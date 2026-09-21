@@ -380,10 +380,10 @@ function waitingFor(state: DomainState, request: PurchaseRequest, now: number): 
   if (request.status === "cancelled" || request.status === "reserved") return null;
   const result = (code: CustomerWaiting["code"]): CustomerWaiting => ({ code, checkedAt: now });
   if (request.status === "review_required") return result("RECONSENT_REQUIRED");
-  if (state.links.some(l => l.requestId === request.id && l.active)) return result("SUPPLY_CONFIRMATION_PENDING");
   const demand = demandFor(state, request.storeId, request.productId, now);
   const throughRequest = sum(pending(state, request.storeId, request.productId, now).filter(r => r.sequence <= request.sequence).map(r => r.quantity));
   if (throughRequest > 0 && demand.pooledQuantity >= throughRequest) return result("ALLOCATION_PENDING");
+  if (state.links.some(l => l.requestId === request.id && l.active)) return result("SUPPLY_CONFIRMATION_PENDING");
   if (!demand.shortage && demand.outstandingQuantity > 0) return result("SUPPLY_CONFIRMATION_PENDING");
   const c = state.conditions.find(c => c.storeId === request.storeId && c.productId === request.productId);
   if (!c || c.supplyStatus === "unknown") return result("CONDITION_UNKNOWN");
