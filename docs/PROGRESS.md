@@ -5,14 +5,14 @@
 ## 현재 포인터
 
 ```text
-현재 task: UI-11 고객 입력 우선 화면 구현·좁은 검토 완료, Preview 게시 중
+현재 task: UI-11 Preview Ready·실제 화면 확인, POLICY-01 입력 크기 복구 중
 branch: codex/ui-preview-20260921
 PR: https://github.com/dokrsky/wanna-gs/pull/1 (draft, 최종 검증 전)
 마지막 유효 게이트: 제품 게이트 미실행
 마지막 Production deployment: dpl_GB3Cr8At3Com7eJcTnboJ9W4Sika (기존 최소 데모, 최종 제품 아님)
-현재 Ready Preview: https://wanna-3laa9hhbf-d-01.vercel.app/demo (25e1e9d, DATA02)
+현재 Ready Preview: https://wanna-ecy1jsxg8-d-01.vercel.app/demo (e2450fd, UI11)
 공유 브랜치 주소: https://wanna-gs-git-codex-ui-preview-20260921-d-01.vercel.app/demo
-다음 한 가지: UI-11 작은 commit/push·정확한 Ready 확인, 이어 정책 UI 크기 불일치 최소 수정
+다음 한 가지: POLICY-01 좁은 독립 검사·작은 Preview 공개, ADR002 보완 ACK
 ```
 
 ## 현재 상태
@@ -23,7 +23,7 @@ PR: https://github.com/dokrsky/wanna-gs/pull/1 (draft, 최종 검증 전)
 | 위임 운영 결정 | ADR-001/003~006 채택, ADR-002 평가 기준 초안·후속 검토 | DECISION_INDEX, 전체 독립 품질검증 후속 |
 | GitHub | dokrsky/wanna-gs, 기준 cf6f95a, 작업 branch에서 UI 개발 중 | 원격 쓰기/Actions 권한 확인, 제품 CI 미구현 |
 | 로컬 설정/사전점검 검사기 | OpenAI 15개 + inventory 10개 테스트 통과 | scripts/ 및 .agents/skills/wanna-gs-preflight/scripts/ |
-| 앱·CI·게이트 실행기·DB seed | UI01~10/DATA02 Preview·실제 거래/검색/정책/복원 연결. 제품 CI/전체 게이트 후속 | D-46·WORKPLAN, 최신 Ready25e1e9d |
+| 앱·CI·게이트 실행기·DB seed | UI01~11/DATA02 Preview·실제 거래/검색/정책/복원 연결. 제품 CI/전체 게이트 후속 | D-46·WORKPLAN, 최신 Readye2450fd |
 | SQLite | 262개 상품·8점포·524조건 거래 schema3, 고객 검색/니즈/추천·경영주 AI 기록·기존 사본 보존 | DATA02 실제 domain/이전 Preview 이행·거래/픽업/정책 복원 |
 | Vercel·OpenAI | Git 자동 Preview 및 UI branch 서버 env 연결. 두 역할·정책·검색v2 실제 호출 관측 | 아래 UI03/06/07 증거; 계정 총 잔액/쿼터 미확인, Production 미변경 |
 | 앱 단위·통합·E2E·실제 모델 평가 | 좁은 자체/조정자 검사·일부 독립 반례 확인 및 실제 정상 흐름 관측. 전체 독립 평가·G1~G6 미실행 | 아래 단위별 실행/미실행 구분; Ready를 제품 게이트로 세지 않음 |
@@ -399,3 +399,13 @@ Erdos 독립 검토: Node24 실제 React markup7 PASS, 별도 AST로 고객27/de
 main이 customer-layout7·실제 SQLite customer-write 인접 검사 및 diff check를 실행해 PASS. 전용 dev server만 정상 종료하고 production build를 시작했다. `.env.local` ignore·기존 실제 설정 증거와 사용자 `.idea/`는 보존한다. 전체 goal 검증을 UI11 게시 선행조건으로 만들지 않는다.
 
 동시에 ADR002에 대한 Ptolemy 제품/eval·Planck method/state 독립 보고가 도착했다. 아직 proposed이며 holdout 선소비/분모·UX 부담/호출 상한 등을 보완·재ACK 후 채택해야 한다. Planck가 추가로 발견한 정책 UI의4096B와 API/trace8192B 불일치는 다음 별도 작은 수정 대상이다. 이번 화면 변경으로 그 미검증 경계를 PASS로 승격하지 않는다.
+
+UI11 Node24 production build/타입 PASS. `.env.local` 재확인 CONFIGURED(live 재호출0), client23/staged10파일에서 실제 서버 키 미포함·개인 `.idea/` 제외 확인. `e2450fdb9abcd19caaf78c53ba8ce8379059286d` commit/push → `dpl_51aCLpBJL8qpi4d3kNZr2ycqCwin` / https://wanna-ecy1jsxg8-d-01.vercel.app/demo Ready·source SHA 일치. 같은 브랜치 origin을 실제 reload해 모바일390×844의 입력617.18/CTA843.57·scrollWidth390, 내요청2·보관1·revision33/세대1·실제AI 설정 표시를 확인했다. 경영주 역할 전환 시 기존 상단 저장 도구/점포/묶음/고객 상세 접근 유지. 1280 override 요청은 실제390으로 관측돼 데스크톱 QA로 세지 않는다. 스크린샷 실패는 그대로 남기고 viewport override 해제·고객 화면으로 복귀해 사용자에게 Preview를 공개했다. Production 변경 없음.
+
+## POLICY-01 정책 화면 입력 크기 — 2026-09-22 KST
+
+[POLICY01 계약](context/POLICY-01.md) hash `2ee8b64bf91f53808549484178493b183d71f3ca4f9d0f5ce4aafc003929d77a`. 코드/통합 P2이며 새로운 정책 공백이 아니다. 원래 유효한 전체262대상 정책도 자연어 변경안을 받아야 하는 CORE05/06/23/25·ADR003/006 목적을 유지한다. main이 policy-assistant.tsx의 상수 import와 비교2줄만 수정했다. 공통8192B 계약/API/trace는 그대로다. 출력·명시 확인·정책 저장·동의·SQL/seed/모델은 변경하지 않는다.
+
+Schrodinger는 새 `policy-request-ui.check.mjs`만 작성했고 자체 Node24 실행 후 인계했다. 실제 TSX propose를 AST 추출해 같은 parse/응답 계약으로 실행하며 transport/trace만 stub한다. 메모리상 옛4096은 실제262대상+한글300자5,159B를 거절(RED), 현재코드는 전체대상 보존/예산 변경 제안 GREEN. 한글301자/빈입력/외부SKU는 fetch·trace0, 별도 합성catalog로 정확8192B 전송/8193B 선행거절, 모든경우onSave0·confirmedfalse. 실제 live/browser 실행 증거가 아니다. main도 같은 checker/API policy/trace61·diff check PASS, build 진행. checker hash `e904c6457d7c1eecf39b8d66c4004ced022e15648a020b28d8554eb768c62163`, component `7352796d674f9686be128a40e56202ab4b974c24fdacf9dda4bca4818fd8bdb6`. Planck의 독립 좁은 재검토 후 별도 commit/push하며 UI11 공개는 기다리지 않았다.
+
+Planck 독립 코드 판정: 같은 component hash에 대해 실제 callback RED→GREEN/8192·8193B/전송 전 거절·명시 승인 경로 보존 좁은 PASS, 게시 차단 의견 없음. main Node24 Next production build/타입 PASS, client23/staged5파일에서 실제 키 미포함·개인파일 제외 확인. 소비자 API `d38a7c994e6ee18dd21fd44c2e1d04eb7f93dd352992329cb30ed40b482add86`, trace `f264ba92312717a0d966774b25aa77bdb628c2f7e81accd1ee0e7c36da247819`, UI 위hash가 공통계약 `a47374ec8fa771ff32191157767aa7536850961a74a64f7b3ffab5594d516e18`의8192B를 사용한다. API/trace 기존검사와 UI실제callback 검사를 구분하고 전체브라우저/live/모델품질PASS로 확대하지 않는다. METHOD-VERIFY01-01은 별도 사전 독립승인을 받지 않았으므로 이번 복구를 그 운영시험 PASS로 소급 표시하지 않는다.

@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { AssistantError, errorMessages, isObject, type AssistantErrorCode, type AssistantStatus } from "../../lib/assistant/contracts";
-import { parsePolicyOutput, parsePolicyRequest, resolvePolicyProposal, type CurrentPolicy, type PolicyOutput, type PolicyRequest, type PolicyResponse, type PolicySetting } from "../../lib/assistant/policy-contracts";
+import { POLICY_BODY_BYTES, parsePolicyOutput, parsePolicyRequest, resolvePolicyProposal, type CurrentPolicy, type PolicyOutput, type PolicyRequest, type PolicyResponse, type PolicySetting } from "../../lib/assistant/policy-contracts";
 import type { DomainState, Policy } from "../../lib/domain/types";
 import { getView } from "../../lib/domain/commands";
 import styles from "./domain-workspace.module.css";
@@ -130,7 +130,7 @@ export default function PolicyAssistant({ policy, state, actorId, revision, disa
     try {
       const input = parsePolicyRequest({ text: text.trim(), id: crypto.randomUUID(), generation, storeId: policy.storeId, currentPolicy }, allowedIds, state.stores.map(store => store.id));
       const body = JSON.stringify(input);
-      if (new TextEncoder().encode(body).byteLength > 4096) throw new AssistantError("BODY_TOO_LARGE");
+      if (new TextEncoder().encode(body).byteLength > POLICY_BODY_BYTES) throw new AssistantError("BODY_TOO_LARGE");
       trace = beginMerchantAttempt(activity, input.id, "policy", body); attempt.current = trace;
       const response = await fetch("/api/assistant/policy", { method: "POST", headers: { "Content-Type": "application/json" }, body, signal: abort.signal });
       const data: unknown = await response.json().catch(() => { throw new AssistantError("MODEL_MALFORMED"); });
