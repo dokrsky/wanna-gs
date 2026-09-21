@@ -42,7 +42,7 @@ export const previewStores: PreviewStore[] = [
   ...stores,
 ];
 
-// Only the 484 real-store rows. Missing is unknown/not_configured, never false/zero stock.
+// Only configured real-store rows. Missing is unknown/not_configured, never false/zero stock.
 export const previewAvailability = availability;
 export const previewActors = actors;
 

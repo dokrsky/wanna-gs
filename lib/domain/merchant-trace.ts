@@ -1,7 +1,7 @@
 // Append-only run lifecycle; deliberately no settlement, clock or trade imports.
 import { identifier, integer, requireRule } from "./policy";
 import { parseMerchantContextRequest, parseMerchantContextResponse, type MerchantContextRequest, type MerchantContextResponse } from "../assistant/merchant-context-contracts";
-import { parsePolicyRequest, parsePolicyOutput, resolvePolicyProposal, type PolicyRequest, type PolicyResponse } from "../assistant/policy-contracts";
+import { POLICY_BODY_BYTES, parsePolicyRequest, parsePolicyOutput, resolvePolicyProposal, type PolicyRequest, type PolicyResponse } from "../assistant/policy-contracts";
 import { isObject } from "../assistant/contracts";
 import type { Command, DomainState } from "./types";
 import type { MerchantRun, MerchantObservation } from "./merchant-trace-types";
@@ -16,7 +16,7 @@ function json(text: string, limit: number): unknown {
 }
 function input(s: DomainState, r: MerchantRun): MerchantContextRequest | PolicyRequest {
   const ids = s.products.map(p => p.id);
-  const value = json(r.inputJson, r.kind === "batch" ? 65536 : 4096);
+  const value = json(r.inputJson, r.kind === "batch" ? 65536 : POLICY_BODY_BYTES);
   const parsed = r.kind === "batch" ? parseMerchantContextRequest(value, ids, [r.storeId]) : parsePolicyRequest(value, ids, [r.storeId]);
   rule(parsed.id === r.id);
   return parsed;

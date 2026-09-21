@@ -1,8 +1,56 @@
 {
-  "version": "DATA-01-20260921-v1",
-  "researchVersion": "RS-20260921-v1",
+  "version": "DATA-02-20260922-v1",
+  "researchVersion": "DATA-02-RECENT-20260922-v1",
   "generatedFor": "dev-demo-not-release-verified",
-  "checkedAt": "2026-09-21",
+  "checkedAt": "2026-09-22",
+  "integration": {
+    "researchHash": "a1b134c5d2d01563fd62857d294e488b76e03098a64b4f02175078c0d017f051",
+    "storeReportHash": "3206975577946f4d443465c151a8207bd6bd8fcbba8cbdc68e90bb60900b3578",
+    "appendedIds": [
+      "DEMO-RP-001",
+      "DEMO-RP-002",
+      "DEMO-RP-003",
+      "DEMO-RP-004",
+      "DEMO-RP-005",
+      "DEMO-RP-006",
+      "DEMO-RP-007",
+      "DEMO-RP-008",
+      "DEMO-RP-009",
+      "DEMO-RP-010",
+      "DEMO-RP-011",
+      "DEMO-RP-012",
+      "DEMO-RP-013",
+      "DEMO-RP-014",
+      "DEMO-RP-015",
+      "DEMO-RP-016",
+      "DEMO-RP-017",
+      "DEMO-RP-022",
+      "DEMO-RP-023",
+      "DEMO-RP-024"
+    ],
+    "excludedCandidates": [
+      "RP-018",
+      "RP-019",
+      "RP-020",
+      "RP-021"
+    ],
+    "originalProducts": 242,
+    "originalConditions": 484,
+    "originalConditionVersion": "DATA-01-20260921-v1",
+    "releaseDataQa": "pending_independent_review"
+  },
+  "factualCorrections": [
+    {
+      "candidateId": "RP-010",
+      "basis": "Independent DATA-02 fact review of S03",
+      "correction": "2026-09-03은 발표일. 정식 출시일 null/unknown; frozen 연구 원본은 감사 이력으로 보존."
+    },
+    {
+      "candidateId": "RP-011",
+      "basis": "Independent DATA-02 fact review of S04",
+      "correction": "9/1 출시일 언급·시제 혼재·실판매 미확인. 완료/예정 중 하나로 단정하지 않음."
+    }
+  ],
   "sources": [
     {
       "id": "S01",
@@ -167,7 +215,7 @@
         "public_coordinate",
         "address_match"
       ],
-      "limitations": "관광정보 2차 자료. API 갱신 표시 2026-01-24, 공식 점포 주소와 대조. 현재 영업 보장 아님.",
+      "limitations": "관광정보 2차 자료. API 갱신 표시 2026-01-24, 공식 점포 주소와 대조. 현재 영업 보장 아님. 2026-09-22 재조회 HTTP 404. 기존 좌표 원문 재확인 미완료; 공식 SE-GS-D는 상호·주소의 별도 근거입니다.",
       "type": "secondary_tourism"
     },
     {
@@ -205,6 +253,183 @@
       ],
       "limitations": "기존 화면 6개 ID/명칭 보존. 외부 상품 사실의 확인 근거 아님.",
       "type": "local_contract"
+    },
+    {
+      "id": "RP-S01",
+      "url": "https://v.daum.net/v/ZPyiRRyOyk",
+      "checkedAt": "2026-09-22",
+      "publishedAt": "2026-08-26T08:48:00+09:00",
+      "evidenceScope": [
+        "reported_product_name_and_form",
+        "release_evidence"
+      ],
+      "limitations": "재게시와 원매체를 독립 근거 두 개로 세지 않는다. 현재 재고·용량·GTIN은 확인 불가.",
+      "type": "credible_reporting",
+      "licenseOrUsageNote": "사실·서지정보와 짧은 자체 요약만. 원문·사진·로고·패키지 디자인 재배포 없음."
+    },
+    {
+      "id": "RP-S02",
+      "url": "https://www.newswire.co.kr/newsRead.php?no=1041291",
+      "checkedAt": "2026-09-22",
+      "publishedAt": "2026-08-27T14:29:00+09:00",
+      "evidenceScope": [
+        "reported_product_name_and_form",
+        "release_evidence"
+      ],
+      "limitations": "기업 자기집계. 기존 두 맛의 판매량을 그릭 복숭아에 귀속하지 않는다. 8월 초 출시와 '한 달'이라는 기간 표현이 근사적이다. 식이섬유 10g은 총중량이 아니다.",
+      "type": "issuer_press_release",
+      "licenseOrUsageNote": "사실·서지정보와 짧은 자체 요약만. 원문·사진·로고·패키지 디자인 재배포 없음."
+    },
+    {
+      "id": "RP-S03",
+      "url": "https://www.newswire.co.kr/newsRead.php?no=1041771",
+      "checkedAt": "2026-09-22",
+      "publishedAt": "2026-09-03T10:47:00+09:00",
+      "evidenceScope": [
+        "reported_product_name_and_form",
+        "release_evidence"
+      ],
+      "limitations": "한정 행사 소진을 전국 수요·오늘 재고로 확대하지 않는다. 순중량 미확인.",
+      "type": "issuer_press_release",
+      "licenseOrUsageNote": "사실·서지정보와 짧은 자체 요약만. 원문·사진·로고·패키지 디자인 재배포 없음."
+    },
+    {
+      "id": "RP-S04",
+      "url": "https://www.newspim.com/news/view/20260908000078",
+      "checkedAt": "2026-09-22",
+      "publishedAt": "2026-09-08T09:45:00+09:00",
+      "evidenceScope": [
+        "reported_product_name_and_form",
+        "release_evidence"
+      ],
+      "limitations": "도시락 문장에 과거 날짜와 미래형 어미가 섞여 있어 실제 출시 단정은 보류한다. 나머지도 발표 일정이며 점포 판매 확인이 아니다.",
+      "type": "credible_reporting",
+      "licenseOrUsageNote": "사실·서지정보와 짧은 자체 요약만. 원문·사진·로고·패키지 디자인 재배포 없음."
+    },
+    {
+      "id": "RP-S05",
+      "url": "https://www.newswire.co.kr/newsRead.php?no=1042803",
+      "checkedAt": "2026-09-22",
+      "publishedAt": "2026-09-17T10:21:00+09:00",
+      "evidenceScope": [
+        "reported_product_name_and_form",
+        "release_evidence"
+      ],
+      "limitations": "SNS 유행은 회사의 정성적 설명이며 두 SKU 판매 증거가 아니다. 앱의 레시피 기능을 추가할 근거가 아니다.",
+      "type": "issuer_press_release",
+      "licenseOrUsageNote": "사실·서지정보와 짧은 자체 요약만. 원문·사진·로고·패키지 디자인 재배포 없음."
+    },
+    {
+      "id": "RP-S06",
+      "url": "https://www.newswire.co.kr/newsRead.php?no=1039749",
+      "checkedAt": "2026-09-22",
+      "publishedAt": "2026-07-31T14:19:00+09:00",
+      "evidenceScope": [
+        "reported_product_name_and_form",
+        "release_evidence"
+      ],
+      "limitations": "증가율은 출시 전 카테고리 통계이며 이 신제품 판매량이 아니다. 용량·카페인 정량 미확인.",
+      "type": "issuer_press_release",
+      "licenseOrUsageNote": "사실·서지정보와 짧은 자체 요약만. 원문·사진·로고·패키지 디자인 재배포 없음."
+    },
+    {
+      "id": "RP-S12",
+      "url": "https://www.newswire.co.kr/newsRead.php?no=1039781",
+      "checkedAt": "2026-09-22",
+      "publishedAt": "2026-08-02T09:26:00+09:00",
+      "evidenceScope": [
+        "reported_product_name_and_form",
+        "release_evidence"
+      ],
+      "limitations": "같은 자료 속 다른 스낵 판매 순위를 이 제품에 옮기지 않는다. 캐릭터·맛·제품명 확인이지 패키지 사용 허가가 아니다.",
+      "type": "issuer_press_release",
+      "licenseOrUsageNote": "사실·서지정보와 짧은 자체 요약만. 원문·사진·로고·패키지 디자인 재배포 없음."
+    },
+    {
+      "id": "RP-S13",
+      "url": "https://www.newswire.co.kr/newsRead.php?no=1039325",
+      "checkedAt": "2026-09-22",
+      "publishedAt": "2026-07-27T09:17:00+09:00",
+      "evidenceScope": [
+        "reported_product_name_and_form",
+        "release_evidence"
+      ],
+      "limitations": "품목별 출시일·판매량 분해는 없다. 단백질 약 15g은 총중량이 아니다. 다른 삼각김밥까지 합한 250만 개를 두 김밥 실적으로 쓰지 않는다.",
+      "type": "issuer_press_release",
+      "licenseOrUsageNote": "사실·서지정보와 짧은 자체 요약만. 원문·사진·로고·패키지 디자인 재배포 없음."
+    },
+    {
+      "id": "SE-GS-Y",
+      "url": "https://www.gsretail.com/api/homepage/brand/storeSearch/selectGs25Stores?shopName=%EC%97%AD%EC%82%BC",
+      "checkedAt": "2026-09-22",
+      "publishedAt": null,
+      "evidenceScope": [
+        "store_name",
+        "store_address",
+        "coordinate_comparison_only"
+      ],
+      "limitations": "공식 공개 응답의 상호·주소 대조. CRS·실측 정확도·갱신일·재사용 조건 미기재. 현재 영업·재고 보장 아님.",
+      "type": "official_store",
+      "responseSha256": "e239e092954154b6a01054940047aeed6075a1c7cc5161f1251a7c5ab3f3ffe4",
+      "crossCheck": "researcher_and_main_matching_response_hash"
+    },
+    {
+      "id": "SE-GS-S",
+      "url": "https://www.gsretail.com/api/homepage/brand/storeSearch/selectGs25Stores?shopName=%EA%B0%95%EB%82%A8%EC%83%81%EB%A1%9D%ED%9A%8C%EA%B4%80",
+      "checkedAt": "2026-09-22",
+      "publishedAt": null,
+      "evidenceScope": [
+        "store_name",
+        "store_address",
+        "coordinate_comparison_only"
+      ],
+      "limitations": "공식 공개 응답의 상호·주소 대조. CRS·실측 정확도·갱신일·재사용 조건 미기재. 현재 영업·재고 보장 아님.",
+      "type": "official_store",
+      "responseSha256": "db18bcb558c306a47b334ea369852f745b6ee994fb5a17407f634c40fd376594",
+      "crossCheck": "researcher_and_main_matching_response_hash"
+    },
+    {
+      "id": "SE-GS-D",
+      "url": "https://www.gsretail.com/api/homepage/brand/storeSearch/selectGs25Stores?shopName=%EA%B0%95%EB%82%A8%EB%8F%99%EC%9B%90",
+      "checkedAt": "2026-09-22",
+      "publishedAt": null,
+      "evidenceScope": [
+        "store_name",
+        "store_address",
+        "coordinate_comparison_only"
+      ],
+      "limitations": "공식 공개 응답의 상호·주소 대조. CRS·실측 정확도·갱신일·재사용 조건 미기재. 현재 영업·재고 보장 아님.",
+      "type": "official_store",
+      "responseSha256": "e5fbf7748285a75f8db98d74d39c3a5177bf831cc7b47f996752a4a2e6cb5a0f",
+      "crossCheck": "researcher_and_main_matching_response_hash"
+    },
+    {
+      "id": "SE-GS-E",
+      "url": "https://www.gsretail.com/api/homepage/brand/storeSearch/selectGs25Stores?shopName=S9%EC%96%B8%EC%A3%BC%EC%97%AD",
+      "checkedAt": "2026-09-22",
+      "publishedAt": null,
+      "evidenceScope": [
+        "store_name",
+        "store_address",
+        "coordinate_comparison_only"
+      ],
+      "limitations": "공식 공개 응답의 상호·주소 대조. CRS·실측 정확도·갱신일·재사용 조건 미기재. 현재 영업·재고 보장 아님.",
+      "type": "official_store",
+      "responseSha256": "02628ea0d4107d54b30b1e1463903ee44fa8fb997f5ef7324702026a22f3eb99",
+      "crossCheck": "researcher_and_main_matching_response_hash"
+    },
+    {
+      "id": "SE-OSM-NODE",
+      "url": "https://api.openstreetmap.org/api/0.6/node/12843268937.json",
+      "checkedAt": "2026-09-22",
+      "publishedAt": "2025-08-05T08:40:57Z",
+      "evidenceScope": [
+        "named_station_poi",
+        "coordinate_comparison_only"
+      ],
+      "limitations": "node version5. 주소·층·출입구·실측 태그 없음. 현재 영업 미확인; 기존 좌표 유지.",
+      "type": "openstreetmap",
+      "licenseOrUsageNote": "OpenStreetMap contributors / ODbL: https://www.openstreetmap.org/copyright . 전체 seed의 재배포 준수 판정은 별도."
     }
   ],
   "candidatePolicy": "24개는 S08의 2026-08 행사 목록에서 이름을 직접 읽은 과거 행사 기반 관심 후보. 실제 출시·현재 인기 24개 확인을 뜻하지 않음.",
@@ -245,10 +470,10 @@
     "기존 RS 표본 ST08 아르누보 상호 불일치는 해당 점포 제외 후 역삼대홍점으로 교체; 원본 보고서 보존"
   ],
   "contentHashes": {
-    "catalog": "d71b9efd88b36feffe51458b9e087c0db70ac5d22b07f381842b9fa187a127e3",
-    "stores": "0d23e34fd1bddde1eea6f81fba94e01494547bae7556ed51d9ca5e32f9a0d1d5",
+    "catalog": "c405bb1f52173c2580a857e5eceb266a064519838e449ff9995228a5aa66953b",
+    "stores": "09c9bd480c7dc24b1d709cc96d2bc18b51c36d54db8142436292b17d67b225de",
     "actors": "8999bcc5c9ffcee89d0e69e9f359ef6f551f1a50f450210e21ba5fceb0f719af",
-    "availability": "fc6b95cd24fbc11a0946bb7a1e19747344a95b5831276b3e82c05fe234b29d6b",
+    "availability": "42c76babb2d699768f7f513cd79dc0bfc9dcb6bc3f012ca4ea3e432f1dc498a9",
     "scenarios": "32fd93c4b00b34866974aea7d563c591bc5cb2597b65db7f16a4147c0cd155fe"
   }
 }

@@ -7,16 +7,31 @@
     "longitude": 127.042457,
     "sourceIds": [
       "S02",
-      "P01"
+      "P01",
+      "SE-GS-Y"
     ],
     "confidence": "medium",
     "identityOrigin": "reference_verified",
-    "checkedAt": "2026-09-21",
+    "checkedAt": "2026-09-22",
     "coordinateSystem": "WGS84",
     "coordinateSourceId": "P01",
     "coordinateAccuracy": "address_or_poi_not_surveyed_entrance",
     "operatingNowVerified": false,
-    "limitations": "실제 점포 위치 참고. 상품·가격·취급·재고·경영주 관계는 모두 모의이며 실시간 영업을 보장하지 않음."
+    "limitations": "실제 점포 위치 참고. 상품·가격·취급·재고·경영주 관계는 모두 모의이며 실시간 영업을 보장하지 않음. 공식 상호·주소 재대조, 기존 좌표 유지. 원배포 행·재사용 조건 전체 대조 미완료.",
+    "evidenceUpdate": {
+      "sourceId": "SE-GS-Y",
+      "externalShopCode": "VS089",
+      "verifiedFields": [
+        "name",
+        "address"
+      ],
+      "coordinateDifferenceMeters": 1.82,
+      "coordinateComparison": "공개 자료 간 거리 차이, 실측 오차/정확도 아님",
+      "officialCrsVerified": false,
+      "officialReuseTermsVerified": false,
+      "originalCoordinateRechecked": true,
+      "originalDistributionRowVerified": false
+    }
   },
   {
     "id": "DEMO-ST-02",
@@ -26,16 +41,31 @@
     "longitude": 127.043994,
     "sourceIds": [
       "S02",
-      "P02"
+      "P02",
+      "SE-GS-Y"
     ],
     "confidence": "medium",
     "identityOrigin": "reference_verified",
-    "checkedAt": "2026-09-21",
+    "checkedAt": "2026-09-22",
     "coordinateSystem": "WGS84",
     "coordinateSourceId": "P02",
     "coordinateAccuracy": "address_or_poi_not_surveyed_entrance",
     "operatingNowVerified": false,
-    "limitations": "실제 점포 위치 참고. 상품·가격·취급·재고·경영주 관계는 모두 모의이며 실시간 영업을 보장하지 않음."
+    "limitations": "실제 점포 위치 참고. 상품·가격·취급·재고·경영주 관계는 모두 모의이며 실시간 영업을 보장하지 않음. 공식 상호·주소 재대조, 기존 좌표 유지. 원배포 행·재사용 조건 전체 대조 미완료.",
+    "evidenceUpdate": {
+      "sourceId": "SE-GS-Y",
+      "externalShopCode": "VX051",
+      "verifiedFields": [
+        "name",
+        "address"
+      ],
+      "coordinateDifferenceMeters": 3.37,
+      "coordinateComparison": "공개 자료 간 거리 차이, 실측 오차/정확도 아님",
+      "officialCrsVerified": false,
+      "officialReuseTermsVerified": false,
+      "originalCoordinateRechecked": true,
+      "originalDistributionRowVerified": false
+    }
   },
   {
     "id": "DEMO-ST-03",
@@ -45,16 +75,31 @@
     "longitude": 127.040274,
     "sourceIds": [
       "S02",
-      "P03"
+      "P03",
+      "SE-GS-Y"
     ],
     "confidence": "medium",
     "identityOrigin": "reference_verified",
-    "checkedAt": "2026-09-21",
+    "checkedAt": "2026-09-22",
     "coordinateSystem": "WGS84",
     "coordinateSourceId": "P03",
     "coordinateAccuracy": "address_or_poi_not_surveyed_entrance",
     "operatingNowVerified": false,
-    "limitations": "실제 점포 위치 참고. 상품·가격·취급·재고·경영주 관계는 모두 모의이며 실시간 영업을 보장하지 않음."
+    "limitations": "실제 점포 위치 참고. 상품·가격·취급·재고·경영주 관계는 모두 모의이며 실시간 영업을 보장하지 않음. 공식 상호·주소 재대조, 기존 좌표 유지. 원배포 행·재사용 조건 전체 대조 미완료.",
+    "evidenceUpdate": {
+      "sourceId": "SE-GS-Y",
+      "externalShopCode": "VDZ92",
+      "verifiedFields": [
+        "name",
+        "address"
+      ],
+      "coordinateDifferenceMeters": 2.82,
+      "coordinateComparison": "공개 자료 간 거리 차이, 실측 오차/정확도 아님",
+      "officialCrsVerified": false,
+      "officialReuseTermsVerified": false,
+      "originalCoordinateRechecked": true,
+      "originalDistributionRowVerified": false
+    }
   },
   {
     "id": "DEMO-ST-04",
@@ -64,16 +109,31 @@
     "longitude": 127.044264,
     "sourceIds": [
       "S02",
-      "P04"
+      "P04",
+      "SE-GS-Y"
     ],
     "confidence": "medium",
     "identityOrigin": "reference_verified",
-    "checkedAt": "2026-09-21",
+    "checkedAt": "2026-09-22",
     "coordinateSystem": "WGS84",
     "coordinateSourceId": "P04",
     "coordinateAccuracy": "address_or_poi_not_surveyed_entrance",
     "operatingNowVerified": false,
-    "limitations": "실제 점포 위치 참고. 상품·가격·취급·재고·경영주 관계는 모두 모의이며 실시간 영업을 보장하지 않음."
+    "limitations": "실제 점포 위치 참고. 상품·가격·취급·재고·경영주 관계는 모두 모의이며 실시간 영업을 보장하지 않음. 공식 상호·주소 재대조, 기존 좌표 유지. 원배포 행·재사용 조건 전체 대조 미완료.",
+    "evidenceUpdate": {
+      "sourceId": "SE-GS-Y",
+      "externalShopCode": "V2300",
+      "verifiedFields": [
+        "name",
+        "address"
+      ],
+      "coordinateDifferenceMeters": 9.75,
+      "coordinateComparison": "공개 자료 간 거리 차이, 실측 오차/정확도 아님",
+      "officialCrsVerified": false,
+      "officialReuseTermsVerified": false,
+      "originalCoordinateRechecked": true,
+      "originalDistributionRowVerified": false
+    }
   },
   {
     "id": "DEMO-ST-05",
@@ -83,16 +143,31 @@
     "longitude": 127.043938,
     "sourceIds": [
       "S02",
-      "P05"
+      "P05",
+      "SE-GS-S"
     ],
     "confidence": "medium",
     "identityOrigin": "reference_verified",
-    "checkedAt": "2026-09-21",
+    "checkedAt": "2026-09-22",
     "coordinateSystem": "WGS84",
     "coordinateSourceId": "P05",
     "coordinateAccuracy": "address_or_poi_not_surveyed_entrance",
     "operatingNowVerified": false,
-    "limitations": "실제 점포 위치 참고. 상품·가격·취급·재고·경영주 관계는 모두 모의이며 실시간 영업을 보장하지 않음."
+    "limitations": "실제 점포 위치 참고. 상품·가격·취급·재고·경영주 관계는 모두 모의이며 실시간 영업을 보장하지 않음. 공식 상호·주소 재대조, 기존 좌표 유지. 원배포 행·재사용 조건 전체 대조 미완료.",
+    "evidenceUpdate": {
+      "sourceId": "SE-GS-S",
+      "externalShopCode": "VJH73",
+      "verifiedFields": [
+        "name",
+        "address"
+      ],
+      "coordinateDifferenceMeters": 0.27,
+      "coordinateComparison": "공개 자료 간 거리 차이, 실측 오차/정확도 아님",
+      "officialCrsVerified": false,
+      "officialReuseTermsVerified": false,
+      "originalCoordinateRechecked": true,
+      "originalDistributionRowVerified": false
+    }
   },
   {
     "id": "DEMO-ST-06",
@@ -102,16 +177,31 @@
     "longitude": 127.05451,
     "sourceIds": [
       "S02",
-      "P07"
+      "P07",
+      "SE-GS-D"
     ],
     "confidence": "medium",
     "identityOrigin": "reference_verified",
-    "checkedAt": "2026-09-21",
+    "checkedAt": "2026-09-22",
     "coordinateSystem": "WGS84",
     "coordinateSourceId": "P07",
     "coordinateAccuracy": "address_or_poi_not_surveyed_entrance",
     "operatingNowVerified": false,
-    "limitations": "실제 점포 위치 참고. 상품·가격·취급·재고·경영주 관계는 모두 모의이며 실시간 영업을 보장하지 않음."
+    "limitations": "실제 점포 위치 참고. 상품·가격·취급·재고·경영주 관계는 모두 모의이며 실시간 영업을 보장하지 않음. 공식 상호·주소 재대조, 기존 좌표 유지. 원배포 행·재사용 조건 전체 대조 미완료. 기존 좌표 출처 P07은 2026-09-22 HTTP 404로 재확인하지 못함.",
+    "evidenceUpdate": {
+      "sourceId": "SE-GS-D",
+      "externalShopCode": "V1049",
+      "verifiedFields": [
+        "name",
+        "address"
+      ],
+      "coordinateDifferenceMeters": 9.96,
+      "coordinateComparison": "공개 자료 간 거리 차이, 실측 오차/정확도 아님",
+      "officialCrsVerified": false,
+      "officialReuseTermsVerified": false,
+      "originalCoordinateRechecked": false,
+      "originalDistributionRowVerified": false
+    }
   },
   {
     "id": "DEMO-ST-07",
@@ -121,16 +211,32 @@
     "longitude": 127.03404,
     "sourceIds": [
       "S02",
-      "P08"
+      "P08",
+      "SE-GS-E",
+      "SE-OSM-NODE"
     ],
     "confidence": "low",
     "identityOrigin": "reference_verified",
-    "checkedAt": "2026-09-21",
+    "checkedAt": "2026-09-22",
     "coordinateSystem": "WGS84",
     "coordinateSourceId": "P08",
     "coordinateAccuracy": "address_or_poi_not_surveyed_entrance",
     "operatingNowVerified": false,
-    "limitations": "실제 점포 위치 참고. 상품·가격·취급·재고·경영주 관계는 모두 모의이며 실시간 영업을 보장하지 않음."
+    "limitations": "실제 점포 위치 참고. 상품·가격·취급·재고·경영주 관계는 모두 모의이며 실시간 영업을 보장하지 않음. 공식 상호·주소 재대조, 기존 좌표 유지. 원배포 행·재사용 조건 전체 대조 미완료.",
+    "evidenceUpdate": {
+      "sourceId": "SE-GS-E",
+      "externalShopCode": "VGC22",
+      "verifiedFields": [
+        "name",
+        "address"
+      ],
+      "coordinateDifferenceMeters": 18.79,
+      "coordinateComparison": "공개 자료 간 거리 차이, 실측 오차/정확도 아님",
+      "officialCrsVerified": false,
+      "officialReuseTermsVerified": false,
+      "originalCoordinateRechecked": true,
+      "originalDistributionRowVerified": false
+    }
   },
   {
     "id": "DEMO-ST-08",
@@ -140,15 +246,30 @@
     "longitude": 127.039295,
     "sourceIds": [
       "S02",
-      "P09"
+      "P09",
+      "SE-GS-Y"
     ],
     "confidence": "medium",
     "identityOrigin": "reference_verified",
-    "checkedAt": "2026-09-21",
+    "checkedAt": "2026-09-22",
     "coordinateSystem": "WGS84",
     "coordinateSourceId": "P09",
     "coordinateAccuracy": "address_or_poi_not_surveyed_entrance",
     "operatingNowVerified": false,
-    "limitations": "실제 점포 위치 참고. 상품·가격·취급·재고·경영주 관계는 모두 모의이며 실시간 영업을 보장하지 않음."
+    "limitations": "실제 점포 위치 참고. 상품·가격·취급·재고·경영주 관계는 모두 모의이며 실시간 영업을 보장하지 않음. 공식 상호·주소 재대조, 기존 좌표 유지. 원배포 행·재사용 조건 전체 대조 미완료.",
+    "evidenceUpdate": {
+      "sourceId": "SE-GS-Y",
+      "externalShopCode": "V3831",
+      "verifiedFields": [
+        "name",
+        "address"
+      ],
+      "coordinateDifferenceMeters": 6.35,
+      "coordinateComparison": "공개 자료 간 거리 차이, 실측 오차/정확도 아님",
+      "officialCrsVerified": false,
+      "officialReuseTermsVerified": false,
+      "originalCoordinateRechecked": true,
+      "originalDistributionRowVerified": false
+    }
   }
 ]

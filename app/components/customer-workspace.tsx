@@ -25,7 +25,8 @@ type Props = {
 type Tab = "want" | "requests" | "pickup";
 type SearchMode = "live" | "local";
 type SearchResult = SearchOutput & { mode: SearchMode; model?: string; usage?: SearchResponse["usage"]; dialogue?: DialogueResponse["dialogue"]; run?: SearchRunInput };
-const examples = ["딸기랑 크림이 들어간 샌드위치 찾아줘", "매일우유 900ml가 있었으면 좋겠어", "고소한 버터 소금빵을 찾고 있어"];
+// DATA-02 RP-007/017, public-dev families PD-RP-F02/F06; examples fill input only.
+const examples = ["딸기랑 크림이 들어간 샌드위치 찾아줘", "라라스윗 그릭 복숭아 쫀득바 찾아줘", "유어스로얄밀크티가 궁금해"];
 const normalize = (value: string) => value.normalize("NFKC").toLowerCase().replace(/\s+/g, "");
 const allowedIds = previewProducts.map(product => product.id);
 const requestStores = previewStores.filter(store => store.identityOrigin === "reference_verified");

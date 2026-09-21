@@ -9323,5 +9323,1081 @@
       "sourceIds": [],
       "publishedAt": null
     }
+  },
+  {
+    "id": "DEMO-RP-001",
+    "name": "사랑에 대하여 — 모카번 커스터드맛",
+    "category": "샌드위치·버거·빵",
+    "description": "출시 보도·발표 근거가 있는 명칭·형태 참고 상품입니다. 규격·현재 판매·점포 재고·인기는 미확인이며 가격·공급은 모의입니다.",
+    "price": 2000,
+    "emoji": "🥐",
+    "color": "#FFF4D9",
+    "aliases": [
+      "사랑에 대하여 — 모카번 커스터드맛",
+      "사랑에",
+      "대하여",
+      "모카번",
+      "커스터드맛",
+      "민음사",
+      "문학 빵"
+    ],
+    "size": null,
+    "identityOrigin": "reference_verified",
+    "sourceIds": [
+      "RP-S01"
+    ],
+    "sourceConfidence": "medium",
+    "verifiedFields": [
+      "name"
+    ],
+    "fieldOrigins": {
+      "id": "demo_internal_id",
+      "name": "referenced_name_and_form",
+      "size": "not_provided",
+      "category": "curated",
+      "description": "synthetic_copy",
+      "aliases": "synthetic_search_helpers",
+      "price": "simulated",
+      "emoji": "presentation",
+      "color": "presentation"
+    },
+    "version": "DATA-02-20260922-v1",
+    "trend": {
+      "status": "recent_referenced_name",
+      "confidence": "unverified",
+      "sourceIds": [
+        "RP-S01"
+      ],
+      "publishedAt": "2026-08-26T08:48:00+09:00",
+      "currentPopularityVerified": false,
+      "limitation": "출시 근거와 현재 인기·점포 재고는 별개입니다. 기업의 제품군 실적을 개별 상품에 귀속하지 않습니다."
+    },
+    "researchCandidateId": "RP-001",
+    "release": {
+      "date": "2026-08-21",
+      "precision": "day",
+      "status": "reported_released",
+      "actual_current_sale_checked": false
+    }
+  },
+  {
+    "id": "DEMO-RP-002",
+    "name": "늑대처럼 싱싱하게 울고 싶었다 — 깨찰빵 솔티밀크맛",
+    "category": "샌드위치·버거·빵",
+    "description": "출시 보도·발표 근거가 있는 명칭·형태 참고 상품입니다. 규격·현재 판매·점포 재고·인기는 미확인이며 가격·공급은 모의입니다.",
+    "price": 2100,
+    "emoji": "🥐",
+    "color": "#FFF4D9",
+    "aliases": [
+      "늑대처럼 싱싱하게 울고 싶었다 — 깨찰빵 솔티밀크맛",
+      "늑대처럼",
+      "싱싱하게",
+      "울고",
+      "싶었다",
+      "깨찰빵",
+      "솔티밀크맛",
+      "민음사",
+      "문학 빵"
+    ],
+    "size": null,
+    "identityOrigin": "reference_verified",
+    "sourceIds": [
+      "RP-S01"
+    ],
+    "sourceConfidence": "medium",
+    "verifiedFields": [
+      "name"
+    ],
+    "fieldOrigins": {
+      "id": "demo_internal_id",
+      "name": "referenced_name_and_form",
+      "size": "not_provided",
+      "category": "curated",
+      "description": "synthetic_copy",
+      "aliases": "synthetic_search_helpers",
+      "price": "simulated",
+      "emoji": "presentation",
+      "color": "presentation"
+    },
+    "version": "DATA-02-20260922-v1",
+    "trend": {
+      "status": "recent_referenced_name",
+      "confidence": "unverified",
+      "sourceIds": [
+        "RP-S01"
+      ],
+      "publishedAt": "2026-08-26T08:48:00+09:00",
+      "currentPopularityVerified": false,
+      "limitation": "출시 근거와 현재 인기·점포 재고는 별개입니다. 기업의 제품군 실적을 개별 상품에 귀속하지 않습니다."
+    },
+    "researchCandidateId": "RP-002",
+    "release": {
+      "date": "2026-08-21",
+      "precision": "day",
+      "status": "reported_released",
+      "actual_current_sale_checked": false
+    }
+  },
+  {
+    "id": "DEMO-RP-003",
+    "name": "오만과 편견 — 모카번 우유크림맛",
+    "category": "샌드위치·버거·빵",
+    "description": "출시 보도·발표 근거가 있는 명칭·형태 참고 상품입니다. 규격·현재 판매·점포 재고·인기는 미확인이며 가격·공급은 모의입니다.",
+    "price": 2200,
+    "emoji": "🥐",
+    "color": "#FFF4D9",
+    "aliases": [
+      "오만과 편견 — 모카번 우유크림맛",
+      "오만과",
+      "편견",
+      "모카번",
+      "우유크림맛",
+      "민음사",
+      "문학 빵"
+    ],
+    "size": null,
+    "identityOrigin": "reference_verified",
+    "sourceIds": [
+      "RP-S01"
+    ],
+    "sourceConfidence": "medium",
+    "verifiedFields": [
+      "name"
+    ],
+    "fieldOrigins": {
+      "id": "demo_internal_id",
+      "name": "referenced_name_and_form",
+      "size": "not_provided",
+      "category": "curated",
+      "description": "synthetic_copy",
+      "aliases": "synthetic_search_helpers",
+      "price": "simulated",
+      "emoji": "presentation",
+      "color": "presentation"
+    },
+    "version": "DATA-02-20260922-v1",
+    "trend": {
+      "status": "recent_referenced_name",
+      "confidence": "unverified",
+      "sourceIds": [
+        "RP-S01"
+      ],
+      "publishedAt": "2026-08-26T08:48:00+09:00",
+      "currentPopularityVerified": false,
+      "limitation": "출시 근거와 현재 인기·점포 재고는 별개입니다. 기업의 제품군 실적을 개별 상품에 귀속하지 않습니다."
+    },
+    "researchCandidateId": "RP-003",
+    "release": {
+      "date": "2026-08-26",
+      "precision": "day",
+      "status": "reported_released",
+      "actual_current_sale_checked": false
+    }
+  },
+  {
+    "id": "DEMO-RP-004",
+    "name": "나쁜 소년이 서 있다 — 깨찰빵 커스터드맛",
+    "category": "샌드위치·버거·빵",
+    "description": "출시 보도·발표 근거가 있는 명칭·형태 참고 상품입니다. 규격·현재 판매·점포 재고·인기는 미확인이며 가격·공급은 모의입니다.",
+    "price": 2300,
+    "emoji": "🥐",
+    "color": "#FFF4D9",
+    "aliases": [
+      "나쁜 소년이 서 있다 — 깨찰빵 커스터드맛",
+      "나쁜",
+      "소년이",
+      "서",
+      "있다",
+      "깨찰빵",
+      "커스터드맛",
+      "민음사",
+      "문학 빵"
+    ],
+    "size": null,
+    "identityOrigin": "reference_verified",
+    "sourceIds": [
+      "RP-S01"
+    ],
+    "sourceConfidence": "medium",
+    "verifiedFields": [
+      "name"
+    ],
+    "fieldOrigins": {
+      "id": "demo_internal_id",
+      "name": "referenced_name_and_form",
+      "size": "not_provided",
+      "category": "curated",
+      "description": "synthetic_copy",
+      "aliases": "synthetic_search_helpers",
+      "price": "simulated",
+      "emoji": "presentation",
+      "color": "presentation"
+    },
+    "version": "DATA-02-20260922-v1",
+    "trend": {
+      "status": "recent_referenced_name",
+      "confidence": "unverified",
+      "sourceIds": [
+        "RP-S01"
+      ],
+      "publishedAt": "2026-08-26T08:48:00+09:00",
+      "currentPopularityVerified": false,
+      "limitation": "출시 근거와 현재 인기·점포 재고는 별개입니다. 기업의 제품군 실적을 개별 상품에 귀속하지 않습니다."
+    },
+    "researchCandidateId": "RP-004",
+    "release": {
+      "date": "2026-08-26",
+      "precision": "day",
+      "status": "reported_released",
+      "actual_current_sale_checked": false
+    }
+  },
+  {
+    "id": "DEMO-RP-005",
+    "name": "라라스윗 메론 쫀득바",
+    "category": "디저트·아이스크림",
+    "description": "출시 보도·발표 근거가 있는 명칭·형태 참고 상품입니다. 규격·현재 판매·점포 재고·인기는 미확인이며 가격·공급은 모의입니다.",
+    "price": 2400,
+    "emoji": "🍨",
+    "color": "#FFECED",
+    "aliases": [
+      "라라스윗 메론 쫀득바",
+      "라라스윗",
+      "메론",
+      "쫀득바"
+    ],
+    "size": null,
+    "identityOrigin": "reference_verified",
+    "sourceIds": [
+      "RP-S02"
+    ],
+    "sourceConfidence": "high",
+    "verifiedFields": [
+      "name"
+    ],
+    "fieldOrigins": {
+      "id": "demo_internal_id",
+      "name": "referenced_name_and_form",
+      "size": "not_provided",
+      "category": "curated",
+      "description": "synthetic_copy",
+      "aliases": "synthetic_search_helpers",
+      "price": "simulated",
+      "emoji": "presentation",
+      "color": "presentation"
+    },
+    "version": "DATA-02-20260922-v1",
+    "trend": {
+      "status": "recent_referenced_name",
+      "confidence": "unverified",
+      "sourceIds": [
+        "RP-S02"
+      ],
+      "publishedAt": "2026-08-27T14:29:00+09:00",
+      "currentPopularityVerified": false,
+      "limitation": "출시 근거와 현재 인기·점포 재고는 별개입니다. 기업의 제품군 실적을 개별 상품에 귀속하지 않습니다."
+    },
+    "researchCandidateId": "RP-005",
+    "release": {
+      "date": "2026-05",
+      "precision": "late_month",
+      "status": "reported_released",
+      "actual_current_sale_checked": false
+    }
+  },
+  {
+    "id": "DEMO-RP-006",
+    "name": "라라스윗 망고 쫀득바",
+    "category": "디저트·아이스크림",
+    "description": "출시 보도·발표 근거가 있는 명칭·형태 참고 상품입니다. 규격·현재 판매·점포 재고·인기는 미확인이며 가격·공급은 모의입니다.",
+    "price": 2500,
+    "emoji": "🍨",
+    "color": "#FFECED",
+    "aliases": [
+      "라라스윗 망고 쫀득바",
+      "라라스윗",
+      "망고",
+      "쫀득바"
+    ],
+    "size": null,
+    "identityOrigin": "reference_verified",
+    "sourceIds": [
+      "RP-S02"
+    ],
+    "sourceConfidence": "high",
+    "verifiedFields": [
+      "name"
+    ],
+    "fieldOrigins": {
+      "id": "demo_internal_id",
+      "name": "referenced_name_and_form",
+      "size": "not_provided",
+      "category": "curated",
+      "description": "synthetic_copy",
+      "aliases": "synthetic_search_helpers",
+      "price": "simulated",
+      "emoji": "presentation",
+      "color": "presentation"
+    },
+    "version": "DATA-02-20260922-v1",
+    "trend": {
+      "status": "recent_referenced_name",
+      "confidence": "unverified",
+      "sourceIds": [
+        "RP-S02"
+      ],
+      "publishedAt": "2026-08-27T14:29:00+09:00",
+      "currentPopularityVerified": false,
+      "limitation": "출시 근거와 현재 인기·점포 재고는 별개입니다. 기업의 제품군 실적을 개별 상품에 귀속하지 않습니다."
+    },
+    "researchCandidateId": "RP-006",
+    "release": {
+      "date": "2026-05",
+      "precision": "late_month",
+      "status": "reported_released",
+      "actual_current_sale_checked": false
+    }
+  },
+  {
+    "id": "DEMO-RP-007",
+    "name": "라라스윗 그릭 복숭아 쫀득바",
+    "category": "디저트·아이스크림",
+    "description": "출시 보도·발표 근거가 있는 명칭·형태 참고 상품입니다. 규격·현재 판매·점포 재고·인기는 미확인이며 가격·공급은 모의입니다.",
+    "price": 2600,
+    "emoji": "🍨",
+    "color": "#FFECED",
+    "aliases": [
+      "라라스윗 그릭 복숭아 쫀득바",
+      "라라스윗",
+      "그릭",
+      "복숭아",
+      "쫀득바"
+    ],
+    "size": null,
+    "identityOrigin": "reference_verified",
+    "sourceIds": [
+      "RP-S02"
+    ],
+    "sourceConfidence": "high",
+    "verifiedFields": [
+      "name"
+    ],
+    "fieldOrigins": {
+      "id": "demo_internal_id",
+      "name": "referenced_name_and_form",
+      "size": "not_provided",
+      "category": "curated",
+      "description": "synthetic_copy",
+      "aliases": "synthetic_search_helpers",
+      "price": "simulated",
+      "emoji": "presentation",
+      "color": "presentation"
+    },
+    "version": "DATA-02-20260922-v1",
+    "trend": {
+      "status": "recent_referenced_name",
+      "confidence": "unverified",
+      "sourceIds": [
+        "RP-S02"
+      ],
+      "publishedAt": "2026-08-27T14:29:00+09:00",
+      "currentPopularityVerified": false,
+      "limitation": "출시 근거와 현재 인기·점포 재고는 별개입니다. 기업의 제품군 실적을 개별 상품에 귀속하지 않습니다."
+    },
+    "researchCandidateId": "RP-007",
+    "release": {
+      "date": "2026-08-25",
+      "precision": "day",
+      "status": "reported_released",
+      "actual_current_sale_checked": false
+    }
+  },
+  {
+    "id": "DEMO-RP-008",
+    "name": "스크류바 젤리 골드키위&딸기",
+    "category": "디저트·아이스크림",
+    "description": "출시 보도·발표 근거가 있는 명칭·형태 참고 상품입니다. 규격·현재 판매·점포 재고·인기는 미확인이며 가격·공급은 모의입니다.",
+    "price": 2700,
+    "emoji": "🍨",
+    "color": "#FFECED",
+    "aliases": [
+      "스크류바 젤리 골드키위&딸기",
+      "스크류바",
+      "젤리",
+      "골드키위&딸기"
+    ],
+    "size": null,
+    "identityOrigin": "reference_verified",
+    "sourceIds": [
+      "RP-S02"
+    ],
+    "sourceConfidence": "high",
+    "verifiedFields": [
+      "name"
+    ],
+    "fieldOrigins": {
+      "id": "demo_internal_id",
+      "name": "referenced_name_and_form",
+      "size": "not_provided",
+      "category": "curated",
+      "description": "synthetic_copy",
+      "aliases": "synthetic_search_helpers",
+      "price": "simulated",
+      "emoji": "presentation",
+      "color": "presentation"
+    },
+    "version": "DATA-02-20260922-v1",
+    "trend": {
+      "status": "recent_referenced_name",
+      "confidence": "unverified",
+      "sourceIds": [
+        "RP-S02"
+      ],
+      "publishedAt": "2026-08-27T14:29:00+09:00",
+      "currentPopularityVerified": false,
+      "limitation": "출시 근거와 현재 인기·점포 재고는 별개입니다. 기업의 제품군 실적을 개별 상품에 귀속하지 않습니다."
+    },
+    "researchCandidateId": "RP-008",
+    "release": {
+      "date": "2026-08",
+      "precision": "early_month",
+      "status": "reported_released",
+      "actual_current_sale_checked": false
+    }
+  },
+  {
+    "id": "DEMO-RP-009",
+    "name": "죠스바 젤리 먹은 포도&피치",
+    "category": "디저트·아이스크림",
+    "description": "출시 보도·발표 근거가 있는 명칭·형태 참고 상품입니다. 규격·현재 판매·점포 재고·인기는 미확인이며 가격·공급은 모의입니다.",
+    "price": 2800,
+    "emoji": "🍨",
+    "color": "#FFECED",
+    "aliases": [
+      "죠스바 젤리 먹은 포도&피치",
+      "죠스바",
+      "젤리",
+      "먹은",
+      "포도&피치"
+    ],
+    "size": null,
+    "identityOrigin": "reference_verified",
+    "sourceIds": [
+      "RP-S02"
+    ],
+    "sourceConfidence": "high",
+    "verifiedFields": [
+      "name"
+    ],
+    "fieldOrigins": {
+      "id": "demo_internal_id",
+      "name": "referenced_name_and_form",
+      "size": "not_provided",
+      "category": "curated",
+      "description": "synthetic_copy",
+      "aliases": "synthetic_search_helpers",
+      "price": "simulated",
+      "emoji": "presentation",
+      "color": "presentation"
+    },
+    "version": "DATA-02-20260922-v1",
+    "trend": {
+      "status": "recent_referenced_name",
+      "confidence": "unverified",
+      "sourceIds": [
+        "RP-S02"
+      ],
+      "publishedAt": "2026-08-27T14:29:00+09:00",
+      "currentPopularityVerified": false,
+      "limitation": "출시 근거와 현재 인기·점포 재고는 별개입니다. 기업의 제품군 실적을 개별 상품에 귀속하지 않습니다."
+    },
+    "researchCandidateId": "RP-009",
+    "release": {
+      "date": "2026-08",
+      "precision": "early_month",
+      "status": "reported_released",
+      "actual_current_sale_checked": false
+    }
+  },
+  {
+    "id": "DEMO-RP-010",
+    "name": "한정선 요거트 찹쌀떡",
+    "category": "디저트·아이스크림",
+    "description": "9/3 출시 발표만 확인한(정식 출시일 미확인) 명칭·형태 참고 상품입니다. 규격·현재 판매·점포 재고·인기는 미확인이며 가격·공급은 모의입니다.",
+    "price": 2900,
+    "emoji": "🍨",
+    "color": "#FFECED",
+    "aliases": [
+      "한정선 요거트 찹쌀떡",
+      "한정선",
+      "요거트",
+      "찹쌀떡"
+    ],
+    "size": null,
+    "identityOrigin": "reference_verified",
+    "sourceIds": [
+      "RP-S03"
+    ],
+    "sourceConfidence": "high",
+    "verifiedFields": [
+      "name"
+    ],
+    "fieldOrigins": {
+      "id": "demo_internal_id",
+      "name": "referenced_name_and_form",
+      "size": "not_provided",
+      "category": "curated",
+      "description": "synthetic_copy",
+      "aliases": "synthetic_search_helpers",
+      "price": "simulated",
+      "emoji": "presentation",
+      "color": "presentation"
+    },
+    "version": "DATA-02-20260922-v1",
+    "trend": {
+      "status": "recent_referenced_name",
+      "confidence": "unverified",
+      "sourceIds": [
+        "RP-S03"
+      ],
+      "publishedAt": "2026-09-03T10:47:00+09:00",
+      "currentPopularityVerified": false,
+      "limitation": "출시 근거와 현재 인기·점포 재고는 별개입니다. 기업의 제품군 실적을 개별 상품에 귀속하지 않습니다."
+    },
+    "researchCandidateId": "RP-010",
+    "release": {
+      "date": null,
+      "precision": "unknown",
+      "status": "launch_announced_date_unknown",
+      "announcedAt": "2026-09-03",
+      "actual_current_sale_checked": false,
+      "note": "9/3은 발표일이며 개별 정식 출시일은 미확인."
+    }
+  },
+  {
+    "id": "DEMO-RP-011",
+    "name": "이달의 도시락 한가위편",
+    "category": "도시락·김밥·주먹밥",
+    "description": "9/1 출시일 언급·시제 혼재·실판매 미확인인 명칭·형태 참고 상품입니다. 규격·현재 판매·점포 재고·인기는 미확인이며 가격·공급은 모의입니다.",
+    "price": 3000,
+    "emoji": "🍱",
+    "color": "#FFF1DC",
+    "aliases": [
+      "이달의 도시락 한가위편",
+      "이달의",
+      "도시락",
+      "한가위편"
+    ],
+    "size": null,
+    "identityOrigin": "reference_verified",
+    "sourceIds": [
+      "RP-S04"
+    ],
+    "sourceConfidence": "medium",
+    "verifiedFields": [
+      "name"
+    ],
+    "fieldOrigins": {
+      "id": "demo_internal_id",
+      "name": "referenced_name_and_form",
+      "size": "not_provided",
+      "category": "curated",
+      "description": "synthetic_copy",
+      "aliases": "synthetic_search_helpers",
+      "price": "simulated",
+      "emoji": "presentation",
+      "color": "presentation"
+    },
+    "version": "DATA-02-20260922-v1",
+    "trend": {
+      "status": "recent_referenced_name",
+      "confidence": "unverified",
+      "sourceIds": [
+        "RP-S04"
+      ],
+      "publishedAt": "2026-09-08T09:45:00+09:00",
+      "currentPopularityVerified": false,
+      "limitation": "출시 근거와 현재 인기·점포 재고는 별개입니다. 기업의 제품군 실적을 개별 상품에 귀속하지 않습니다."
+    },
+    "researchCandidateId": "RP-011",
+    "release": {
+      "date": "2026-09-01",
+      "precision": "day",
+      "status": "mentioned_date_tense_mixed_unconfirmed",
+      "actual_current_sale_checked": false,
+      "note": "9/1 출시일 언급·시제 혼재·실판매 미확인"
+    }
+  },
+  {
+    "id": "DEMO-RP-012",
+    "name": "추석 잡채&전",
+    "category": "간편식·생활 소품",
+    "description": "출시 일정 발표만 확인한(실출시 미확인) 명칭·형태 참고 상품입니다. 규격·현재 판매·점포 재고·인기는 미확인이며 가격·공급은 모의입니다.",
+    "price": 3100,
+    "emoji": "🛍️",
+    "color": "#EAEFF5",
+    "aliases": [
+      "추석 잡채&전",
+      "추석",
+      "잡채&전"
+    ],
+    "size": null,
+    "identityOrigin": "reference_verified",
+    "sourceIds": [
+      "RP-S04"
+    ],
+    "sourceConfidence": "medium",
+    "verifiedFields": [
+      "name"
+    ],
+    "fieldOrigins": {
+      "id": "demo_internal_id",
+      "name": "referenced_name_and_form",
+      "size": "not_provided",
+      "category": "curated",
+      "description": "synthetic_copy",
+      "aliases": "synthetic_search_helpers",
+      "price": "simulated",
+      "emoji": "presentation",
+      "color": "presentation"
+    },
+    "version": "DATA-02-20260922-v1",
+    "trend": {
+      "status": "recent_referenced_name",
+      "confidence": "unverified",
+      "sourceIds": [
+        "RP-S04"
+      ],
+      "publishedAt": "2026-09-08T09:45:00+09:00",
+      "currentPopularityVerified": false,
+      "limitation": "출시 근거와 현재 인기·점포 재고는 별개입니다. 기업의 제품군 실적을 개별 상품에 귀속하지 않습니다."
+    },
+    "researchCandidateId": "RP-012",
+    "release": {
+      "date": "2026-09-15",
+      "precision": "day",
+      "status": "announced_date_elapsed_unconfirmed",
+      "actual_current_sale_checked": false
+    }
+  },
+  {
+    "id": "DEMO-RP-013",
+    "name": "추석 불고기고추장비빔 김밥",
+    "category": "도시락·김밥·주먹밥",
+    "description": "출시 일정 발표만 확인한(실출시 미확인) 명칭·형태 참고 상품입니다. 규격·현재 판매·점포 재고·인기는 미확인이며 가격·공급은 모의입니다.",
+    "price": 3200,
+    "emoji": "🍱",
+    "color": "#FFF1DC",
+    "aliases": [
+      "추석 불고기고추장비빔 김밥",
+      "추석",
+      "불고기고추장비빔",
+      "김밥"
+    ],
+    "size": null,
+    "identityOrigin": "reference_verified",
+    "sourceIds": [
+      "RP-S04"
+    ],
+    "sourceConfidence": "medium",
+    "verifiedFields": [
+      "name"
+    ],
+    "fieldOrigins": {
+      "id": "demo_internal_id",
+      "name": "referenced_name_and_form",
+      "size": "not_provided",
+      "category": "curated",
+      "description": "synthetic_copy",
+      "aliases": "synthetic_search_helpers",
+      "price": "simulated",
+      "emoji": "presentation",
+      "color": "presentation"
+    },
+    "version": "DATA-02-20260922-v1",
+    "trend": {
+      "status": "recent_referenced_name",
+      "confidence": "unverified",
+      "sourceIds": [
+        "RP-S04"
+      ],
+      "publishedAt": "2026-09-08T09:45:00+09:00",
+      "currentPopularityVerified": false,
+      "limitation": "출시 근거와 현재 인기·점포 재고는 별개입니다. 기업의 제품군 실적을 개별 상품에 귀속하지 않습니다."
+    },
+    "researchCandidateId": "RP-013",
+    "release": {
+      "date": "2026-09-15",
+      "precision": "day",
+      "status": "announced_date_elapsed_unconfirmed",
+      "actual_current_sale_checked": false
+    }
+  },
+  {
+    "id": "DEMO-RP-014",
+    "name": "추석 맥적구이 주먹밥",
+    "category": "도시락·김밥·주먹밥",
+    "description": "출시 일정 발표만 확인한(실출시 미확인) 명칭·형태 참고 상품입니다. 규격·현재 판매·점포 재고·인기는 미확인이며 가격·공급은 모의입니다.",
+    "price": 3300,
+    "emoji": "🍱",
+    "color": "#FFF1DC",
+    "aliases": [
+      "추석 맥적구이 주먹밥",
+      "추석",
+      "맥적구이",
+      "주먹밥"
+    ],
+    "size": null,
+    "identityOrigin": "reference_verified",
+    "sourceIds": [
+      "RP-S04"
+    ],
+    "sourceConfidence": "medium",
+    "verifiedFields": [
+      "name"
+    ],
+    "fieldOrigins": {
+      "id": "demo_internal_id",
+      "name": "referenced_name_and_form",
+      "size": "not_provided",
+      "category": "curated",
+      "description": "synthetic_copy",
+      "aliases": "synthetic_search_helpers",
+      "price": "simulated",
+      "emoji": "presentation",
+      "color": "presentation"
+    },
+    "version": "DATA-02-20260922-v1",
+    "trend": {
+      "status": "recent_referenced_name",
+      "confidence": "unverified",
+      "sourceIds": [
+        "RP-S04"
+      ],
+      "publishedAt": "2026-09-08T09:45:00+09:00",
+      "currentPopularityVerified": false,
+      "limitation": "출시 근거와 현재 인기·점포 재고는 별개입니다. 기업의 제품군 실적을 개별 상품에 귀속하지 않습니다."
+    },
+    "researchCandidateId": "RP-014",
+    "release": {
+      "date": "2026-09-22",
+      "precision": "day",
+      "status": "scheduled_today_unconfirmed",
+      "actual_current_sale_checked": false
+    }
+  },
+  {
+    "id": "DEMO-RP-015",
+    "name": "치즈 미역국",
+    "category": "간편식·생활 소품",
+    "description": "출시 일정 발표만 확인한(실출시 미확인) 명칭·형태 참고 상품입니다. 규격·현재 판매·점포 재고·인기는 미확인이며 가격·공급은 모의입니다.",
+    "price": 3400,
+    "emoji": "🛍️",
+    "color": "#EAEFF5",
+    "aliases": [
+      "치즈 미역국",
+      "치즈",
+      "미역국"
+    ],
+    "size": null,
+    "identityOrigin": "reference_verified",
+    "sourceIds": [
+      "RP-S05"
+    ],
+    "sourceConfidence": "high",
+    "verifiedFields": [
+      "name"
+    ],
+    "fieldOrigins": {
+      "id": "demo_internal_id",
+      "name": "referenced_name_and_form",
+      "size": "not_provided",
+      "category": "curated",
+      "description": "synthetic_copy",
+      "aliases": "synthetic_search_helpers",
+      "price": "simulated",
+      "emoji": "presentation",
+      "color": "presentation"
+    },
+    "version": "DATA-02-20260922-v1",
+    "trend": {
+      "status": "recent_referenced_name",
+      "confidence": "unverified",
+      "sourceIds": [
+        "RP-S05"
+      ],
+      "publishedAt": "2026-09-17T10:21:00+09:00",
+      "currentPopularityVerified": false,
+      "limitation": "출시 근거와 현재 인기·점포 재고는 별개입니다. 기업의 제품군 실적을 개별 상품에 귀속하지 않습니다."
+    },
+    "researchCandidateId": "RP-015",
+    "release": {
+      "date": "2026-09-18",
+      "precision": "day",
+      "status": "announced_date_elapsed_unconfirmed",
+      "actual_current_sale_checked": false
+    }
+  },
+  {
+    "id": "DEMO-RP-016",
+    "name": "카레 당면",
+    "category": "컵라면·면류",
+    "description": "출시 일정 발표만 확인한(실출시 미확인) 명칭·형태 참고 상품입니다. 규격·현재 판매·점포 재고·인기는 미확인이며 가격·공급은 모의입니다.",
+    "price": 3500,
+    "emoji": "🍜",
+    "color": "#FFF1DC",
+    "aliases": [
+      "카레 당면",
+      "카레",
+      "당면"
+    ],
+    "size": null,
+    "identityOrigin": "reference_verified",
+    "sourceIds": [
+      "RP-S05"
+    ],
+    "sourceConfidence": "high",
+    "verifiedFields": [
+      "name"
+    ],
+    "fieldOrigins": {
+      "id": "demo_internal_id",
+      "name": "referenced_name_and_form",
+      "size": "not_provided",
+      "category": "curated",
+      "description": "synthetic_copy",
+      "aliases": "synthetic_search_helpers",
+      "price": "simulated",
+      "emoji": "presentation",
+      "color": "presentation"
+    },
+    "version": "DATA-02-20260922-v1",
+    "trend": {
+      "status": "recent_referenced_name",
+      "confidence": "unverified",
+      "sourceIds": [
+        "RP-S05"
+      ],
+      "publishedAt": "2026-09-17T10:21:00+09:00",
+      "currentPopularityVerified": false,
+      "limitation": "출시 근거와 현재 인기·점포 재고는 별개입니다. 기업의 제품군 실적을 개별 상품에 귀속하지 않습니다."
+    },
+    "researchCandidateId": "RP-016",
+    "release": {
+      "date": "2026-09-18",
+      "precision": "day",
+      "status": "announced_date_elapsed_unconfirmed",
+      "actual_current_sale_checked": false
+    }
+  },
+  {
+    "id": "DEMO-RP-017",
+    "name": "유어스로얄밀크티",
+    "category": "음료·생수·차",
+    "description": "출시 보도·발표 근거가 있는 명칭·형태 참고 상품입니다. 규격·현재 판매·점포 재고·인기는 미확인이며 가격·공급은 모의입니다.",
+    "price": 3600,
+    "emoji": "🧃",
+    "color": "#E1F6F3",
+    "aliases": [
+      "유어스로얄밀크티",
+      "유어스로얄밀크티"
+    ],
+    "size": null,
+    "identityOrigin": "reference_verified",
+    "sourceIds": [
+      "RP-S06"
+    ],
+    "sourceConfidence": "high",
+    "verifiedFields": [
+      "name"
+    ],
+    "fieldOrigins": {
+      "id": "demo_internal_id",
+      "name": "referenced_name_and_form",
+      "size": "not_provided",
+      "category": "curated",
+      "description": "synthetic_copy",
+      "aliases": "synthetic_search_helpers",
+      "price": "simulated",
+      "emoji": "presentation",
+      "color": "presentation"
+    },
+    "version": "DATA-02-20260922-v1",
+    "trend": {
+      "status": "recent_referenced_name",
+      "confidence": "unverified",
+      "sourceIds": [
+        "RP-S06"
+      ],
+      "publishedAt": "2026-07-31T14:19:00+09:00",
+      "currentPopularityVerified": false,
+      "limitation": "출시 근거와 현재 인기·점포 재고는 별개입니다. 기업의 제품군 실적을 개별 상품에 귀속하지 않습니다."
+    },
+    "researchCandidateId": "RP-017",
+    "release": {
+      "date": "2026-07-29",
+      "precision": "day",
+      "status": "reported_released",
+      "actual_current_sale_checked": false
+    }
+  },
+  {
+    "id": "DEMO-RP-022",
+    "name": "춘식이 꼬북칩 고구마탕후루맛",
+    "category": "스낵·과자·초콜릿",
+    "description": "출시 일정 발표만 확인한(실출시 미확인) 명칭·형태 참고 상품입니다. 규격·현재 판매·점포 재고·인기는 미확인이며 가격·공급은 모의입니다.",
+    "price": 3700,
+    "emoji": "🍪",
+    "color": "#F4EAF8",
+    "aliases": [
+      "춘식이 꼬북칩 고구마탕후루맛",
+      "춘식이",
+      "꼬북칩",
+      "고구마탕후루맛"
+    ],
+    "size": null,
+    "identityOrigin": "reference_verified",
+    "sourceIds": [
+      "RP-S12"
+    ],
+    "sourceConfidence": "high",
+    "verifiedFields": [
+      "name"
+    ],
+    "fieldOrigins": {
+      "id": "demo_internal_id",
+      "name": "referenced_name_and_form",
+      "size": "not_provided",
+      "category": "curated",
+      "description": "synthetic_copy",
+      "aliases": "synthetic_search_helpers",
+      "price": "simulated",
+      "emoji": "presentation",
+      "color": "presentation"
+    },
+    "version": "DATA-02-20260922-v1",
+    "trend": {
+      "status": "recent_referenced_name",
+      "confidence": "unverified",
+      "sourceIds": [
+        "RP-S12"
+      ],
+      "publishedAt": "2026-08-02T09:26:00+09:00",
+      "currentPopularityVerified": false,
+      "limitation": "출시 근거와 현재 인기·점포 재고는 별개입니다. 기업의 제품군 실적을 개별 상품에 귀속하지 않습니다."
+    },
+    "researchCandidateId": "RP-022",
+    "release": {
+      "date": "2026-08-06",
+      "precision": "day",
+      "status": "announced_date_elapsed_unconfirmed",
+      "actual_current_sale_checked": false
+    }
+  },
+  {
+    "id": "DEMO-RP-023",
+    "name": "참치계란김밥",
+    "category": "도시락·김밥·주먹밥",
+    "description": "출시 보도·발표 근거가 있는 명칭·형태 참고 상품입니다. 규격·현재 판매·점포 재고·인기는 미확인이며 가격·공급은 모의입니다.",
+    "price": 3800,
+    "emoji": "🍱",
+    "color": "#FFF1DC",
+    "aliases": [
+      "참치계란김밥",
+      "참치계란김밥"
+    ],
+    "size": null,
+    "identityOrigin": "reference_verified",
+    "sourceIds": [
+      "RP-S13"
+    ],
+    "sourceConfidence": "high",
+    "verifiedFields": [
+      "name"
+    ],
+    "fieldOrigins": {
+      "id": "demo_internal_id",
+      "name": "referenced_name_and_form",
+      "size": "not_provided",
+      "category": "curated",
+      "description": "synthetic_copy",
+      "aliases": "synthetic_search_helpers",
+      "price": "simulated",
+      "emoji": "presentation",
+      "color": "presentation"
+    },
+    "version": "DATA-02-20260922-v1",
+    "trend": {
+      "status": "recent_referenced_name",
+      "confidence": "unverified",
+      "sourceIds": [
+        "RP-S13"
+      ],
+      "publishedAt": "2026-07-27T09:17:00+09:00",
+      "currentPopularityVerified": false,
+      "limitation": "출시 근거와 현재 인기·점포 재고는 별개입니다. 기업의 제품군 실적을 개별 상품에 귀속하지 않습니다."
+    },
+    "researchCandidateId": "RP-023",
+    "release": {
+      "date": null,
+      "precision": "group_rollout_start",
+      "group_rollout_start": "2026-04-28",
+      "status": "reported_released",
+      "actual_current_sale_checked": false,
+      "note": "순차 출시 두 제품 중 어느 제품이 4/28인지 미확인"
+    }
+  },
+  {
+    "id": "DEMO-RP-024",
+    "name": "계란명란마요김밥",
+    "category": "도시락·김밥·주먹밥",
+    "description": "출시 보도·발표 근거가 있는 명칭·형태 참고 상품입니다. 규격·현재 판매·점포 재고·인기는 미확인이며 가격·공급은 모의입니다.",
+    "price": 3900,
+    "emoji": "🍱",
+    "color": "#FFF1DC",
+    "aliases": [
+      "계란명란마요김밥",
+      "계란명란마요김밥"
+    ],
+    "size": null,
+    "identityOrigin": "reference_verified",
+    "sourceIds": [
+      "RP-S13"
+    ],
+    "sourceConfidence": "high",
+    "verifiedFields": [
+      "name"
+    ],
+    "fieldOrigins": {
+      "id": "demo_internal_id",
+      "name": "referenced_name_and_form",
+      "size": "not_provided",
+      "category": "curated",
+      "description": "synthetic_copy",
+      "aliases": "synthetic_search_helpers",
+      "price": "simulated",
+      "emoji": "presentation",
+      "color": "presentation"
+    },
+    "version": "DATA-02-20260922-v1",
+    "trend": {
+      "status": "recent_referenced_name",
+      "confidence": "unverified",
+      "sourceIds": [
+        "RP-S13"
+      ],
+      "publishedAt": "2026-07-27T09:17:00+09:00",
+      "currentPopularityVerified": false,
+      "limitation": "출시 근거와 현재 인기·점포 재고는 별개입니다. 기업의 제품군 실적을 개별 상품에 귀속하지 않습니다."
+    },
+    "researchCandidateId": "RP-024",
+    "release": {
+      "date": null,
+      "precision": "group_rollout_start",
+      "group_rollout_start": "2026-04-28",
+      "status": "reported_released",
+      "actual_current_sale_checked": false,
+      "note": "개별 출시일 미확인"
+    }
   }
 ]

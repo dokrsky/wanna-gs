@@ -63,7 +63,7 @@ if (process.argv.includes("--check")) {
   inspect(seed, db => {
     assert.equal(scalar(db, "PRAGMA integrity_check"), "ok");
     assert.deepEqual(db.exec("PRAGMA foreign_key_check"), []);
-    for (const [table, count] of Object.entries({ products: 242, stores: 8, actors: 29, conditions: 484, requests: 20, sources: provenance.sources.length }))
+    for (const [table, count] of Object.entries({ products: 262, stores: 8, actors: 29, conditions: 524, requests: 20, sources: provenance.sources.length }))
       assert.equal(scalar(db, `SELECT count(*) FROM ${table}`), count);
     assert.equal(scalar(db, "SELECT count(*) FROM stores WHERE latitude IS NOT NULL AND longitude IS NOT NULL"), 8);
   });
@@ -321,5 +321,5 @@ if (process.argv.includes("--check")) {
   assert.equal(reset.requests.length, 20); assert.ok(reset.requests.every(r => r.consentAt === wallNow));
   assert.deepEqual(store.archive, archive); assert.equal(hash(oldBytes), oldHash);
   assert.equal((await store.execute(create)).ok, false, "old generation/session command rejected after reset");
-  console.log("PASS domain-store SQL: 242/8/484/29 masters, 20 current-clock pending; normalized request→order→supply→payment→pickup; CHECK/FK + rollback, delayed/failed save/reset, queue/stale/replay, restore, unknown schema/hash rejection, legacy approved archive unchanged. Node persistence seam only; browser IndexedDB/UI not exercised.");
+  console.log(`PASS domain-store SQL: ${products.length}/8/${availability.length}/29 masters, 20 current-clock pending; normalized request→order→supply→payment→pickup; CHECK/FK + rollback, delayed/failed save/reset, queue/stale/replay, restore, unknown schema/hash rejection, legacy approved archive unchanged. Node persistence seam only; browser IndexedDB/UI not exercised.`);
 }

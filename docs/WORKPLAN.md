@@ -16,8 +16,8 @@
 | UI-08 | Locke: 읽기 전용 고객 대기/안전 조회 DTO. Newton: 대기 사유·발음·픽업 위계. 조정자: 통합/Preview | [context/UI-08.md](context/UI-08.md), `e8a5b69` 열 번째 Preview Ready·실제 공급→입고/픽업 확인. `af1dce1` 잔량 우선 안내 보완·열한 번째 Preview Ready·픽업/마감 복원, domain92/needs26/waiting24·독립 좁은 P2 재확인 PASS. 전체 검증 후속 |
 | UI-09A | Meitner: 문맥 v2 계약/API. Newton: 최근 변경·정책 전달 UI. 조정자: 통합/Preview | `cfda3c9` 열두 번째 Preview Ready. 최근5개·합집합 복원→명시 적용·정책 확인 전달 실제2호출, OFF/누적예산 유지·수동draft 보존·정책 저장/복원 확인. 조회-only P2 독립 재확인, 전체 품질 후속 |
 | UI-09B | Locke: domain/SQL 단일 작성. Newton: 실행 이력 UI. 조정자: 저장 어댑터/통합. Meitner: 좁은 독립 검토 | `9e2b6bf` 열세 번째 Preview Ready. trace58/UI13·실제 SQL v1/v2→3 보존·로그/고객 충돌 P2 독립 재확인. 실제2호출→화면적용/정책저장 로그·사용량/시간·새로고침 복원, 기존 픽업/정책 보존. 전체 품질 후속 |
-| UI-10 | 조정자: 지도 지연 진단·동일 공개 좌표 새 탭 링크. Avicenna: 좁은 독립 검토 | [context/UI-10-DATA-02.md](context/UI-10-DATA-02.md). 공식 지도 별도 탭 시각 확인·앱 iframe DOM/확대 확인, 앱 자체 캡처 실패는 미해결. 최소 fallback 링크/React markup 검사·build PASS, Preview 게시 중 |
-| DATA-02 | Singer: 최근 상품 근거. McClintock: 기존8점포 출처·좌표/이용조건 보강 | 같은 계약의 병행 연구. 새 조사 파일만 소유하며 source→후보→공개 개발 scenario를 준비 중. 앱 seed/SQL 자동 반영 없음 |
+| UI-10 | 조정자: 지도 지연 진단·동일 공개 좌표 새 탭 링크. Avicenna: 좁은 독립 검토 | `65765f7` Preview Ready. 실제 링크→같은 점포 외부 지도 탭/컨트롤 확인, 기존 거래 유지. React markup/독립 좁은 검사·build PASS. 앱 자체 시각 캡처 실패는 미해결 |
+| DATA-02 | Singer/McClintock 연구, Boyle data/SQL, Herschel 사실·Lagrange 정책 크기 독립 검토, Helmholtz SQL 검토, 조정자 UI/통합 | [context/DATA-02.md](context/DATA-02.md). 20상품 추가262/524·새 예시2개·두 SQLite 사본의 보존 이행 후보 완료. 전체 대상 정책4KiB 회귀→8KiB 최소 복구·독립 좁은 PASS, build/핵심 저장 소비자 PASS. SQL 독립 검토 및 새 Preview 게시 진행 중 |
 | DATA-01/02 | Locke: 242개 상품 초안·실제 점포8/legacy2·합성 역할/availability·SQLite 업그레이드. Newton: 출처/실제 점포 UI | `aa54838` 다섯 번째 Preview Ready. 로컬 기존 요청 보존 확인. 최종 상품 사실/독립 데이터 검증 전 |
 | VERIFY | 전체 seed/독립 검증·정책 검토·E2E·평가·G5/G6 | 구현 후 수행, 최종 완료 조건 유지 |
 

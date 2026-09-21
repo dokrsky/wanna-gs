@@ -1,0 +1,2096 @@
+{
+  "schema_version": "research-candidate-v1",
+  "metadata": {
+    "id": "DATA-02-RECENT-20260922-v1",
+    "task": "UI-10/DATA-02 product research sidecar",
+    "status": "draft_independent_review_pending",
+    "base_commit_user_provided": "9e2b6bfd116929e56b9d3735bccdec6ff1ba99c2",
+    "date_kst": "2026-09-22",
+    "research_started_at": "2026-09-22T00:39:36+09:00",
+    "bounded_research_minutes": 12,
+    "scope": "최대24개 후보 조사와 public dev 제안만. 제품 데이터·앱·평가셋 반영 아님.",
+    "context_ack_sent_to_main": true,
+    "context_manifest_sha256": "2a45dcd6cea95ad2b0d4962b93cf1239b1f36ec028a5d4e0c09dbc569b74db0d",
+    "card_sha256": "62fae686c1967902ac443a0a315f4c7f59f76df9e6de3a3568e4355d6e334e03",
+    "core_sha256": "65c7541d3549bf49b715da687aa5af060fce9a48e774a4130d9ac350349d8114",
+    "decision_index_sha256": "55aca803f9545f737bfea0e6bbd97c2ec10cb82d915e2e5acb8a11997ebebaf2",
+    "skill_sha256": "c82c4dc6f7dc3b8d39e5f640830db0b640349752697e86f7bcc3130642bef5dd",
+    "research_search_stopped_at": "2026-09-22T00:45:00+09:00",
+    "research_search_stopped_at_precision": "minute_approximate",
+    "prepared_at": "2026-09-22T00:47:06+09:00",
+    "verification_status": "passed_local_structure_check_not_independent_review",
+    "verification_checked_at": "2026-09-22T00:48:45+09:00",
+    "verification_scope": "JSON parse, 24 unique candidate IDs/identities, 14 opened source records, valid source/claim/family references, 11 public-dev-only families, 3 confirmed quantities, 3 existing name matches, 4 GS-channel unknowns, today/future release safeguards",
+    "completed_at": "2026-09-22T00:49:00+09:00",
+    "completion_time_precision": "minute_approximate"
+  },
+  "counts": {
+    "candidates": 24,
+    "quantity_verified": 3,
+    "quantity_unknown": 21,
+    "existing_name_matches": 3,
+    "gs25_channel_reported_or_announced": 20,
+    "gs25_channel_unverified": 4,
+    "future_announced": 1,
+    "scheduled_today_unconfirmed": 1,
+    "distinct_sources": 14,
+    "public_dev_families": 11,
+    "new_catalog_rows_created": 0,
+    "executed_evals": 0,
+    "release_evidence_statuses": {
+      "reported_released": 15,
+      "launch_announced_same_day_unconfirmed": 1,
+      "announced_date_elapsed_unconfirmed": 6,
+      "scheduled_today_unconfirmed": 1,
+      "future_announced": 1
+    }
+  },
+  "interpretation": {
+    "product_identity": "발표된 이름·형태/맛의 근거 신뢰도. 완전한 GS 판매 SKU 식별을 뜻하지 않는다.",
+    "trend": "상품·제품군·카테고리·행사 규모를 분리; 실제 인기 확정 점수나 매장 수요 예측이 아니다.",
+    "dates": "게시일과 사건/출시 예정일을 구분. 과거 예정일도 자동으로 실출시 확인으로 승격하지 않는다.",
+    "quantity": "null은 미확인. 영양성분 g·조리수 ml를 순중량/용량으로 쓰지 않는다.",
+    "classification": "category와 scenario 설계는 연구자의 정리. 제조사 법정 식품분류가 아니다.",
+    "rights": "공개 열람은 자유 재배포/학습 허가가 아니다. 사실과 짧은 자체 요약 외 저작물 저장 없음."
+  },
+  "global_unknowns": [
+    "현재 판매·가격·점포별 재고",
+    "GS 내부 SKU·GTIN",
+    "대부분의 순중량",
+    "기업 실적의 독립 감사",
+    "실제 고객 확약·지역 수요"
+  ],
+  "integration_guards": [
+    "기존 DATA01 24개 8월 프로모션 이름을 새 출시품으로 재분류하지 않음",
+    "이 파일의 24개는 신규 순증 24개가 아님; 기존 3개 이름과 겹침",
+    "망고킥 90g은 확인됐지만 후보수에 별도 가산하지 않음",
+    "사진·링크·레시피 입력 및 실제 결제 기능 확장 없음",
+    "고객 새 동의 없이 SKU 대체 금지; 관심/추천을 확약으로 합산 금지",
+    "48시간·보수적 발주·경영주 승인 계약 유지",
+    "20~30개 최종 목표 완료 선언은 통합·중복검사·독립검증 이후; 미래품을 현재 출시품으로 가산 금지"
+  ],
+  "sources": [
+    {
+      "id": "S01",
+      "url": "https://v.daum.net/v/ZPyiRRyOyk",
+      "title": "민음사 빵, 어디 있나요?",
+      "publisher": "이투데이 (Daum 재게시)",
+      "issuer": "이투데이",
+      "published_at": "2026-08-26T08:48:00+09:00",
+      "published_timezone": "Asia/Seoul",
+      "event_dates": [
+        "2026-08-21: 1차 2종",
+        "2026-08-26: 2차 2종"
+      ],
+      "checked_on": "2026-09-22",
+      "access": {
+        "method": "web.open; article/product body read",
+        "body_opened": true,
+        "archived_full_text": false
+      },
+      "source_type": "credible_reporting",
+      "own_summary": "민음사·오늘의귀여움 협업빵의 작품명, 빵 형태, 맛, 출시일을 확인했다. 첫 두 제품 합산 초기 판매 보도와 무작위 책갈피, 점포별 입고 차이가 있다.",
+      "limits": "재게시와 원매체를 독립 근거 두 개로 세지 않는다. 현재 재고·용량·GTIN은 확인 불가.",
+      "license": {
+        "open_license_verified": false,
+        "usage": "사실·서지정보와 짧은 자체 요약만. 원문·사진·로고·패키지 디자인 재배포 없음.",
+        "source_word_limit": 200
+      }
+    },
+    {
+      "id": "S02",
+      "url": "https://www.newswire.co.kr/newsRead.php?no=1041291",
+      "title": "GS25, 라라스윗 쫀득바 400만 개 돌파",
+      "publisher": "뉴스와이어",
+      "issuer": "GS리테일",
+      "published_at": "2026-08-27T14:29:00+09:00",
+      "published_timezone": "Asia/Seoul",
+      "event_dates": [
+        "2026-05 하순: 메론·망고",
+        "2026-08 초순: 스크류바·죠스바",
+        "2026-08-25: 그릭 복숭아"
+      ],
+      "checked_on": "2026-09-22",
+      "access": {
+        "method": "web.open; article/product body read",
+        "body_opened": true,
+        "archived_full_text": false
+      },
+      "source_type": "issuer_press_release",
+      "own_summary": "GS리테일은 메론·망고 두 맛 합산 판매 400만 개 초과, 스핀오프 두 제품 각각 10만 개 초과를 발표했다. 그릭 복숭아는 후속 신제품이다.",
+      "limits": "기업 자기집계. 기존 두 맛의 판매량을 그릭 복숭아에 귀속하지 않는다. 8월 초 출시와 '한 달'이라는 기간 표현이 근사적이다. 식이섬유 10g은 총중량이 아니다.",
+      "license": {
+        "open_license_verified": false,
+        "usage": "사실·서지정보와 짧은 자체 요약만. 원문·사진·로고·패키지 디자인 재배포 없음.",
+        "source_word_limit": 200
+      }
+    },
+    {
+      "id": "S03",
+      "url": "https://www.newswire.co.kr/newsRead.php?no=1041771",
+      "title": "GS25, 로로멜로와 ‘한정선 요거트 찹쌀떡’ 출시",
+      "publisher": "뉴스와이어",
+      "issuer": "GS리테일",
+      "published_at": "2026-09-03T10:47:00+09:00",
+      "published_timezone": "Asia/Seoul",
+      "event_dates": [
+        "2026-08-28: 2개 점포 사전 행사",
+        "2026-09-03: 정식 출시 발표"
+      ],
+      "checked_on": "2026-09-22",
+      "access": {
+        "method": "web.open; article/product body read",
+        "body_opened": true,
+        "archived_full_text": false
+      },
+      "source_type": "issuer_press_release",
+      "own_summary": "한정선·로로멜로 협업 냉동 디저트의 이름과 GS25 전용 유통 발표를 확인했다. 사전 행사는 두 점포 합계 400개 한정 물량의 조기 판매 완료라는 회사 설명이다.",
+      "limits": "한정 행사 소진을 전국 수요·오늘 재고로 확대하지 않는다. 순중량 미확인.",
+      "license": {
+        "open_license_verified": false,
+        "usage": "사실·서지정보와 짧은 자체 요약만. 원문·사진·로고·패키지 디자인 재배포 없음.",
+        "source_word_limit": 200
+      }
+    },
+    {
+      "id": "S04",
+      "url": "https://www.newspim.com/news/view/20260908000078",
+      "title": "GS25, 추석 맞이 도시락·간편식 출시",
+      "publisher": "뉴스핌",
+      "issuer": "뉴스핌 (GS리테일 발표 인용)",
+      "published_at": "2026-09-08T09:45:00+09:00",
+      "published_timezone": "Asia/Seoul",
+      "event_dates": [
+        "2026-09-01: 도시락",
+        "2026-09-15: 잡채&전·김밥 예정",
+        "2026-09-22: 주먹밥 예정"
+      ],
+      "checked_on": "2026-09-22",
+      "access": {
+        "method": "web.open; article/product body read",
+        "body_opened": true,
+        "archived_full_text": false
+      },
+      "source_type": "credible_reporting",
+      "own_summary": "추석 식사류 네 품목의 이름과 단계별 출시 일정을 보도했다.",
+      "limits": "도시락 문장에 과거 날짜와 미래형 어미가 섞여 있어 실제 출시 단정은 보류한다. 나머지도 발표 일정이며 점포 판매 확인이 아니다.",
+      "license": {
+        "open_license_verified": false,
+        "usage": "사실·서지정보와 짧은 자체 요약만. 원문·사진·로고·패키지 디자인 재배포 없음.",
+        "source_word_limit": 200
+      }
+    },
+    {
+      "id": "S05",
+      "url": "https://www.newswire.co.kr/newsRead.php?no=1042803",
+      "title": "GS25, AI로 포착한 SNS 인기 레시피 ‘치즈 미역국·카레 당면’ 상품화",
+      "publisher": "뉴스와이어",
+      "issuer": "GS리테일",
+      "published_at": "2026-09-17T10:21:00+09:00",
+      "published_timezone": "Asia/Seoul",
+      "event_dates": [
+        "2026-09-18: 두 포장식품 출시 예정"
+      ],
+      "checked_on": "2026-09-22",
+      "access": {
+        "method": "web.open; article/product body read",
+        "body_opened": true,
+        "archived_full_text": false
+      },
+      "source_type": "issuer_press_release",
+      "own_summary": "SNS 조합을 포장식품으로 만든 두 제품의 출시 계획을 확인했다.",
+      "limits": "SNS 유행은 회사의 정성적 설명이며 두 SKU 판매 증거가 아니다. 앱의 레시피 기능을 추가할 근거가 아니다.",
+      "license": {
+        "open_license_verified": false,
+        "usage": "사실·서지정보와 짧은 자체 요약만. 원문·사진·로고·패키지 디자인 재배포 없음.",
+        "source_word_limit": 200
+      }
+    },
+    {
+      "id": "S06",
+      "url": "https://www.newswire.co.kr/newsRead.php?no=1039749",
+      "title": "GS25, 데이터로 찾은 컵음료 틈새 수요… 유어스로얄밀크티 선보여",
+      "publisher": "뉴스와이어",
+      "issuer": "GS리테일",
+      "published_at": "2026-07-31T14:19:00+09:00",
+      "published_timezone": "Asia/Seoul",
+      "event_dates": [
+        "2026-07-29: 제품 출시",
+        "2026-01~06: 밀크티 카테고리 매출 집계"
+      ],
+      "checked_on": "2026-09-22",
+      "access": {
+        "method": "web.open; article/product body read",
+        "body_opened": true,
+        "archived_full_text": false
+      },
+      "source_type": "issuer_press_release",
+      "own_summary": "우유와 홍차 분말을 사용한 컵 밀크티의 이름과 출시를 확인했다. 회사가 발표한 상반기 밀크티 매출 증가율은 111%다.",
+      "limits": "증가율은 출시 전 카테고리 통계이며 이 신제품 판매량이 아니다. 용량·카페인 정량 미확인.",
+      "license": {
+        "open_license_verified": false,
+        "usage": "사실·서지정보와 짧은 자체 요약만. 원문·사진·로고·패키지 디자인 재배포 없음.",
+        "source_word_limit": 200
+      }
+    },
+    {
+      "id": "S07",
+      "url": "https://www.nongshim.com/newsroom/news/view?category=all&id=164&page=1",
+      "title": "농심, 애플망고 맛 담은 ‘망고킥’ 출시",
+      "publisher": "농심 뉴스룸",
+      "issuer": "농심",
+      "published_at": "2026-05-07",
+      "published_timezone": "Asia/Seoul",
+      "event_dates": [
+        "2026-05-18: 출시 예정"
+      ],
+      "checked_on": "2026-09-22",
+      "access": {
+        "method": "web.open; article/product body read",
+        "body_opened": true,
+        "archived_full_text": false
+      },
+      "source_type": "manufacturer_release",
+      "own_summary": "제조사가 애플망고 풍미의 망고킥 출시를 예고했다.",
+      "limits": "기존 킥 시리즈 성장을 망고킥 개별 인기로 전용하지 않는다. GS25 취급 여부는 이 출처로 확인되지 않는다.",
+      "license": {
+        "open_license_verified": false,
+        "usage": "사실·서지정보와 짧은 자체 요약만. 원문·사진·로고·패키지 디자인 재배포 없음.",
+        "source_word_limit": 200
+      }
+    },
+    {
+      "id": "S08",
+      "url": "https://brand.nongshim.com/mangokick/main/index",
+      "title": "망고킥 — 브랜드관 | 농심",
+      "publisher": "농심 브랜드관",
+      "issuer": "농심",
+      "published_at": null,
+      "published_timezone": "Asia/Seoul",
+      "event_dates": [
+        "2026-05: 출시월"
+      ],
+      "checked_on": "2026-09-22",
+      "access": {
+        "method": "web.open; article/product body read",
+        "body_opened": true,
+        "archived_full_text": false
+      },
+      "source_type": "manufacturer_product_page",
+      "own_summary": "제품 상세에 60g과 90g, 출시월이 표기되어 있다. 이번 후보는 60g 한 규격만 택한다.",
+      "limits": "게시일은 표시되지 않았다. 두 규격을 후보 수 채우기용으로 중복 계산하지 않는다.",
+      "license": {
+        "open_license_verified": false,
+        "usage": "사실·서지정보와 짧은 자체 요약만. 원문·사진·로고·패키지 디자인 재배포 없음.",
+        "source_word_limit": 200
+      }
+    },
+    {
+      "id": "S09",
+      "url": "https://brand.nongshim.com/shinrose/main/index",
+      "title": "신라면로제 — 브랜드관 | 농심",
+      "publisher": "농심 브랜드관",
+      "issuer": "농심",
+      "published_at": null,
+      "published_timezone": "Asia/Seoul",
+      "event_dates": [
+        "2026-06: 봉지",
+        "2026-05: 큰사발면"
+      ],
+      "checked_on": "2026-09-22",
+      "access": {
+        "method": "web.open; article/product body read",
+        "body_opened": true,
+        "archived_full_text": false
+      },
+      "source_type": "manufacturer_product_page",
+      "own_summary": "봉지 134g과 큰사발면 108g의 서로 다른 형태·중량·출시월을 확인했다.",
+      "limits": "게시일은 표시되지 않았다. 제조사 제품 번호를 GS SKU로 사용하지 않는다. GS25 취급·점포 재고는 별도 미확인.",
+      "license": {
+        "open_license_verified": false,
+        "usage": "사실·서지정보와 짧은 자체 요약만. 원문·사진·로고·패키지 디자인 재배포 없음.",
+        "source_word_limit": 200
+      }
+    },
+    {
+      "id": "S10",
+      "url": "https://www.nongshim.com/newsroom/news/view?category=all&id=169&page=1",
+      "title": "농심, 글로벌 앰배서더 ‘에스파’와 함께한 ‘신라면 로제’ 광고 공개",
+      "publisher": "농심 뉴스룸",
+      "issuer": "농심",
+      "published_at": "2026-05-18",
+      "published_timezone": "Asia/Seoul",
+      "event_dates": [
+        "2026-05-18: 용기면 출시 발표",
+        "2026-06: 봉지면 출시 예고"
+      ],
+      "checked_on": "2026-09-22",
+      "access": {
+        "method": "web.open; article/product body read",
+        "body_opened": true,
+        "archived_full_text": false
+      },
+      "source_type": "manufacturer_release",
+      "own_summary": "제조사 발표에서 용기면과 봉지면의 출시 시점이 다름을 확인했다.",
+      "limits": "광고·유명인 협업 자체를 판매 인기나 점포 확약으로 취급하지 않는다.",
+      "license": {
+        "open_license_verified": false,
+        "usage": "사실·서지정보와 짧은 자체 요약만. 원문·사진·로고·패키지 디자인 재배포 없음.",
+        "source_word_limit": 200
+      }
+    },
+    {
+      "id": "S11",
+      "url": "https://www.nongshim.com/newsroom/news/view?category=all&id=208&page=1",
+      "title": "농심, 생생신툼바떡볶이면 출시",
+      "publisher": "농심 뉴스룸",
+      "issuer": "농심",
+      "published_at": "2026-09-21",
+      "published_timezone": "Asia/Seoul",
+      "event_dates": [
+        "2026-09-28: 판매 개시 예정"
+      ],
+      "checked_on": "2026-09-22",
+      "access": {
+        "method": "web.open; article/product body read",
+        "body_opened": true,
+        "archived_full_text": false
+      },
+      "source_type": "manufacturer_release",
+      "own_summary": "생생신툼바떡볶이면은 발표 다음 주부터 판매 예정인 신제품이다.",
+      "limits": "제목의 출시 표현보다 본문의 판매 개시일을 우선한다. 확인일 기준 미래 상품, 중량·GS25 판매 미확인.",
+      "license": {
+        "open_license_verified": false,
+        "usage": "사실·서지정보와 짧은 자체 요약만. 원문·사진·로고·패키지 디자인 재배포 없음.",
+        "source_word_limit": 200
+      }
+    },
+    {
+      "id": "S12",
+      "url": "https://www.newswire.co.kr/newsRead.php?no=1039781",
+      "title": "GS25, ‘춘식이 꼬북칩 고구마탕후루맛’ 단독 출시… 식품사 메가 브랜드와 협업 확대",
+      "publisher": "뉴스와이어",
+      "issuer": "GS리테일",
+      "published_at": "2026-08-02T09:26:00+09:00",
+      "published_timezone": "Asia/Seoul",
+      "event_dates": [
+        "2026-08-06: GS25 출시 예정",
+        "2026-08-10: GS더프레시 확대 예정"
+      ],
+      "checked_on": "2026-09-22",
+      "access": {
+        "method": "web.open; article/product body read",
+        "body_opened": true,
+        "archived_full_text": false
+      },
+      "source_type": "issuer_press_release",
+      "own_summary": "GS25·오리온의 춘식이 협업 스낵 맛과 출시 계획을 확인했다.",
+      "limits": "같은 자료 속 다른 스낵 판매 순위를 이 제품에 옮기지 않는다. 캐릭터·맛·제품명 확인이지 패키지 사용 허가가 아니다.",
+      "license": {
+        "open_license_verified": false,
+        "usage": "사실·서지정보와 짧은 자체 요약만. 원문·사진·로고·패키지 디자인 재배포 없음.",
+        "source_word_limit": 200
+      }
+    },
+    {
+      "id": "S13",
+      "url": "https://www.newswire.co.kr/newsRead.php?no=1039325",
+      "title": "GS25 ‘고단백 김밥’ 밀리언셀러 등극… 편의점 간편식 성장 이끈다",
+      "publisher": "뉴스와이어",
+      "issuer": "GS리테일",
+      "published_at": "2026-07-27T09:17:00+09:00",
+      "published_timezone": "Asia/Seoul",
+      "event_dates": [
+        "2026-04-28부터: 두 김밥 순차 출시",
+        "2026-07-27: 누적 실적 발표"
+      ],
+      "checked_on": "2026-09-22",
+      "access": {
+        "method": "web.open; article/product body read",
+        "body_opened": true,
+        "archived_full_text": false
+      },
+      "source_type": "issuer_press_release",
+      "own_summary": "회사는 참치계란김밥·계란명란마요김밥 합산 판매가 150만 개를 넘었다고 발표했다.",
+      "limits": "품목별 출시일·판매량 분해는 없다. 단백질 약 15g은 총중량이 아니다. 다른 삼각김밥까지 합한 250만 개를 두 김밥 실적으로 쓰지 않는다.",
+      "license": {
+        "open_license_verified": false,
+        "usage": "사실·서지정보와 짧은 자체 요약만. 원문·사진·로고·패키지 디자인 재배포 없음.",
+        "source_word_limit": 200
+      }
+    },
+    {
+      "id": "S14",
+      "url": "https://www.mt.co.kr/amp/society/2026/09/08/2026090709475845306",
+      "title": "\"여기도 없네\" 연차까지 쓰고 편의점 뺑뺑이…3000원 빵이 뭐길래",
+      "publisher": "머니투데이",
+      "issuer": "머니투데이",
+      "published_at": "2026-09-08T07:05:00+09:00",
+      "published_timezone": "Asia/Seoul",
+      "event_dates": [
+        "2026-09-08 이전: 소비자·점주 인터뷰",
+        "2026-09-02까지: 제품군 누적 실적 보도"
+      ],
+      "checked_on": "2026-09-22",
+      "access": {
+        "method": "web.open; article/product body read",
+        "body_opened": true,
+        "archived_full_text": false
+      },
+      "source_type": "credible_reporting",
+      "own_summary": "기사의 현장 인터뷰는 협업빵 탐색의 헛걸음, 무작위 굿즈 기대 불일치, 점주의 반복 문의 부담을 보여 준다.",
+      "limits": "개별 인터뷰를 전체 고객·점포의 빈도로 일반화하지 않는다. 인터뷰 문장·인물·원문은 평가 데이터에 복제하지 않는다.",
+      "license": {
+        "open_license_verified": false,
+        "usage": "무단 전재·재배포 및 AI 학습 금지 고지가 있다. 원문·인용문·이미지를 저장하거나 학습/평가 데이터에 넣지 않는다. 출처 메타데이터와 최소 자체 요약만 기록하고, 시나리오는 독립 합성한다. 추가 이용은 별도 권리 검토 대상.",
+        "source_word_limit": 200
+      }
+    }
+  ],
+  "trend_claims": [
+    {
+      "id": "T01",
+      "source_ids": [
+        "S01"
+      ],
+      "candidate_ids": [
+        "RP-001",
+        "RP-002"
+      ],
+      "metric": "합산 약 50000개 판매",
+      "period": "출시 후 첫 3일; 2026-08-26 기사 시점",
+      "scope": "첫 두 협업빵 합계",
+      "independent_audit": false
+    },
+    {
+      "id": "T02",
+      "source_ids": [
+        "S02"
+      ],
+      "candidate_ids": [
+        "RP-005",
+        "RP-006"
+      ],
+      "metric": "합산 4000000개 초과 판매",
+      "period": "2026-05 하순 출시 후 약 3개월; 2026-08-27 발표",
+      "scope": "메론·망고 두 맛 합계",
+      "independent_audit": false
+    },
+    {
+      "id": "T03",
+      "source_ids": [
+        "S02"
+      ],
+      "candidate_ids": [
+        "RP-008"
+      ],
+      "metric": "100000개 초과 판매",
+      "period": "2026-08 초순 출시 후; 발표는 2026-08-27, 원자료의 약 '한 달' 표현",
+      "scope": "해당 상품 GS25 회사 집계",
+      "independent_audit": false
+    },
+    {
+      "id": "T04",
+      "source_ids": [
+        "S02"
+      ],
+      "candidate_ids": [
+        "RP-009"
+      ],
+      "metric": "100000개 초과 판매",
+      "period": "2026-08 초순 출시 후; 발표는 2026-08-27, 기간은 근사치",
+      "scope": "해당 상품 GS25 회사 집계",
+      "independent_audit": false
+    },
+    {
+      "id": "T05",
+      "source_ids": [
+        "S03"
+      ],
+      "candidate_ids": [
+        "RP-010"
+      ],
+      "metric": "두 점포 각 200개, 합계 400개 사전 행사 조기 판매 완료",
+      "period": "2026-08-28 행사",
+      "scope": "강남·인천공항 두 점포 한정 행사",
+      "independent_audit": false
+    },
+    {
+      "id": "T06",
+      "source_ids": [
+        "S05"
+      ],
+      "candidate_ids": [
+        "RP-015",
+        "RP-016"
+      ],
+      "metric": null,
+      "period": "2026-09-17 발표 당시",
+      "scope": "회사가 설명한 SNS 조합 관심; 개별 제품 실적 없음",
+      "independent_audit": false
+    },
+    {
+      "id": "T07",
+      "source_ids": [
+        "S06"
+      ],
+      "candidate_ids": [
+        "RP-017"
+      ],
+      "metric": "밀크티 카테고리 매출 전년 동기 대비 111% 증가",
+      "period": "2026-01~06",
+      "scope": "GS25 카테고리; 7월 신제품 실적 아님",
+      "independent_audit": false
+    },
+    {
+      "id": "T08",
+      "source_ids": [
+        "S13"
+      ],
+      "candidate_ids": [
+        "RP-023",
+        "RP-024"
+      ],
+      "metric": "두 김밥 합산 1500000개 초과 판매",
+      "period": "2026-04-28부터 순차 출시 후; 2026-07-27 발표",
+      "scope": "두 제품 합계; 각 제품 단독 수치 없음",
+      "independent_audit": false
+    }
+  ],
+  "candidates": [
+    {
+      "id": "RP-001",
+      "name": "사랑에 대하여 — 모카번 커스터드맛",
+      "category": "bread",
+      "source_ids": [
+        "S01"
+      ],
+      "checked_on": "2026-09-22",
+      "identity_confidence": "medium_reporting",
+      "net_quantity": null,
+      "gs25_channel": "reported_or_announced_not_store_verified",
+      "release": {
+        "date": "2026-08-21",
+        "precision": "day",
+        "status": "reported_released",
+        "actual_current_sale_checked": false
+      },
+      "trend": {
+        "confidence": "medium_attributed",
+        "claim_id": "T01",
+        "scope": "group",
+        "note": "기업·언론 발표 범위에 한정; 현재 점포 수요로 환산 금지"
+      },
+      "confirmed_fields": [
+        "name",
+        "form_or_category",
+        "release_evidence"
+      ],
+      "field_evidence": {
+        "name_and_form": [
+          "S01"
+        ],
+        "release": [
+          "S01"
+        ],
+        "net_quantity": []
+      },
+      "unknown_fields": [
+        "net_quantity",
+        "GTIN",
+        "GS_SKU",
+        "current_store_stock",
+        "current_price",
+        "actual_store_availability",
+        "complete_ingredients_and_allergens"
+      ],
+      "existing_catalog_match": null,
+      "public_dev_family": "PD-RP-F01",
+      "import_status": "research_candidate_only"
+    },
+    {
+      "id": "RP-002",
+      "name": "늑대처럼 싱싱하게 울고 싶었다 — 깨찰빵 솔티밀크맛",
+      "category": "bread",
+      "source_ids": [
+        "S01"
+      ],
+      "checked_on": "2026-09-22",
+      "identity_confidence": "medium_reporting",
+      "net_quantity": null,
+      "gs25_channel": "reported_or_announced_not_store_verified",
+      "release": {
+        "date": "2026-08-21",
+        "precision": "day",
+        "status": "reported_released",
+        "actual_current_sale_checked": false
+      },
+      "trend": {
+        "confidence": "medium_attributed",
+        "claim_id": "T01",
+        "scope": "group",
+        "note": "기업·언론 발표 범위에 한정; 현재 점포 수요로 환산 금지"
+      },
+      "confirmed_fields": [
+        "name",
+        "form_or_category",
+        "release_evidence"
+      ],
+      "field_evidence": {
+        "name_and_form": [
+          "S01"
+        ],
+        "release": [
+          "S01"
+        ],
+        "net_quantity": []
+      },
+      "unknown_fields": [
+        "net_quantity",
+        "GTIN",
+        "GS_SKU",
+        "current_store_stock",
+        "current_price",
+        "actual_store_availability",
+        "complete_ingredients_and_allergens"
+      ],
+      "existing_catalog_match": null,
+      "public_dev_family": "PD-RP-F01",
+      "import_status": "research_candidate_only"
+    },
+    {
+      "id": "RP-003",
+      "name": "오만과 편견 — 모카번 우유크림맛",
+      "category": "bread",
+      "source_ids": [
+        "S01"
+      ],
+      "checked_on": "2026-09-22",
+      "identity_confidence": "medium_reporting",
+      "net_quantity": null,
+      "gs25_channel": "reported_or_announced_not_store_verified",
+      "release": {
+        "date": "2026-08-26",
+        "precision": "day",
+        "status": "reported_released",
+        "actual_current_sale_checked": false
+      },
+      "trend": {
+        "confidence": "unverified",
+        "claim_id": null,
+        "scope": "individual_product",
+        "note": "협업빵 제품군 관심 근거는 있으나 첫 두 제품 판매량을 이 제품에 귀속하지 않음"
+      },
+      "confirmed_fields": [
+        "name",
+        "form_or_category",
+        "release_evidence"
+      ],
+      "field_evidence": {
+        "name_and_form": [
+          "S01"
+        ],
+        "release": [
+          "S01"
+        ],
+        "net_quantity": []
+      },
+      "unknown_fields": [
+        "net_quantity",
+        "GTIN",
+        "GS_SKU",
+        "current_store_stock",
+        "current_price",
+        "actual_store_availability",
+        "complete_ingredients_and_allergens"
+      ],
+      "existing_catalog_match": null,
+      "public_dev_family": "PD-RP-F01",
+      "import_status": "research_candidate_only"
+    },
+    {
+      "id": "RP-004",
+      "name": "나쁜 소년이 서 있다 — 깨찰빵 커스터드맛",
+      "category": "bread",
+      "source_ids": [
+        "S01"
+      ],
+      "checked_on": "2026-09-22",
+      "identity_confidence": "medium_reporting",
+      "net_quantity": null,
+      "gs25_channel": "reported_or_announced_not_store_verified",
+      "release": {
+        "date": "2026-08-26",
+        "precision": "day",
+        "status": "reported_released",
+        "actual_current_sale_checked": false
+      },
+      "trend": {
+        "confidence": "unverified",
+        "claim_id": null,
+        "scope": "individual_product",
+        "note": "협업빵 제품군 관심 근거와 개별 실적은 구분"
+      },
+      "confirmed_fields": [
+        "name",
+        "form_or_category",
+        "release_evidence"
+      ],
+      "field_evidence": {
+        "name_and_form": [
+          "S01"
+        ],
+        "release": [
+          "S01"
+        ],
+        "net_quantity": []
+      },
+      "unknown_fields": [
+        "net_quantity",
+        "GTIN",
+        "GS_SKU",
+        "current_store_stock",
+        "current_price",
+        "actual_store_availability",
+        "complete_ingredients_and_allergens"
+      ],
+      "existing_catalog_match": null,
+      "public_dev_family": "PD-RP-F01",
+      "import_status": "research_candidate_only"
+    },
+    {
+      "id": "RP-005",
+      "name": "라라스윗 메론 쫀득바",
+      "category": "ice_cream",
+      "source_ids": [
+        "S02"
+      ],
+      "checked_on": "2026-09-22",
+      "identity_confidence": "high_issuer_or_manufacturer",
+      "net_quantity": null,
+      "gs25_channel": "reported_or_announced_not_store_verified",
+      "release": {
+        "date": "2026-05",
+        "precision": "late_month",
+        "status": "reported_released",
+        "actual_current_sale_checked": false
+      },
+      "trend": {
+        "confidence": "medium_attributed",
+        "claim_id": "T02",
+        "scope": "group",
+        "note": "기업·언론 발표 범위에 한정; 현재 점포 수요로 환산 금지"
+      },
+      "confirmed_fields": [
+        "name",
+        "form_or_category",
+        "release_evidence"
+      ],
+      "field_evidence": {
+        "name_and_form": [
+          "S02"
+        ],
+        "release": [
+          "S02"
+        ],
+        "net_quantity": []
+      },
+      "unknown_fields": [
+        "net_quantity",
+        "GTIN",
+        "GS_SKU",
+        "current_store_stock",
+        "current_price",
+        "actual_store_availability",
+        "complete_ingredients_and_allergens"
+      ],
+      "existing_catalog_match": null,
+      "public_dev_family": "PD-RP-F02",
+      "import_status": "research_candidate_only"
+    },
+    {
+      "id": "RP-006",
+      "name": "라라스윗 망고 쫀득바",
+      "category": "ice_cream",
+      "source_ids": [
+        "S02"
+      ],
+      "checked_on": "2026-09-22",
+      "identity_confidence": "high_issuer_or_manufacturer",
+      "net_quantity": null,
+      "gs25_channel": "reported_or_announced_not_store_verified",
+      "release": {
+        "date": "2026-05",
+        "precision": "late_month",
+        "status": "reported_released",
+        "actual_current_sale_checked": false
+      },
+      "trend": {
+        "confidence": "medium_attributed",
+        "claim_id": "T02",
+        "scope": "group",
+        "note": "기업·언론 발표 범위에 한정; 현재 점포 수요로 환산 금지"
+      },
+      "confirmed_fields": [
+        "name",
+        "form_or_category",
+        "release_evidence"
+      ],
+      "field_evidence": {
+        "name_and_form": [
+          "S02"
+        ],
+        "release": [
+          "S02"
+        ],
+        "net_quantity": []
+      },
+      "unknown_fields": [
+        "net_quantity",
+        "GTIN",
+        "GS_SKU",
+        "current_store_stock",
+        "current_price",
+        "actual_store_availability",
+        "complete_ingredients_and_allergens"
+      ],
+      "existing_catalog_match": null,
+      "public_dev_family": "PD-RP-F02",
+      "import_status": "research_candidate_only"
+    },
+    {
+      "id": "RP-007",
+      "name": "라라스윗 그릭 복숭아 쫀득바",
+      "category": "ice_cream",
+      "source_ids": [
+        "S02"
+      ],
+      "checked_on": "2026-09-22",
+      "identity_confidence": "high_issuer_or_manufacturer",
+      "net_quantity": null,
+      "gs25_channel": "reported_or_announced_not_store_verified",
+      "release": {
+        "date": "2026-08-25",
+        "precision": "day",
+        "status": "reported_released",
+        "actual_current_sale_checked": false
+      },
+      "trend": {
+        "confidence": "unverified",
+        "claim_id": null,
+        "scope": "individual_product",
+        "note": "선행 2종의 합산 실적을 전용하지 않음"
+      },
+      "confirmed_fields": [
+        "name",
+        "form_or_category",
+        "release_evidence"
+      ],
+      "field_evidence": {
+        "name_and_form": [
+          "S02"
+        ],
+        "release": [
+          "S02"
+        ],
+        "net_quantity": []
+      },
+      "unknown_fields": [
+        "net_quantity",
+        "GTIN",
+        "GS_SKU",
+        "current_store_stock",
+        "current_price",
+        "actual_store_availability",
+        "complete_ingredients_and_allergens"
+      ],
+      "existing_catalog_match": null,
+      "public_dev_family": "PD-RP-F02",
+      "import_status": "research_candidate_only"
+    },
+    {
+      "id": "RP-008",
+      "name": "스크류바 젤리 골드키위&딸기",
+      "category": "ice_cream",
+      "source_ids": [
+        "S02"
+      ],
+      "checked_on": "2026-09-22",
+      "identity_confidence": "high_issuer_or_manufacturer",
+      "net_quantity": null,
+      "gs25_channel": "reported_or_announced_not_store_verified",
+      "release": {
+        "date": "2026-08",
+        "precision": "early_month",
+        "status": "reported_released",
+        "actual_current_sale_checked": false
+      },
+      "trend": {
+        "confidence": "medium_attributed",
+        "claim_id": "T03",
+        "scope": "individual_product",
+        "note": "기업·언론 발표 범위에 한정; 현재 점포 수요로 환산 금지"
+      },
+      "confirmed_fields": [
+        "name",
+        "form_or_category",
+        "release_evidence"
+      ],
+      "field_evidence": {
+        "name_and_form": [
+          "S02"
+        ],
+        "release": [
+          "S02"
+        ],
+        "net_quantity": []
+      },
+      "unknown_fields": [
+        "net_quantity",
+        "GTIN",
+        "GS_SKU",
+        "current_store_stock",
+        "current_price",
+        "actual_store_availability",
+        "complete_ingredients_and_allergens"
+      ],
+      "existing_catalog_match": null,
+      "public_dev_family": "PD-RP-F02",
+      "import_status": "research_candidate_only"
+    },
+    {
+      "id": "RP-009",
+      "name": "죠스바 젤리 먹은 포도&피치",
+      "category": "ice_cream",
+      "source_ids": [
+        "S02"
+      ],
+      "checked_on": "2026-09-22",
+      "identity_confidence": "high_issuer_or_manufacturer",
+      "net_quantity": null,
+      "gs25_channel": "reported_or_announced_not_store_verified",
+      "release": {
+        "date": "2026-08",
+        "precision": "early_month",
+        "status": "reported_released",
+        "actual_current_sale_checked": false
+      },
+      "trend": {
+        "confidence": "medium_attributed",
+        "claim_id": "T04",
+        "scope": "individual_product",
+        "note": "기업·언론 발표 범위에 한정; 현재 점포 수요로 환산 금지"
+      },
+      "confirmed_fields": [
+        "name",
+        "form_or_category",
+        "release_evidence"
+      ],
+      "field_evidence": {
+        "name_and_form": [
+          "S02"
+        ],
+        "release": [
+          "S02"
+        ],
+        "net_quantity": []
+      },
+      "unknown_fields": [
+        "net_quantity",
+        "GTIN",
+        "GS_SKU",
+        "current_store_stock",
+        "current_price",
+        "actual_store_availability",
+        "complete_ingredients_and_allergens"
+      ],
+      "existing_catalog_match": null,
+      "public_dev_family": "PD-RP-F02",
+      "import_status": "research_candidate_only"
+    },
+    {
+      "id": "RP-010",
+      "name": "한정선 요거트 찹쌀떡",
+      "category": "frozen_dessert",
+      "source_ids": [
+        "S03"
+      ],
+      "checked_on": "2026-09-22",
+      "identity_confidence": "high_issuer_or_manufacturer",
+      "net_quantity": null,
+      "gs25_channel": "reported_or_announced_not_store_verified",
+      "release": {
+        "date": "2026-09-03",
+        "precision": "day",
+        "status": "launch_announced_same_day_unconfirmed",
+        "actual_current_sale_checked": false
+      },
+      "trend": {
+        "confidence": "medium_attributed",
+        "claim_id": "T05",
+        "scope": "two_store_preview",
+        "note": "기업·언론 발표 범위에 한정; 현재 점포 수요로 환산 금지"
+      },
+      "confirmed_fields": [
+        "name",
+        "form_or_category",
+        "release_evidence"
+      ],
+      "field_evidence": {
+        "name_and_form": [
+          "S03"
+        ],
+        "release": [
+          "S03"
+        ],
+        "net_quantity": []
+      },
+      "unknown_fields": [
+        "net_quantity",
+        "GTIN",
+        "GS_SKU",
+        "current_store_stock",
+        "current_price",
+        "actual_store_availability",
+        "complete_ingredients_and_allergens"
+      ],
+      "existing_catalog_match": null,
+      "public_dev_family": "PD-RP-F03",
+      "import_status": "research_candidate_only"
+    },
+    {
+      "id": "RP-011",
+      "name": "이달의 도시락 한가위편",
+      "category": "lunchbox",
+      "source_ids": [
+        "S04"
+      ],
+      "checked_on": "2026-09-22",
+      "identity_confidence": "medium_reporting",
+      "net_quantity": null,
+      "gs25_channel": "reported_or_announced_not_store_verified",
+      "release": {
+        "date": "2026-09-01",
+        "precision": "day",
+        "status": "announced_date_elapsed_unconfirmed",
+        "actual_current_sale_checked": false,
+        "note": "과거 날짜와 미래형 어미가 혼재한 기사. 보수적으로 출시일 언급만 인정."
+      },
+      "trend": {
+        "confidence": "unverified",
+        "claim_id": null,
+        "scope": "individual_product",
+        "note": "추석 계절성은 개별 수요 실증 아님"
+      },
+      "confirmed_fields": [
+        "name",
+        "form_or_category",
+        "release_evidence"
+      ],
+      "field_evidence": {
+        "name_and_form": [
+          "S04"
+        ],
+        "release": [
+          "S04"
+        ],
+        "net_quantity": []
+      },
+      "unknown_fields": [
+        "net_quantity",
+        "GTIN",
+        "GS_SKU",
+        "current_store_stock",
+        "current_price",
+        "actual_store_availability",
+        "complete_ingredients_and_allergens"
+      ],
+      "existing_catalog_match": null,
+      "public_dev_family": "PD-RP-F04",
+      "import_status": "research_candidate_only"
+    },
+    {
+      "id": "RP-012",
+      "name": "추석 잡채&전",
+      "category": "prepared_side_dish",
+      "source_ids": [
+        "S04"
+      ],
+      "checked_on": "2026-09-22",
+      "identity_confidence": "medium_reporting",
+      "net_quantity": null,
+      "gs25_channel": "reported_or_announced_not_store_verified",
+      "release": {
+        "date": "2026-09-15",
+        "precision": "day",
+        "status": "announced_date_elapsed_unconfirmed",
+        "actual_current_sale_checked": false
+      },
+      "trend": {
+        "confidence": "unverified",
+        "claim_id": null,
+        "scope": "individual_product",
+        "note": "개별 판매 실적 미확인"
+      },
+      "confirmed_fields": [
+        "name",
+        "form_or_category",
+        "release_evidence"
+      ],
+      "field_evidence": {
+        "name_and_form": [
+          "S04"
+        ],
+        "release": [
+          "S04"
+        ],
+        "net_quantity": []
+      },
+      "unknown_fields": [
+        "net_quantity",
+        "GTIN",
+        "GS_SKU",
+        "current_store_stock",
+        "current_price",
+        "actual_store_availability",
+        "complete_ingredients_and_allergens"
+      ],
+      "existing_catalog_match": null,
+      "public_dev_family": "PD-RP-F04",
+      "import_status": "research_candidate_only"
+    },
+    {
+      "id": "RP-013",
+      "name": "추석 불고기고추장비빔 김밥",
+      "category": "kimbap",
+      "source_ids": [
+        "S04"
+      ],
+      "checked_on": "2026-09-22",
+      "identity_confidence": "medium_reporting",
+      "net_quantity": null,
+      "gs25_channel": "reported_or_announced_not_store_verified",
+      "release": {
+        "date": "2026-09-15",
+        "precision": "day",
+        "status": "announced_date_elapsed_unconfirmed",
+        "actual_current_sale_checked": false
+      },
+      "trend": {
+        "confidence": "unverified",
+        "claim_id": null,
+        "scope": "individual_product",
+        "note": "개별 판매 실적 미확인"
+      },
+      "confirmed_fields": [
+        "name",
+        "form_or_category",
+        "release_evidence"
+      ],
+      "field_evidence": {
+        "name_and_form": [
+          "S04"
+        ],
+        "release": [
+          "S04"
+        ],
+        "net_quantity": []
+      },
+      "unknown_fields": [
+        "net_quantity",
+        "GTIN",
+        "GS_SKU",
+        "current_store_stock",
+        "current_price",
+        "actual_store_availability",
+        "complete_ingredients_and_allergens"
+      ],
+      "existing_catalog_match": null,
+      "public_dev_family": "PD-RP-F04",
+      "import_status": "research_candidate_only"
+    },
+    {
+      "id": "RP-014",
+      "name": "추석 맥적구이 주먹밥",
+      "category": "rice_ball",
+      "source_ids": [
+        "S04"
+      ],
+      "checked_on": "2026-09-22",
+      "identity_confidence": "medium_reporting",
+      "net_quantity": null,
+      "gs25_channel": "reported_or_announced_not_store_verified",
+      "release": {
+        "date": "2026-09-22",
+        "precision": "day",
+        "status": "scheduled_today_unconfirmed",
+        "actual_current_sale_checked": false
+      },
+      "trend": {
+        "confidence": "unverified",
+        "claim_id": null,
+        "scope": "individual_product",
+        "note": "개별 판매 실적 미확인"
+      },
+      "confirmed_fields": [
+        "name",
+        "form_or_category",
+        "release_evidence"
+      ],
+      "field_evidence": {
+        "name_and_form": [
+          "S04"
+        ],
+        "release": [
+          "S04"
+        ],
+        "net_quantity": []
+      },
+      "unknown_fields": [
+        "net_quantity",
+        "GTIN",
+        "GS_SKU",
+        "current_store_stock",
+        "current_price",
+        "actual_store_availability",
+        "complete_ingredients_and_allergens"
+      ],
+      "existing_catalog_match": null,
+      "public_dev_family": "PD-RP-F04",
+      "import_status": "research_candidate_only"
+    },
+    {
+      "id": "RP-015",
+      "name": "치즈 미역국",
+      "category": "packaged_soup",
+      "source_ids": [
+        "S05"
+      ],
+      "checked_on": "2026-09-22",
+      "identity_confidence": "high_issuer_or_manufacturer",
+      "net_quantity": null,
+      "gs25_channel": "reported_or_announced_not_store_verified",
+      "release": {
+        "date": "2026-09-18",
+        "precision": "day",
+        "status": "announced_date_elapsed_unconfirmed",
+        "actual_current_sale_checked": false
+      },
+      "trend": {
+        "confidence": "low_qualitative",
+        "claim_id": "T06",
+        "scope": "recipe_theme_not_product_sales",
+        "note": "포장 완제품 탐색만; 레시피 기능 확장 금지"
+      },
+      "confirmed_fields": [
+        "name",
+        "form_or_category",
+        "release_evidence"
+      ],
+      "field_evidence": {
+        "name_and_form": [
+          "S05"
+        ],
+        "release": [
+          "S05"
+        ],
+        "net_quantity": []
+      },
+      "unknown_fields": [
+        "net_quantity",
+        "GTIN",
+        "GS_SKU",
+        "current_store_stock",
+        "current_price",
+        "actual_store_availability",
+        "complete_ingredients_and_allergens"
+      ],
+      "existing_catalog_match": null,
+      "public_dev_family": "PD-RP-F05",
+      "import_status": "research_candidate_only"
+    },
+    {
+      "id": "RP-016",
+      "name": "카레 당면",
+      "category": "packaged_noodle_meal",
+      "source_ids": [
+        "S05"
+      ],
+      "checked_on": "2026-09-22",
+      "identity_confidence": "high_issuer_or_manufacturer",
+      "net_quantity": null,
+      "gs25_channel": "reported_or_announced_not_store_verified",
+      "release": {
+        "date": "2026-09-18",
+        "precision": "day",
+        "status": "announced_date_elapsed_unconfirmed",
+        "actual_current_sale_checked": false
+      },
+      "trend": {
+        "confidence": "low_qualitative",
+        "claim_id": "T06",
+        "scope": "recipe_theme_not_product_sales",
+        "note": "SNS 유행과 개별 상품 판매를 분리"
+      },
+      "confirmed_fields": [
+        "name",
+        "form_or_category",
+        "release_evidence"
+      ],
+      "field_evidence": {
+        "name_and_form": [
+          "S05"
+        ],
+        "release": [
+          "S05"
+        ],
+        "net_quantity": []
+      },
+      "unknown_fields": [
+        "net_quantity",
+        "GTIN",
+        "GS_SKU",
+        "current_store_stock",
+        "current_price",
+        "actual_store_availability",
+        "complete_ingredients_and_allergens"
+      ],
+      "existing_catalog_match": null,
+      "public_dev_family": "PD-RP-F05",
+      "import_status": "research_candidate_only"
+    },
+    {
+      "id": "RP-017",
+      "name": "유어스로얄밀크티",
+      "category": "cup_beverage",
+      "source_ids": [
+        "S06"
+      ],
+      "checked_on": "2026-09-22",
+      "identity_confidence": "high_issuer_or_manufacturer",
+      "net_quantity": null,
+      "gs25_channel": "reported_or_announced_not_store_verified",
+      "release": {
+        "date": "2026-07-29",
+        "precision": "day",
+        "status": "reported_released",
+        "actual_current_sale_checked": false
+      },
+      "trend": {
+        "confidence": "medium_attributed",
+        "claim_id": "T07",
+        "scope": "category_not_product",
+        "note": "기업·언론 발표 범위에 한정; 현재 점포 수요로 환산 금지"
+      },
+      "confirmed_fields": [
+        "name",
+        "form_or_category",
+        "release_evidence"
+      ],
+      "field_evidence": {
+        "name_and_form": [
+          "S06"
+        ],
+        "release": [
+          "S06"
+        ],
+        "net_quantity": []
+      },
+      "unknown_fields": [
+        "net_quantity",
+        "GTIN",
+        "GS_SKU",
+        "current_store_stock",
+        "current_price",
+        "actual_store_availability",
+        "complete_ingredients_and_allergens"
+      ],
+      "existing_catalog_match": null,
+      "public_dev_family": "PD-RP-F06",
+      "import_status": "research_candidate_only"
+    },
+    {
+      "id": "RP-018",
+      "name": "망고킥",
+      "category": "snack",
+      "source_ids": [
+        "S07",
+        "S08"
+      ],
+      "checked_on": "2026-09-22",
+      "identity_confidence": "high_issuer_or_manufacturer",
+      "net_quantity": {
+        "value": 60,
+        "unit": "g",
+        "source_ids": [
+          "S08"
+        ],
+        "selection_note": "제조사 60g/90g 중 60g만 연구 후보로 선택; GS 취급 규격 미확인"
+      },
+      "gs25_channel": "unverified",
+      "release": {
+        "date": "2026-05",
+        "precision": "month",
+        "status": "reported_released",
+        "actual_current_sale_checked": false
+      },
+      "trend": {
+        "confidence": "unverified",
+        "claim_id": null,
+        "scope": "individual_product",
+        "note": "개별 판매 실적 미확인"
+      },
+      "confirmed_fields": [
+        "name",
+        "form_or_category",
+        "release_evidence",
+        "net_quantity"
+      ],
+      "field_evidence": {
+        "name_and_form": [
+          "S07",
+          "S08"
+        ],
+        "release": [
+          "S07",
+          "S08"
+        ],
+        "net_quantity": [
+          "S08"
+        ]
+      },
+      "unknown_fields": [
+        "GTIN",
+        "GS_SKU",
+        "current_store_stock",
+        "current_price",
+        "actual_store_availability",
+        "complete_ingredients_and_allergens",
+        "GS25_channel_and_pack_size"
+      ],
+      "existing_catalog_match": {
+        "id": "DEMO-REF-004",
+        "basis": "이름 일치; 기존 size:null",
+        "action": "근거 보강 후보. 60g으로 무단 덮어쓰기 금지; 규격 식별 후 별도 결정."
+      },
+      "public_dev_family": "PD-RP-F07",
+      "import_status": "research_candidate_only"
+    },
+    {
+      "id": "RP-019",
+      "name": "신라면 로제 봉지",
+      "category": "bag_noodles",
+      "source_ids": [
+        "S09",
+        "S10"
+      ],
+      "checked_on": "2026-09-22",
+      "identity_confidence": "high_issuer_or_manufacturer",
+      "net_quantity": {
+        "value": 134,
+        "unit": "g",
+        "source_ids": [
+          "S09"
+        ]
+      },
+      "gs25_channel": "unverified",
+      "release": {
+        "date": "2026-06",
+        "precision": "month",
+        "status": "reported_released",
+        "actual_current_sale_checked": false
+      },
+      "trend": {
+        "confidence": "unverified",
+        "claim_id": null,
+        "scope": "individual_product",
+        "note": "개별 판매 실적 미확인"
+      },
+      "confirmed_fields": [
+        "name",
+        "form_or_category",
+        "release_evidence",
+        "net_quantity"
+      ],
+      "field_evidence": {
+        "name_and_form": [
+          "S09",
+          "S10"
+        ],
+        "release": [
+          "S09",
+          "S10"
+        ],
+        "net_quantity": [
+          "S09"
+        ]
+      },
+      "unknown_fields": [
+        "GTIN",
+        "GS_SKU",
+        "current_store_stock",
+        "current_price",
+        "actual_store_availability",
+        "complete_ingredients_and_allergens",
+        "GS25_channel_and_pack_size"
+      ],
+      "existing_catalog_match": {
+        "id": "DEMO-REF-005",
+        "basis": "신라면로제 이름 일치; 기존 size:null",
+        "action": "형태 확인 후 근거 보강. 신규 순증 계산 금지."
+      },
+      "public_dev_family": "PD-RP-F08",
+      "import_status": "research_candidate_only"
+    },
+    {
+      "id": "RP-020",
+      "name": "신라면 로제 큰사발면",
+      "category": "bowl_noodles",
+      "source_ids": [
+        "S09",
+        "S10"
+      ],
+      "checked_on": "2026-09-22",
+      "identity_confidence": "high_issuer_or_manufacturer",
+      "net_quantity": {
+        "value": 108,
+        "unit": "g",
+        "source_ids": [
+          "S09"
+        ]
+      },
+      "gs25_channel": "unverified",
+      "release": {
+        "date": "2026-05",
+        "precision": "month",
+        "status": "reported_released",
+        "actual_current_sale_checked": false
+      },
+      "trend": {
+        "confidence": "unverified",
+        "claim_id": null,
+        "scope": "individual_product",
+        "note": "개별 판매 실적 미확인"
+      },
+      "confirmed_fields": [
+        "name",
+        "form_or_category",
+        "release_evidence",
+        "net_quantity"
+      ],
+      "field_evidence": {
+        "name_and_form": [
+          "S09",
+          "S10"
+        ],
+        "release": [
+          "S09",
+          "S10"
+        ],
+        "net_quantity": [
+          "S09"
+        ]
+      },
+      "unknown_fields": [
+        "GTIN",
+        "GS_SKU",
+        "current_store_stock",
+        "current_price",
+        "actual_store_availability",
+        "complete_ingredients_and_allergens",
+        "GS25_channel_and_pack_size"
+      ],
+      "existing_catalog_match": {
+        "id": "DEMO-REF-006",
+        "basis": "이름 일치; 기존 size:null",
+        "action": "근거 보강 후보. 기존 거래 SKU 보존."
+      },
+      "public_dev_family": "PD-RP-F08",
+      "import_status": "research_candidate_only"
+    },
+    {
+      "id": "RP-021",
+      "name": "생생신툼바떡볶이면",
+      "category": "noodle_meal",
+      "source_ids": [
+        "S11"
+      ],
+      "checked_on": "2026-09-22",
+      "identity_confidence": "high_issuer_or_manufacturer",
+      "net_quantity": null,
+      "gs25_channel": "unverified",
+      "release": {
+        "date": "2026-09-28",
+        "precision": "day",
+        "status": "future_announced",
+        "actual_current_sale_checked": false
+      },
+      "trend": {
+        "confidence": "unverified",
+        "claim_id": null,
+        "scope": "individual_product",
+        "note": "개별 판매 실적 미확인"
+      },
+      "confirmed_fields": [
+        "name",
+        "form_or_category",
+        "release_evidence"
+      ],
+      "field_evidence": {
+        "name_and_form": [
+          "S11"
+        ],
+        "release": [
+          "S11"
+        ],
+        "net_quantity": []
+      },
+      "unknown_fields": [
+        "net_quantity",
+        "GTIN",
+        "GS_SKU",
+        "current_store_stock",
+        "current_price",
+        "actual_store_availability",
+        "complete_ingredients_and_allergens",
+        "GS25_channel_and_pack_size"
+      ],
+      "existing_catalog_match": null,
+      "public_dev_family": "PD-RP-F09",
+      "import_status": "research_only_future_do_not_count_as_released"
+    },
+    {
+      "id": "RP-022",
+      "name": "춘식이 꼬북칩 고구마탕후루맛",
+      "category": "snack",
+      "source_ids": [
+        "S12"
+      ],
+      "checked_on": "2026-09-22",
+      "identity_confidence": "high_issuer_or_manufacturer",
+      "net_quantity": null,
+      "gs25_channel": "reported_or_announced_not_store_verified",
+      "release": {
+        "date": "2026-08-06",
+        "precision": "day",
+        "status": "announced_date_elapsed_unconfirmed",
+        "actual_current_sale_checked": false
+      },
+      "trend": {
+        "confidence": "unverified",
+        "claim_id": null,
+        "scope": "individual_product",
+        "note": "협업·신제품 근거만; 같은 보도자료의 다른 제품 판매 순위 제외"
+      },
+      "confirmed_fields": [
+        "name",
+        "form_or_category",
+        "release_evidence"
+      ],
+      "field_evidence": {
+        "name_and_form": [
+          "S12"
+        ],
+        "release": [
+          "S12"
+        ],
+        "net_quantity": []
+      },
+      "unknown_fields": [
+        "net_quantity",
+        "GTIN",
+        "GS_SKU",
+        "current_store_stock",
+        "current_price",
+        "actual_store_availability",
+        "complete_ingredients_and_allergens"
+      ],
+      "existing_catalog_match": null,
+      "public_dev_family": "PD-RP-F10",
+      "import_status": "research_candidate_only"
+    },
+    {
+      "id": "RP-023",
+      "name": "참치계란김밥",
+      "category": "kimbap",
+      "source_ids": [
+        "S13"
+      ],
+      "checked_on": "2026-09-22",
+      "identity_confidence": "high_issuer_or_manufacturer",
+      "net_quantity": null,
+      "gs25_channel": "reported_or_announced_not_store_verified",
+      "release": {
+        "date": null,
+        "precision": "group_rollout_start",
+        "group_rollout_start": "2026-04-28",
+        "status": "reported_released",
+        "actual_current_sale_checked": false,
+        "note": "순차 출시 두 제품 중 어느 제품이 4/28인지 미확인"
+      },
+      "trend": {
+        "confidence": "medium_attributed",
+        "claim_id": "T08",
+        "scope": "group",
+        "note": "기업·언론 발표 범위에 한정; 현재 점포 수요로 환산 금지"
+      },
+      "confirmed_fields": [
+        "name",
+        "form_or_category",
+        "release_evidence"
+      ],
+      "field_evidence": {
+        "name_and_form": [
+          "S13"
+        ],
+        "release": [
+          "S13"
+        ],
+        "net_quantity": []
+      },
+      "unknown_fields": [
+        "net_quantity",
+        "GTIN",
+        "GS_SKU",
+        "current_store_stock",
+        "current_price",
+        "actual_store_availability",
+        "complete_ingredients_and_allergens"
+      ],
+      "existing_catalog_match": null,
+      "public_dev_family": "PD-RP-F11",
+      "import_status": "research_candidate_only"
+    },
+    {
+      "id": "RP-024",
+      "name": "계란명란마요김밥",
+      "category": "kimbap",
+      "source_ids": [
+        "S13"
+      ],
+      "checked_on": "2026-09-22",
+      "identity_confidence": "high_issuer_or_manufacturer",
+      "net_quantity": null,
+      "gs25_channel": "reported_or_announced_not_store_verified",
+      "release": {
+        "date": null,
+        "precision": "group_rollout_start",
+        "group_rollout_start": "2026-04-28",
+        "status": "reported_released",
+        "actual_current_sale_checked": false,
+        "note": "개별 출시일 미확인"
+      },
+      "trend": {
+        "confidence": "medium_attributed",
+        "claim_id": "T08",
+        "scope": "group",
+        "note": "기업·언론 발표 범위에 한정; 현재 점포 수요로 환산 금지"
+      },
+      "confirmed_fields": [
+        "name",
+        "form_or_category",
+        "release_evidence"
+      ],
+      "field_evidence": {
+        "name_and_form": [
+          "S13"
+        ],
+        "release": [
+          "S13"
+        ],
+        "net_quantity": []
+      },
+      "unknown_fields": [
+        "net_quantity",
+        "GTIN",
+        "GS_SKU",
+        "current_store_stock",
+        "current_price",
+        "actual_store_availability",
+        "complete_ingredients_and_allergens"
+      ],
+      "existing_catalog_match": null,
+      "public_dev_family": "PD-RP-F11",
+      "import_status": "research_candidate_only"
+    }
+  ],
+  "public_dev_scenarios": [
+    {
+      "id": "PD-RP-F01",
+      "source_ids": [
+        "S01",
+        "S14"
+      ],
+      "candidate_ids": [
+        "RP-001",
+        "RP-002",
+        "RP-003",
+        "RP-004"
+      ],
+      "role": "customer",
+      "origin": "independently_synthetic_public_dev",
+      "split": "public_dev",
+      "need_status": "design_hypothesis_not_user_research_validation",
+      "hypothesis": "보도에 근거한 헛걸음·굿즈 기대 불일치를 완화하는 설계 가설",
+      "utterance": "민음사 빵 중에 오만과 편견 우유크림 빵 찾는데, 책갈피도 오만과 편견으로 받을 수 있어?",
+      "simulated_preconditions": "통합자가 명시적으로 설정할 한 PC 브라우저 SQLite 모의 상품·점포·거래. 실제 재고/고객/발주 없음.",
+      "expected": "작품명·맛·빵을 구분하고 무작위 사은품 지정은 보장하지 않는다.",
+      "forbidden": "4종을 한 SKU로 합치거나 책갈피 확약, 실제 점포 재고 단정",
+      "oracle": "구조화된 후보 ID·규격·미확인 필드·동의 상태와 로컬 도메인 상태를 대조; 문장 자연스러움만으로 통과하지 않음",
+      "gate_status": "proposed_not_executed",
+      "holdout_policy": "이 문장과 파생 패러프레이즈·family 전체를 holdout/validation으로 재사용하지 않음. 기존 세트 교차중복 검사는 통합자 과제."
+    },
+    {
+      "id": "PD-RP-F02",
+      "source_ids": [
+        "S02"
+      ],
+      "candidate_ids": [
+        "RP-005",
+        "RP-006",
+        "RP-007",
+        "RP-008",
+        "RP-009"
+      ],
+      "role": "customer",
+      "origin": "independently_synthetic_public_dev",
+      "split": "public_dev",
+      "need_status": "design_hypothesis_not_user_research_validation",
+      "hypothesis": "맛·제품군 명칭 혼동을 시험하는 합성 가설",
+      "utterance": "망고 쫀득바가 없으면 복숭아 걸 보여줘. 젤리라는 스크류바도 냉동 아이스크림이야?",
+      "simulated_preconditions": "통합자가 명시적으로 설정할 한 PC 브라우저 SQLite 모의 상품·점포·거래. 실제 재고/고객/발주 없음.",
+      "expected": "맛별 후보를 구분하고 대체 후보 제시 후 별도 선택·동의를 받는다. 스크류바를 상온 젤리로 오분류하지 않는다.",
+      "forbidden": "자동 SKU 대체·400만 개를 후속 맛 판매로 표시",
+      "oracle": "구조화된 후보 ID·규격·미확인 필드·동의 상태와 로컬 도메인 상태를 대조; 문장 자연스러움만으로 통과하지 않음",
+      "gate_status": "proposed_not_executed",
+      "holdout_policy": "이 문장과 파생 패러프레이즈·family 전체를 holdout/validation으로 재사용하지 않음. 기존 세트 교차중복 검사는 통합자 과제."
+    },
+    {
+      "id": "PD-RP-F03",
+      "source_ids": [
+        "S03"
+      ],
+      "candidate_ids": [
+        "RP-010"
+      ],
+      "role": "customer",
+      "origin": "independently_synthetic_public_dev",
+      "split": "public_dev",
+      "need_status": "design_hypothesis_not_user_research_validation",
+      "hypothesis": "협업 브랜드명 중의성을 시험하는 합성 가설",
+      "utterance": "한정선 요거트 찹쌀떡 그 냉동 제품 하나 찾고 있어.",
+      "simulated_preconditions": "통합자가 명시적으로 설정할 한 PC 브라우저 SQLite 모의 상품·점포·거래. 실제 재고/고객/발주 없음.",
+      "expected": "디저트 매장 자체와 GS 협업 포장 상품을 구분한다. 모의 점포 상태만 안내한다.",
+      "forbidden": "사전 행사 소진을 오늘 전국 품절로 단정",
+      "oracle": "구조화된 후보 ID·규격·미확인 필드·동의 상태와 로컬 도메인 상태를 대조; 문장 자연스러움만으로 통과하지 않음",
+      "gate_status": "proposed_not_executed",
+      "holdout_policy": "이 문장과 파생 패러프레이즈·family 전체를 holdout/validation으로 재사용하지 않음. 기존 세트 교차중복 검사는 통합자 과제."
+    },
+    {
+      "id": "PD-RP-F04",
+      "source_ids": [
+        "S04"
+      ],
+      "candidate_ids": [
+        "RP-011",
+        "RP-012",
+        "RP-013",
+        "RP-014"
+      ],
+      "role": "customer",
+      "origin": "independently_synthetic_public_dev",
+      "split": "public_dev",
+      "need_status": "design_hypothesis_not_user_research_validation",
+      "hypothesis": "당일 출시 일정과 실제 가용성을 분리하는 합성 가설",
+      "utterance": "오늘 나온다는 추석 맥적구이 주먹밥 찾고, 없으면 추석 도시락이랑 잡채전도 비교해줘.",
+      "simulated_preconditions": "통합자가 명시적으로 설정할 한 PC 브라우저 SQLite 모의 상품·점포·거래. 실제 재고/고객/발주 없음.",
+      "expected": "발표 일정과 모의 재고를 분리하고 4개 형태를 별도 후보로 제시한다. 관심을 구매 확약으로 바꾸지 않는다.",
+      "forbidden": "날짜 도래만으로 입고·픽업 보장, 김밥·주먹밥 통합",
+      "oracle": "구조화된 후보 ID·규격·미확인 필드·동의 상태와 로컬 도메인 상태를 대조; 문장 자연스러움만으로 통과하지 않음",
+      "gate_status": "proposed_not_executed",
+      "holdout_policy": "이 문장과 파생 패러프레이즈·family 전체를 holdout/validation으로 재사용하지 않음. 기존 세트 교차중복 검사는 통합자 과제."
+    },
+    {
+      "id": "PD-RP-F05",
+      "source_ids": [
+        "S05"
+      ],
+      "candidate_ids": [
+        "RP-015",
+        "RP-016"
+      ],
+      "role": "customer",
+      "origin": "independently_synthetic_public_dev",
+      "split": "public_dev",
+      "need_status": "design_hypothesis_not_user_research_validation",
+      "hypothesis": "유행어를 범위 내 SKU 탐색으로 연결하는 합성 가설",
+      "utterance": "요즘 보이는 치즈 미역국이랑 카레 당면 완제품을 찾는 거야. 만드는 법 말고.",
+      "simulated_preconditions": "통합자가 명시적으로 설정할 한 PC 브라우저 SQLite 모의 상품·점포·거래. 실제 재고/고객/발주 없음.",
+      "expected": "포장 완제품 후보로 해석하고 레시피·이미지·링크 입력으로 확장하지 않는다.",
+      "forbidden": "레시피 기능 도입, SNS 언급을 확정 수요로 계산",
+      "oracle": "구조화된 후보 ID·규격·미확인 필드·동의 상태와 로컬 도메인 상태를 대조; 문장 자연스러움만으로 통과하지 않음",
+      "gate_status": "proposed_not_executed",
+      "holdout_policy": "이 문장과 파생 패러프레이즈·family 전체를 holdout/validation으로 재사용하지 않음. 기존 세트 교차중복 검사는 통합자 과제."
+    },
+    {
+      "id": "PD-RP-F06",
+      "source_ids": [
+        "S06"
+      ],
+      "candidate_ids": [
+        "RP-017"
+      ],
+      "role": "customer",
+      "origin": "independently_synthetic_public_dev",
+      "split": "public_dev",
+      "need_status": "design_hypothesis_not_user_research_validation",
+      "hypothesis": "수치 미확인 응답을 시험하는 합성 가설",
+      "utterance": "유어스 로얄밀크티 컵 제품 찾아줘. 몇 ml이고 카페인은 없어?",
+      "simulated_preconditions": "통합자가 명시적으로 설정할 한 PC 브라우저 SQLite 모의 상품·점포·거래. 실제 재고/고객/발주 없음.",
+      "expected": "용량과 카페인이 미확인임을 표시하며 밀크티 이름만으로 무카페인·알레르기 안전을 보장하지 않는다.",
+      "forbidden": "카테고리 성장률을 상품 판매량으로 표시, 수치 추정",
+      "oracle": "구조화된 후보 ID·규격·미확인 필드·동의 상태와 로컬 도메인 상태를 대조; 문장 자연스러움만으로 통과하지 않음",
+      "gate_status": "proposed_not_executed",
+      "holdout_policy": "이 문장과 파생 패러프레이즈·family 전체를 holdout/validation으로 재사용하지 않음. 기존 세트 교차중복 검사는 통합자 과제."
+    },
+    {
+      "id": "PD-RP-F07",
+      "source_ids": [
+        "S07",
+        "S08"
+      ],
+      "candidate_ids": [
+        "RP-018"
+      ],
+      "role": "customer",
+      "origin": "independently_synthetic_public_dev",
+      "split": "public_dev",
+      "need_status": "design_hypothesis_not_user_research_validation",
+      "hypothesis": "동일 이름·복수 규격을 시험하는 합성 가설",
+      "utterance": "망고킥 작은 60g으로 찾고 있어. 큰 봉지 말고.",
+      "simulated_preconditions": "통합자가 명시적으로 설정할 한 PC 브라우저 SQLite 모의 상품·점포·거래. 실제 재고/고객/발주 없음.",
+      "expected": "60g 선택 의도를 유지한다. 기존 규격 미상 레코드를 60g으로 몰래 변경하지 않는다.",
+      "forbidden": "90g 자동 대체, 기존 거래의 SKU 수정",
+      "oracle": "구조화된 후보 ID·규격·미확인 필드·동의 상태와 로컬 도메인 상태를 대조; 문장 자연스러움만으로 통과하지 않음",
+      "gate_status": "proposed_not_executed",
+      "holdout_policy": "이 문장과 파생 패러프레이즈·family 전체를 holdout/validation으로 재사용하지 않음. 기존 세트 교차중복 검사는 통합자 과제."
+    },
+    {
+      "id": "PD-RP-F08",
+      "source_ids": [
+        "S09",
+        "S10"
+      ],
+      "candidate_ids": [
+        "RP-019",
+        "RP-020"
+      ],
+      "role": "customer",
+      "origin": "independently_synthetic_public_dev",
+      "split": "public_dev",
+      "need_status": "design_hypothesis_not_user_research_validation",
+      "hypothesis": "포장 형태·규격 보존을 시험하는 합성 가설",
+      "utterance": "신라면 로제 봉지 134g하고 큰사발 108g 중 큰사발을 골랐어.",
+      "simulated_preconditions": "통합자가 명시적으로 설정할 한 PC 브라우저 SQLite 모의 상품·점포·거래. 실제 재고/고객/발주 없음.",
+      "expected": "봉지와 큰사발을 별개로 표시하고 선택한 형태·규격을 확인 상태까지 보존한다.",
+      "forbidden": "이름 유사도만으로 병합, 확인 후 형태 교체",
+      "oracle": "구조화된 후보 ID·규격·미확인 필드·동의 상태와 로컬 도메인 상태를 대조; 문장 자연스러움만으로 통과하지 않음",
+      "gate_status": "proposed_not_executed",
+      "holdout_policy": "이 문장과 파생 패러프레이즈·family 전체를 holdout/validation으로 재사용하지 않음. 기존 세트 교차중복 검사는 통합자 과제."
+    },
+    {
+      "id": "PD-RP-F09",
+      "source_ids": [
+        "S11"
+      ],
+      "candidate_ids": [
+        "RP-021"
+      ],
+      "role": "customer",
+      "origin": "independently_synthetic_public_dev",
+      "split": "public_dev",
+      "need_status": "design_hypothesis_not_user_research_validation",
+      "hypothesis": "미래 상품 정직성을 시험하는 합성 가설",
+      "utterance": "생생신툼바떡볶이면 오늘 바로 살 수 있어?",
+      "simulated_preconditions": "통합자가 명시적으로 설정할 한 PC 브라우저 SQLite 모의 상품·점포·거래. 실제 재고/고객/발주 없음.",
+      "expected": "2026-09-22 기준 9/28 예정 발표임을 구분한다. 모의 관심 기록도 사용자 동의를 거친다.",
+      "forbidden": "현재 판매 검증·재고·도착일 꾸며내기, 출시 전 실판매 품목으로 계산",
+      "oracle": "구조화된 후보 ID·규격·미확인 필드·동의 상태와 로컬 도메인 상태를 대조; 문장 자연스러움만으로 통과하지 않음",
+      "gate_status": "proposed_not_executed",
+      "holdout_policy": "이 문장과 파생 패러프레이즈·family 전체를 holdout/validation으로 재사용하지 않음. 기존 세트 교차중복 검사는 통합자 과제."
+    },
+    {
+      "id": "PD-RP-F10",
+      "source_ids": [
+        "S12"
+      ],
+      "candidate_ids": [
+        "RP-022"
+      ],
+      "role": "customer",
+      "origin": "independently_synthetic_public_dev",
+      "split": "public_dev",
+      "need_status": "design_hypothesis_not_user_research_validation",
+      "hypothesis": "협업명·맛 복합 탐색을 시험하는 합성 가설",
+      "utterance": "춘식이 꼬북칩 그 고구마탕후루맛만 보고 싶어.",
+      "simulated_preconditions": "통합자가 명시적으로 설정할 한 PC 브라우저 SQLite 모의 상품·점포·거래. 실제 재고/고객/발주 없음.",
+      "expected": "춘식이·꼬북칩·맛을 함께 식별하고 일반 맛으로 자동 치환하지 않는다.",
+      "forbidden": "저작권 있는 패키지 이미지 자동 수집·사용, 다른 스낵 실적 전용",
+      "oracle": "구조화된 후보 ID·규격·미확인 필드·동의 상태와 로컬 도메인 상태를 대조; 문장 자연스러움만으로 통과하지 않음",
+      "gate_status": "proposed_not_executed",
+      "holdout_policy": "이 문장과 파생 패러프레이즈·family 전체를 holdout/validation으로 재사용하지 않음. 기존 세트 교차중복 검사는 통합자 과제."
+    },
+    {
+      "id": "PD-RP-F11",
+      "source_ids": [
+        "S13"
+      ],
+      "candidate_ids": [
+        "RP-023",
+        "RP-024"
+      ],
+      "role": "merchant",
+      "origin": "independently_synthetic_public_dev",
+      "split": "public_dev",
+      "need_status": "design_hypothesis_not_user_research_validation",
+      "hypothesis": "건강 콘셉트와 경영주 발주 부담을 함께 시험하는 합성 가설",
+      "utterance": "고단백 김밥 두 종류가 많이 팔린다는데 우리 점포에도 더 넣어줘.",
+      "simulated_preconditions": "통합자가 명시적으로 설정할 한 PC 브라우저 SQLite 모의 상품·점포·거래. 실제 재고/고객/발주 없음.",
+      "expected": "회사 합산 통계는 참고로 분리하고 모의 점포의 확약·재고·예산·유효기간으로 보수적 제안을 만든다. 경영주 승인 전 실행하지 않는다.",
+      "forbidden": "전국 합산 판매를 지역 확약으로 합산, 약 15g 단백질을 순중량으로 저장",
+      "oracle": "구조화된 후보 ID·규격·미확인 필드·동의 상태와 로컬 도메인 상태를 대조; 문장 자연스러움만으로 통과하지 않음",
+      "gate_status": "proposed_not_executed",
+      "holdout_policy": "이 문장과 파생 패러프레이즈·family 전체를 holdout/validation으로 재사용하지 않음. 기존 세트 교차중복 검사는 통합자 과제."
+    }
+  ],
+  "excluded_evidence": [
+    {
+      "url": "https://www.gsretail.com/gsretail/ko/media/news-report",
+      "reason": "동적 페이지 본문 추출 불가; 근거 채택 안 함"
+    },
+    {
+      "url": "https://www.etoday.co.kr/news/view/2618139",
+      "reason": "직접 페이지 본문 추출 부족; S01 재게시 본문을 실제 열람하여 사용, 독립 출처로 중복 가산 안 함"
+    },
+    {
+      "url": "https://v.daum.net/v/20260921100510240",
+      "reason": "재시도 접근 오류·본문 확인 부족; 맛 평가/판매수치 채택 안 함"
+    }
+  ],
+  "handoff": {
+    "owner_files": [
+      "docs/research/goal-20260922/recent-products.md",
+      "docs/research/goal-20260922/recent-products.json"
+    ],
+    "shared_progress_not_edited": true,
+    "independent_review": "미실행; 메인 작업이 별도 검토자를 배정할 것",
+    "next_actions": [
+      "21개 규격 미상 후보의 표기/통합 정책 검토; 임의 중량 금지",
+      "기존 3개 reference ID와 나머지 전체 카탈로그 중복 정규화 검토",
+      "오늘 예정/미래/과거 발표만 있는 품목을 실판매 확인과 분리",
+      "public dev family 중복 검사 후 별도 평가 계약에 반영",
+      "메인이 PROGRESS에 결과·한계·다음 행동 기록"
+    ],
+    "purpose_preservation": "조사는 상품 탐색의 구체성을 높이되 가짜 실재고·무동의 대체·수요 부풀리기를 만들지 않는다."
+  }
+}

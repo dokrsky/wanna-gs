@@ -1,10 +1,12 @@
 // Browser-safe proposal contract: no SDK, environment access, or domain writes.
-// Wire: UTF-8 JSON <=4096 bytes (shared readJson), text 1..300 JS characters,
+// Wire: UTF-8 JSON <=8192 bytes, text 1..300 JS characters,
 // id 1..100 ASCII alnum/_/-, generation/version nonnegative safe integers.
-// ID count is the entire server catalog (currently 242), NOT a 20-ID limit.
+// ID count is the entire server catalog, NOT a 20-ID limit.
 // Never truncate: oversized requests fail BODY_TOO_LARGE. Shared model output
 // is capped at 1200 tokens / 4096 text characters; incomplete output never applies.
 import { AssistantError, isObject, parseSearchRequest, type SearchRequest, type SearchResponse } from "./contracts";
+
+export const POLICY_BODY_BYTES = 8192;
 
 export type CurrentPolicy = {
   enabled: boolean; productIds: string[]; budgetWon: number; version: number; spentWon: number;

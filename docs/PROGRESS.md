@@ -348,3 +348,33 @@ UI05 지도 지연 재진단: [공식 OSM 공유 iframe](https://wiki.openstreet
 최소 개선은 새 SDK/타일 프록시·timeout 증가 대신 **같은 검증된 공개 점포 iframe URL을 명시 새 탭으로 여는 링크**다. 기존 iframe·주소/목록·선택/동의·거래는 유지하고 외부 연결 설명·지연 안내·키보드 focus만 보완했다. ADR004의 기존 단일 선택 점포·같은 공급자 fallback 구현이며 새로운 고객 정책/좌표/개인정보 전송이 아니다. `check:store-map` 기존8점포/좌표/URL 검사와 실제 React 정적 markup의8개 정확한 링크·noopener·기본 Referer·명시 동작 전 iframe 없음·미확인 점포 링크 없음 PASS. Node24 Next build/타입 PASS. 모델 호출0회이며 실제 브라우저 새 링크 클릭/Preview는 이어서 확인한다.
 
 data 연구는 첫12분 이내 확보 근거를 인계하도록 제한했다. 현재 catalog·SQL·seed는 변경하지 않았고, recent20~30/원배포·좌표/최종 데이터 검증 완료로 보고하지 않는다. 전체 goal 게이트·Production은 후속이다.
+
+`65765f77cd19811f85cacfecba2272562e7dd9ac` commit/push → `dpl_BhAfzvaSoxDuwv3dcxCEJECLM1G7` / https://wanna-lspa25j3p-d-01.vercel.app/demo Ready·정확한 source SHA 확인. Avicenna는 독립 좁은 검토에서 실제 `check:store-map`을 실행해 PASS, 같은 URL·명시 클릭·noopener/Referer·동의/거래 불변을 확인했다. 대상 hash: component `1abebc0e8d2857897dbfc1e0ab83e9280ae07828097329a591f9d3c2d11e0478`, CSS `d2018f93526988f58c8a9ca3cd1e04626e323912493527139be6bd76662294f9`, checker `6993920deb7ede9648f48421fefb6db6af9a240952ec96dd5f1adb353e537401`. 전체 UX/시각 검토가 아니다.
+
+새 Preview 실제 reload 후 SQLite revision27/세대1·기존 내 요청2/이전 보관1 복원. 로컬 우유 검색·선택만으로 revision30, ST01·2,800원·동의 미선택 유지. 새 링크의 href가 같은 공개 점포 좌표임을 읽고 클릭해 탭7 `OpenStreetMap Embedded`의 마커·확대/축소·attribution을 확인했다. 탭 열기는 실제 성공했으며 캡처는 실패해 앱/새 탭 시각 QA PASS로 세지 않는다. 확인 뒤 임시 지도 탭만 닫고 Preview 탭을 남겼다. 추가 요청/결제/모델 호출은0이다.
+
+## DATA-02 데이터 반영 시작 — 2026-09-22 KST
+
+Singer의 [최근 상품 연구](research/goal-20260922/recent-products.md)는 직접 열람14출처/후보24/공개 dev family11개다. 규격3확인·21미확인, 기존 이름3중복, 미래9/28품목1을 분리했고 독립 검토·앱 반영 전이다. McClintock의 [점포 근거](research/goal-20260922/store-evidence.md)는 공식 이름/주소8개·기존 좌표 원문7개를 재확인했다. ST06 과거출처404·원배포/재사용조건 일부미완료·출입구/현재영업 미확인을 보존한다. 두 연구자는 파일 인계 후 종료했다.
+
+조정자도 공식 GS25 공개 검색4개를 일반 HTTP GET으로 읽어8개 이름/주소/별도 좌표를 직접 대조했다. 각 응답SHA256은 점포 보고의 SE-GS-Y/S/D/E와 정확히 일치했다. 웹 텍스트 도구의 접근 실패와 실제200 응답을 분리한다. 현재 좌표를 공식 값으로 자동 교체하거나 CRS/라이선스 보증으로 승격하지 않는다.
+
+[DATA-02 앱 반영 계약](context/DATA-02.md) hash `9eb472380f9de497ecfbe315d41532b6dfa8f97e05dcff83de2ab15f4456ab80`: Boyle 단일 data/SQL 작성, Herschel 독립 상품 사실 검토, main 화면 예시/통합/배포. 기존 중복3·미래품1 제외 최대20개를 기존242개 뒤에 추가하는 후보이며 확인 부족 항목은 보류한다. 기존 상품 정체성·484조건/동의version·모든 거래/receipt/로그/시각을 보존하는 알려진 snapshot 이행을 함께 준비한다. 이행/독립 검토/빌드/새 Preview는 아직 실행 완료가 아니다. 전체 goal 검증을 선행 차단하지 않으며 Production은 그대로다.
+
+인접 소비자를 확인해 같은 catalog를 쓰는 이전 `/` Preview와 고정242개 표기도 영향을 받음을 확인했다. 계약 revision2 hash `388076db14d9c4a71c13f41dd1b0f6364dc6a61222578a23ed26de73e9c330e1`로 이전 schema2/hash의 요청 보존 이행·관련 checker를 같은 데이터 작성자에게 추가하고 두 agent에게 실제 재읽기/ACK를 전달했다. main은 고객 예시2개(RP007/017, 공개 dev F02/F06)와 이전 화면의 실제 catalog 카운트·stale 주석만 수정했다. 이 예시 변경은 아직 미게시이며 입력만 채우는 기존 버튼/되돌리기 로직은 변경하지 않았다.
+
+Herschel [독립 사실 검토](research/goal-20260922/data-review.md) hash `621d8dc60c8fada9b28a29687eb5f756596f2b63af6baa98ca13e30e0e33e5f9`: 직접 본문8출처를 열고20개 이름/형태를 지지, 기존242명칭/704별칭과 전체 신규명 중복0을 확인했다. 단 RP010의9/3은 발표일이며 정식 출시일은 미확인으로 고쳐야 한다. RP011의9/1은 시제 혼재를 명시한다. 작성자에게 이 사실 수정과20개 용량null 유지를 전달했다. 연구 원본은 당시 기록으로 보존하며 최종 생성본·SQL·브라우저 PASS로 확장하지 않는다. reviewer는 revision2 실제 ACK 후 인계/종료했다.
+
+배포 전 실제 기존 `/` 사본은 내 요청1건: `데모 들깨버섯밥 도시락 320g`·GS25역삼미래점·1개·1,200원·동의함·요청 접수 상태로 확인했다. `/demo`는 revision30/세대1·내 요청2/보관1 기준선이다. 초기화/추가 거래/실제 모델을 호출하지 않았다. 다음은 Boyle handback→좁은 독립 SQL 보존 검사와 main 빌드/소비자 검사 병행→작은 commit/push·Ready→동일 주소의 기존 두 사본/새 상품 검색 확인이다. DATA02는 아직 구현 중이며 현재 사용자에게 공유된 Ready는 UI10 `65765f7`이다.
+
+## DATA-02 후보 통합 — 2026-09-22 KST
+
+Boyle은 revision2 실제 읽기/소유권 ACK 후 20분 이내 인계했다. 20상품·40모의 조건 추가로262/524이며 기존242상품 전체 필드·484조건 값/version은 동일하다. 새 규격은 모두null, RP010 발표일/출시일과 RP011 시제 혼재를 생성 자료에서 정정했다. 점포 좌표는 유지하고 근거만 추가했다. schema3/sourceHash `88f9d52f3a8dea7fa72e2f058b4c2ac3e90c0a6c5de4a60f2963437aa49f1672`, 이전 `/` schema2/hash `956e0d1c3841360408ef302813010fb96f961fbc2b159888fa6658154d464eb1`. 기존 알려진 사본만 추가 이행하며 저장 완료 전 공개하지 않는다. 자체 검사는 실제 과거242/484 데이터와 원래 seed bytes를 복원해 거래/receipt/로그/시계/조건 수정값·실패/재시도·재열기를 검사했다. 작성자 자체 PASS와 독립 판정을 구분한다.
+
+통합 중 전체262상품 정책 입력4,284B가 기존4KiB HTTP·실행 기록 한도를 모두 넘는 실제 회귀를 재현했다(RED: BODY_TOO_LARGE / INVALID_MERCHANT_TRACE). 정책 전용 공통 상수8KiB를 route와 기록 파서에 함께 적용했다. 전체 대상 그대로 보존·한글300자·정확히8,192B 허용/8,193B 거절 GREEN. strict 필드/허용ID/301자 거절·최종 승인·모델 출력 한도는 유지한다. 기본/기존 merchant4KiB, search의 기존8KiB, batch64KiB는 변경하지 않았다. 단순 고정 상품 수 검사 갱신과 이 실제 런타임 복구를 구분한다.
+
+Lagrange 독립 검토는 Node24 정책 checker·trace61을 직접 실행하고, 별도 메모리상 옛 제한 재현 및 거짓 Content-Length·한글/초과/추가 필드/외부·중복ID를 검사해 좁은 PASS. manifest/card/CORE/결정/verify/recovery 실제 ACK를 받았다. 대상 hash: policy route `d38a7c994e6ee18dd21fd44c2e1d04eb7f93dd352992329cb30ed40b482add86`, 계약 `a47374ec8fa771ff32191157767aa7536850961a74a64f7b3ffab5594d516e18`, checker `5596e8bb6e2eb20de6fb5222fe432ffa4c65b0f1fd54460ca45b29cfda18015a`, trace `f264ba92312717a0d966774b25aa77bdb628c2f7e81accd1ee0e7c36da247819`, trace checker `ab04eaa8c1d10fb310c36c9331ef1ace996478a123e1dbc50c63d005a182cd7f`. SQL/브라우저/live/전체 QA 판정은 아니다.
+
+main 실행: Node24 `npm run build` Next15.5.25·타입 성공. `check:merchant-trace` pure61·client queue·실제 sql.js 로그실패/receipt/복원·UI13 PASS, `check:customer-write` 실제 SQLite 로그→고객 요청/중복 receipt·조건변경 거절 PASS. 앞선 dialogue/policy/merchant-context 소비자 검사도262개를 사용해 PASS, 실제 모델 호출0. `.env.local` 존재·키/모델 설정·live 여부만 boolean으로 확인했고 비밀값은 출력하지 않았다. Helmholtz는 별도 read-only SQL 이행 검토 중이다. 전체 goal/최종 데이터 QA·Production은 미완료이며 작은 Preview 공개 후 실제 저장 사본/검색을 확인한다.
+
+Helmholtz 독립 SQL 검토 인계: 실제 Node24 전용 checker 종료0·diff check PASS. 별도 메모리 반례에서 요청0건·ON정책·revision73/generation9/nextSequence412를 보존했고 조건INSERT 오류 주입 시 저장0회·원본 불변·재시도 성공을 확인했다. manifest/card/CORE/index/verify 실제 ACK. hash: generator `749cab3db308880ce07d1cc7b988d123799d1ebf46dd52bb2be65228e4e88f61`, domain storage `57592ac364eea8478b48d233dbb700ff7a84358560854fc4a46660b1f37bc551`, preview store `4822623c94aef71a5be6f2c5a1f9ba47b75da8fb0efdd791b291ce421e956aa4`, DATA02 checker `6a11148969c2ecf0b1a255e8e5df3b84cd2fc6ff3fbba448d30def56aac578a3`, domain seed script `e36070956969f348a6b8abaeb1f360a82f9d3a14e39161c1bf1e58adb79e6f69`, preview seed script `e35cf31cc9208de2355315af5b5aa8cd0068cbf817533446226e3d86b4bdc691`. 이행 한정 PASS이며 브라우저/모델/전체 데이터 검증이 아니다. 클라이언트23파일·staged27파일에서 실제 서버 키가 없음을 확인했고 `.env.local` ignore·사용자 `.idea/` 미포함을 확인했다. 두 구현/검토자는 인계 후 종료했다.

@@ -1,9 +1,10 @@
-import type { Database, SqlJsStatic } from "sql.js";
+import type { Database, SqlJsStatic, SqlValue } from "sql.js";
 import type { PreviewRequest } from "./demo-preview";
 
 // DATA-02: intermediate screen persistence; catalog facts/final domain remain unverified.
 export const PREVIEW_SCHEMA_VERSION = 2;
 export const PREVIEW_LEGACY_SOURCE_HASH = "855f6925dfd4aee1d4670731629f6c2530b971a5c991748ee6a9d4066c7a2a21";
+export const PREVIEW_DATA01_SOURCE_HASH = "2faebdf382c933e25c382e4dfa833e55de6c4ae304c991bb51a4c4e3efc42279";
 export type PreviewStore = {
   requests: PreviewRequest[];
   save(next: PreviewRequest[]): Promise<void>;
@@ -133,14 +134,60 @@ export function createPreviewStore(
   };
 }
 
-// Only this known v1 is eligible. Build from v2 seed; saved rows win ID collisions and
-// keep their order, approvals, prices, actors and legacy store IDs. No old bytes are mutated.
+function appendPreviewData(candidate: Database, template: Database) {
+  const rows = (db: Database, table: string) => db.exec(`SELECT * FROM ${table} ORDER BY rowid`)[0];
+  const oldProducts = rows(candidate, "products");
+  const newProducts = rows(template, "products");
+  if (oldProducts?.values.length !== 242 || newProducts?.values.length !== 262 ||
+    JSON.stringify(oldProducts.values) !== JSON.stringify(newProducts.values.slice(0, 242))) throw Error("PREVIEW_PRODUCT_IDENTITY_MISMATCH");
+  const oldStores = rows(candidate, "stores"), newStores = rows(template, "stores");
+  if (!oldStores || !newStores || JSON.stringify(oldStores.values.map(r => r.slice(0, -1))) !==
+    JSON.stringify(newStores.values.map(r => r.slice(0, -1)))) throw Error("PREVIEW_STORE_IDENTITY_MISMATCH");
+  const oldAvailability = rows(candidate, "availability"), nextAvailability = rows(template, "availability");
+  if (oldAvailability?.values.length !== 484 || nextAvailability?.values.length !== 524 ||
+    JSON.stringify(oldAvailability.values.map(r => r.slice(0, 2))) !== JSON.stringify(nextAvailability.values.slice(0, 484).map(r => r.slice(0, 2)))) throw Error("PREVIEW_CONDITION_IDENTITY_MISMATCH");
+  if (JSON.stringify(rows(candidate, "actors")) !== JSON.stringify(rows(template, "actors"))) throw Error("PREVIEW_ACTOR_IDENTITY_MISMATCH");
+  candidate.run("BEGIN");
+  try {
+    for (const [table, added] of [["products", newProducts.values.slice(242)], ["availability", nextAvailability.values.slice(484)]] as [string, SqlValue[][]][]) {
+      for (const row of added) candidate.run(`INSERT INTO ${table} VALUES (${row.map(() => "?").join(",")})`, row);
+    }
+    for (const row of newStores.values) candidate.run("UPDATE stores SET details=? WHERE id=?", [row.at(-1)!, row[0]]);
+    for (const row of rows(template, "sources")?.values ?? []) candidate.run(`INSERT INTO sources VALUES (?,?,?,?,?,?,?)
+      ON CONFLICT(id) DO UPDATE SET url=excluded.url,checked_at=excluded.checked_at,published_at=excluded.published_at,
+        evidence_scope=excluded.evidence_scope,limitations=excluded.limitations,type=excluded.type`, row);
+    for (const key of ["source_hash", "catalog_hash", "data_provenance"]) {
+      const value = rows(template, "metadata")!.values.find(r => r[0] === key)![1];
+      candidate.run("UPDATE metadata SET value=? WHERE key=?", [value, key]);
+    }
+    if (candidate.exec("PRAGMA foreign_key_check").length) throw Error("PREVIEW_FOREIGN_KEY_CHECK");
+    candidate.run("COMMIT");
+  } catch (error) { candidate.run("ROLLBACK"); throw error; }
+}
+
+// Known v2 DATA-01 gets additive masters only; known v1 retains its original merge contract.
+// Neither path exposes a result before export/persistence succeeds.
 export async function restorePreviewStore(
   SQL: SqlJsStatic, seed: Uint8Array, initial: Uint8Array,
   persist: (bytes: Uint8Array) => Promise<void>,
 ): Promise<PreviewStore> {
   try { return createPreviewStore(SQL, seed, initial, persist); }
   catch {
+    let previousV2: Database | undefined;
+    try { previousV2 = openDatabase(SQL, initial, PREVIEW_DATA01_SOURCE_HASH, 2); } catch { /* Check the explicit v1 contract below. */ }
+    if (previousV2) {
+      const template = openDatabase(SQL, seed);
+      let saved: Uint8Array;
+      try {
+        readRequests(previousV2);
+        appendPreviewData(previousV2, template);
+        try {
+          try { saved = previousV2.export(); } finally { foreignKeys(previousV2); }
+          await persist(saved);
+        } catch (cause) { throw new PreviewMigrationSaveError(cause); }
+      } finally { previousV2.close(); template.close(); }
+      return createPreviewStore(SQL, seed, saved, persist);
+    }
     const legacy = openDatabase(SQL, initial, PREVIEW_LEGACY_SOURCE_HASH, 1);
     let previous: PreviewRequest[];
     try { previous = readRequests(legacy); }
@@ -150,16 +197,18 @@ export async function restorePreviewStore(
     try {
       const ids = new Set(previous.map(request => request.id));
       replacePreviewRequests(candidate, [...previous, ...readRequests(candidate).filter(request => !ids.has(request.id))]);
-      try { saved = candidate.export(); }
-      finally { foreignKeys(candidate); }
-      try { await persist(saved); }
+      try {
+        try { saved = candidate.export(); } finally { foreignKeys(candidate); }
+        await persist(saved);
+      }
       catch (cause) { throw new PreviewMigrationSaveError(cause); }
     } finally { candidate.close(); }
     return createPreviewStore(SQL, seed, saved, persist); // Not exposed until persistence completes.
   }
 }
 
-class PreviewMigrationSaveError extends Error {
+export class PreviewMigrationSaveError extends Error {
+  readonly retryable = true;
   constructor(cause: unknown) {
     super("Preview 데이터 업그레이드를 저장하지 못했습니다. 기존 사본은 보존했습니다. 다시 시도해 주세요.", { cause });
     this.name = "PreviewMigrationSaveError";

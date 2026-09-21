@@ -5,6 +5,7 @@ import { readFile, writeFile } from "node:fs/promises";
 import { createHash } from "node:crypto";
 
 const version = "DATA-01-20260921-v1";
+const dataVersion = "DATA-02-20260922-v1";
 const checkedAt = "2026-09-21"; // Calendar date, not an invented precise retrieval timestamp.
 const hash = value => createHash("sha256").update(JSON.stringify(value)).digest("hex");
 const source = (id, url, publishedAt, evidenceScope, limitations, type = "manufacturer") =>
@@ -172,6 +173,60 @@ for (const [group, [category, emoji, color, items]] of categories.entries()) {
   }
 }
 
+// Only public identity/source fields are projected; research/dev scenarios never enter app assets.
+const researchBytes = await readFile(new URL("../docs/research/goal-20260922/recent-products.json", import.meta.url));
+const researchHash = createHash("sha256").update(researchBytes).digest("hex");
+assert.equal(researchHash, "a1b134c5d2d01563fd62857d294e488b76e03098a64b4f02175078c0d017f051");
+const research = JSON.parse(researchBytes);
+const recent = research.candidates.filter(p => !["RP-018", "RP-019", "RP-020", "RP-021"].includes(p.id));
+assert.equal(recent.length, 20);
+const categoryIndex = { bread: 1, ice_cream: 4, frozen_dessert: 4, lunchbox: 0, prepared_side_dish: 7,
+  kimbap: 0, rice_ball: 0, packaged_soup: 7, packaged_noodle_meal: 2, cup_beverage: 5, snack: 3 };
+const recentSourceIds = new Set(recent.flatMap(p => p.source_ids));
+for (const s of research.sources.filter(s => recentSourceIds.has(s.id))) sources.push({
+  ...source(`RP-${s.id}`, s.url, s.published_at, ["reported_product_name_and_form", "release_evidence"], s.limits, s.source_type),
+  checkedAt: s.checked_on, licenseOrUsageNote: s.license.usage,
+});
+for (const [i, p] of recent.entries()) {
+  assert.equal(p.net_quantity, null); assert.equal(p.existing_catalog_match, null);
+  assert.notEqual(p.release.status, "future_announced");
+  const [category, emoji, color] = categories[categoryIndex[p.category]];
+  const item = makeProduct(`DEMO-${p.id}`, p.name, category, 2000 + i * 100, emoji, color,
+    [p.name, ...p.name.split(/\s+| — /).filter(word => word !== "—"), ...(p.category === "bread" ? ["민음사", "문학 빵"] : [])],
+    "reference_verified", p.source_ids.map(id => `RP-${id}`));
+  item.version = dataVersion;
+  item.sourceConfidence = p.identity_confidence === "medium_reporting" ? "medium" : "high";
+  item.fieldOrigins.name = "referenced_name_and_form";
+  item.researchCandidateId = p.id;
+  item.release = p.id === "RP-010" ? { date: null, precision: "unknown", status: "launch_announced_date_unknown",
+    announcedAt: "2026-09-03", actual_current_sale_checked: false, note: "9/3은 발표일이며 개별 정식 출시일은 미확인." } : { ...p.release };
+  if (p.id === "RP-011") Object.assign(item.release, { status: "mentioned_date_tense_mixed_unconfirmed", note: "9/1 출시일 언급·시제 혼재·실판매 미확인" });
+  const releaseLabel = p.id === "RP-010" ? "9/3 출시 발표만 확인한(정식 출시일 미확인)" : p.id === "RP-011"
+    ? "9/1 출시일 언급·시제 혼재·실판매 미확인인" : p.release.status === "reported_released" ? "출시 보도·발표 근거가 있는" : "출시 일정 발표만 확인한(실출시 미확인)";
+  item.description = `${releaseLabel} 명칭·형태 참고 상품입니다. 규격·현재 판매·점포 재고·인기는 미확인이며 가격·공급은 모의입니다.`;
+  item.trend = { status: "recent_referenced_name", confidence: "unverified", sourceIds: item.sourceIds,
+    publishedAt: research.sources.find(s => s.id === p.source_ids[0]).published_at,
+    currentPopularityVerified: false, limitation: "출시 근거와 현재 인기·점포 재고는 별개입니다. 기업의 제품군 실적을 개별 상품에 귀속하지 않습니다." };
+  catalog.push(item);
+}
+
+const officialStoreSources = [
+  ["SE-GS-Y", "역삼", "e239e092954154b6a01054940047aeed6075a1c7cc5161f1251a7c5ab3f3ffe4"],
+  ["SE-GS-S", "강남상록회관", "db18bcb558c306a47b334ea369852f745b6ee994fb5a17407f634c40fd376594"],
+  ["SE-GS-D", "강남동원", "e5fbf7748285a75f8db98d74d39c3a5177bf831cc7b47f996752a4a2e6cb5a0f"],
+  ["SE-GS-E", "S9언주역", "02628ea0d4107d54b30b1e1463903ee44fa8fb997f5ef7324702026a22f3eb99"],
+];
+for (const [id, query, responseSha256] of officialStoreSources) sources.push({
+  ...source(id, `https://www.gsretail.com/api/homepage/brand/storeSearch/selectGs25Stores?shopName=${encodeURIComponent(query)}`,
+    null, ["store_name", "store_address", "coordinate_comparison_only"],
+    "공식 공개 응답의 상호·주소 대조. CRS·실측 정확도·갱신일·재사용 조건 미기재. 현재 영업·재고 보장 아님.", "official_store"),
+  checkedAt: "2026-09-22", responseSha256, crossCheck: "researcher_and_main_matching_response_hash",
+});
+sources.find(s => s.id === "P07").limitations += " 2026-09-22 재조회 HTTP 404. 기존 좌표 원문 재확인 미완료; 공식 SE-GS-D는 상호·주소의 별도 근거입니다.";
+sources.push({ ...source("SE-OSM-NODE", "https://api.openstreetmap.org/api/0.6/node/12843268937.json", "2025-08-05T08:40:57Z",
+  ["named_station_poi", "coordinate_comparison_only"], "node version5. 주소·층·출입구·실측 태그 없음. 현재 영업 미확인; 기존 좌표 유지.", "openstreetmap"),
+  checkedAt: "2026-09-22", licenseOrUsageNote: "OpenStreetMap contributors / ODbL: https://www.openstreetmap.org/copyright . 전체 seed의 재배포 준수 판정은 별도." });
+
 const storeRows = [
   ["DEMO-ST-01", "GS25역삼띵동점", "언주로98길 7, 1층", 37.505154, 127.042457, "P01"],
   ["DEMO-ST-02", "GS25역삼상록점", "테헤란로43길 12, 101호", 37.504081, 127.043994, "P02"],
@@ -188,6 +243,20 @@ const stores = storeRows.map(([id, name, address, latitude, longitude, coordinat
   coordinateSourceId, coordinateAccuracy: "address_or_poi_not_surveyed_entrance", operatingNowVerified: false,
   limitations: "실제 점포 위치 참고. 상품·가격·취급·재고·경영주 관계는 모두 모의이며 실시간 영업을 보장하지 않음.",
 }));
+const storeEvidence = [
+  ["SE-GS-Y", "VS089", 1.82], ["SE-GS-Y", "VX051", 3.37], ["SE-GS-Y", "VDZ92", 2.82], ["SE-GS-Y", "V2300", 9.75],
+  ["SE-GS-S", "VJH73", 0.27], ["SE-GS-D", "V1049", 9.96], ["SE-GS-E", "VGC22", 18.79], ["SE-GS-Y", "V3831", 6.35],
+];
+stores.forEach((store, i) => {
+  const [sourceId, externalShopCode, coordinateDifferenceMeters] = storeEvidence[i];
+  store.sourceIds.push(sourceId, ...(i === 6 ? ["SE-OSM-NODE"] : []));
+  store.checkedAt = "2026-09-22";
+  store.evidenceUpdate = { sourceId, externalShopCode, verifiedFields: ["name", "address"], coordinateDifferenceMeters,
+    coordinateComparison: "공개 자료 간 거리 차이, 실측 오차/정확도 아님", officialCrsVerified: false, officialReuseTermsVerified: false,
+    originalCoordinateRechecked: i !== 5, originalDistributionRowVerified: false };
+  store.limitations += " 공식 상호·주소 재대조, 기존 좌표 유지. 원배포 행·재사용 조건 전체 대조 미완료.";
+  if (i === 5) store.limitations += " 기존 좌표 출처 P07은 2026-09-22 HTTP 404로 재확인하지 못함.";
+});
 const actors = [
   ...Array.from({ length: 20 }, (_, i) => ({ id: `DEMO-CUSTOMER-${String(i + 1).padStart(2, "0")}`,
     role: "customer", displayName: `합성 고객 ${String(i + 1).padStart(2, "0")}`, origin: "synthetic", realPerson: false })),
@@ -201,7 +270,7 @@ const availability = catalog.flatMap((product, i) => [...new Set([i % stores.len
   return { storeId: stores[j].id, productId: product.id, requestable: supplyStatus === "available" || supplyStatus === "limited",
     unitPrice: product.price, unitCost: Math.floor(product.price * 0.65 / 100) * 100,
     moq: i % 3 === 0 ? 6 : 1, packSize: i % 3 === 0 ? 6 : 1, supplyStatus,
-    origin: "simulated", sourceIds: [], version, stockQuantity: i % 5 === 0 ? 0 : (i + k) % 9,
+    origin: "simulated", sourceIds: [], version: product.version, stockQuantity: i % 5 === 0 ? 0 : (i + k) % 9,
     supplyQuantity: supplyStatus === "unavailable" ? 0 : supplyStatus === "unknown" ? null : supplyStatus === "limited" ? 6 : 24,
     observedAt: "2026-09-21T09:00:00+09:00", observedAtOrigin: "simulated_clock", };
 }));
@@ -227,7 +296,14 @@ const scenarios = scenarioRows.map(([family, purpose, expected, coreIds, sourceI
 }));
 
 const provenance = {
-  version, researchVersion: "RS-20260921-v1", generatedFor: "dev-demo-not-release-verified", checkedAt,
+  version: dataVersion, researchVersion: "DATA-02-RECENT-20260922-v1", generatedFor: "dev-demo-not-release-verified", checkedAt: "2026-09-22",
+  integration: { researchHash, storeReportHash: "3206975577946f4d443465c151a8207bd6bd8fcbba8cbdc68e90bb60900b3578",
+    appendedIds: recent.map(p => `DEMO-${p.id}`), excludedCandidates: ["RP-018", "RP-019", "RP-020", "RP-021"],
+    originalProducts: 242, originalConditions: 484, originalConditionVersion: version, releaseDataQa: "pending_independent_review" },
+  factualCorrections: [
+    { candidateId: "RP-010", basis: "Independent DATA-02 fact review of S03", correction: "2026-09-03은 발표일. 정식 출시일 null/unknown; frozen 연구 원본은 감사 이력으로 보존." },
+    { candidateId: "RP-011", basis: "Independent DATA-02 fact review of S04", correction: "9/1 출시일 언급·시제 혼재·실판매 미확인. 완료/예정 중 하나로 단정하지 않음." },
+  ],
   sources, candidatePolicy: "24개는 S08의 2026-08 행사 목록에서 이름을 직접 읽은 과거 행사 기반 관심 후보. 실제 출시·현재 인기 24개 확인을 뜻하지 않음.",
   absenceSemantics: "availability 행 누락은 unknown/not_configured이며 실제 미취급 증거가 아니다.",
   simulatedFields: ["all prices", "costs", "stocks", "supply", "moq", "packSize", "requestable", "actors", "transactions"],

@@ -1,4 +1,5 @@
 import { interpretPolicy, validatePolicyInput } from "../../../../lib/assistant/policy";
+import { POLICY_BODY_BYTES } from "../../../../lib/assistant/policy-contracts";
 import { failureResponse, json, limitRequest, readJson, requireLive, requireSameOrigin } from "../../../../lib/assistant/server";
 
 export const runtime = "nodejs";
@@ -10,7 +11,7 @@ export async function POST(request: Request) {
     requireLive(request);
     // Shared per-process 20/IP/minute counter, not a durable/global cost cap.
     limitRequest(request);
-    const input = validatePolicyInput(await readJson(request));
+    const input = validatePolicyInput(await readJson(request, POLICY_BODY_BYTES));
     return json(await interpretPolicy(input, request));
   } catch (error) { return failureResponse(error); }
 }

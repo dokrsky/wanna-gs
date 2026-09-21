@@ -9,6 +9,7 @@ import type { Command, CommandOutcome, DomainState, SearchRun, Seed } from "./ty
 export const DOMAIN_SCHEMA_VERSION = 3;
 export const DOMAIN_V1_SOURCE_HASH = "13bc7a6a7a88bb3d60e80444fa24731b29feeaafc7a0a71c546a19a60014403e";
 export const DOMAIN_V2_SOURCE_HASH = "3d15fce9caf74e0293ce5908bb532cbd3dc69e4639df573b5f76553f1fc72bc0";
+export const DOMAIN_DATA01_SOURCE_HASH = "b665391bac2a443ae0a42f850828e3c0ceaafaad4c9f7c8058c1b67453f24051";
 export const LOCAL_CUSTOMER_ID = "DEMO-CUSTOMER-LOCAL";
 export type ArchivedPreviewRequest = {
   id: string; actor: string; productId: string; productName: string; storeId: string;
@@ -204,7 +205,8 @@ function openDatabase(SQL: SqlJsStatic, bytes: Uint8Array, sourceHash?: string, 
     foreignKeys(db);
     const version = scalar(db, "PRAGMA user_version");
     const observedHash = scalar(db, "SELECT value FROM metadata WHERE key='source_hash'");
-    const knownLegacy = allowLegacy && ((version === 1 && observedHash === DOMAIN_V1_SOURCE_HASH) || (version === 2 && observedHash === DOMAIN_V2_SOURCE_HASH));
+    const knownLegacy = allowLegacy && ((version === 1 && observedHash === DOMAIN_V1_SOURCE_HASH) ||
+      (version === 2 && observedHash === DOMAIN_V2_SOURCE_HASH) || (version === 3 && observedHash === DOMAIN_DATA01_SOURCE_HASH));
     if ((!knownLegacy && (version !== DOMAIN_SCHEMA_VERSION || (sourceHash !== undefined && observedHash !== sourceHash))) ||
       scalar(db, "PRAGMA integrity_check") !== "ok" || db.exec("PRAGMA foreign_key_check").length) {
       throw Error("DOMAIN_SNAPSHOT_INCOMPATIBLE");
@@ -381,6 +383,42 @@ export function createDomainSeed(SQL: SqlJsStatic, seed: Seed, sourceHash: strin
   } finally { db.close(); }
 }
 
+// Caller owns one SQL transaction. No bootstrap, business-row rewrite, clock or settlement.
+function appendReferenceData(db: Database, template: Database) {
+  const existingProducts = new Map(rows(db, "SELECT * FROM products").map(p => [p.id, p]));
+  const incomingProducts = rows(template, "SELECT * FROM products ORDER BY position");
+  if (incomingProducts.slice(0, 242).some(p => !existingProducts.has(p.id))) throw Error("DOMAIN_ORIGINAL_PRODUCT_MISSING");
+  // Exact old identity/position must still exist. A known hash is not a corruption bypass.
+  for (const old of existingProducts.values()) {
+    const next = incomingProducts.find(p => p.id === old.id);
+    if (!next || Object.keys(old).some(key => old[key] !== next[key])) throw Error("DOMAIN_MASTER_IDENTITY_MISMATCH");
+  }
+  for (const product of incomingProducts) if (!existingProducts.has(product.id)) {
+    insert(db, "products", "id,name,details", product, Number(product.position));
+  }
+  const existingConditions = new Set(rows(db, "SELECT storeId,productId FROM conditions").map(c => `${c.storeId}:${c.productId}`));
+  let position = Number(scalar(db, "SELECT COALESCE(MAX(position),-1) FROM conditions")) + 1;
+  for (const condition of rows(template, "SELECT * FROM conditions ORDER BY position")) {
+    // Existing conditions may have been deliberately edited in the demo; preserve all values/version.
+    if (existingConditions.has(`${condition.storeId}:${condition.productId}`)) continue;
+    if (existingProducts.has(condition.productId)) throw Error("DOMAIN_EXISTING_CONDITION_MISSING");
+    insert(db, "conditions", COLUMNS.conditions, condition, position++);
+  }
+  const oldStores = rows(db, "SELECT * FROM stores");
+  const incomingStores = rows(template, "SELECT * FROM stores ORDER BY position");
+  if (oldStores.length !== incomingStores.length) throw Error("DOMAIN_STORE_IDENTITY_MISMATCH");
+  for (const store of incomingStores) {
+    const old = oldStores.find(s => s.id === store.id);
+    if (!old || ["name", "address", "latitude", "longitude", "position"].some(key => old[key] !== store[key])) throw Error("DOMAIN_STORE_IDENTITY_MISMATCH");
+    db.run("UPDATE stores SET details=? WHERE id=?", [store.details, store.id]);
+  }
+  for (const s of rows(template, "SELECT * FROM sources")) db.run(`INSERT INTO sources VALUES (?,?,?,?,?,?)
+    ON CONFLICT(id) DO UPDATE SET url=excluded.url,checkedAt=excluded.checkedAt,publishedAt=excluded.publishedAt,
+      evidenceScope=excluded.evidenceScope,limitations=excluded.limitations`,
+    [s.id, s.url, s.checkedAt, s.publishedAt, s.evidenceScope, s.limitations]);
+  db.run("UPDATE metadata SET value=? WHERE key='data_provenance'", [String(scalar(template, "SELECT value FROM metadata WHERE key='data_provenance'"))]);
+}
+
 export async function createDomainStore(options: {
   SQL: SqlJsStatic; seed: Uint8Array; initial?: Uint8Array; persist: (bytes: Uint8Array) => Promise<void>;
   archive?: PreviewArchive; now?: () => number; sessionId?: () => string;
@@ -401,21 +439,26 @@ export async function createDomainStore(options: {
   let archive: PreviewArchive;
   try {
     const previousVersion = scalar(db, "PRAGMA user_version");
-    if (previousVersion === 1 || previousVersion === 2) {
+    const previousHash = scalar(db, "SELECT value FROM metadata WHERE key='source_hash'");
+    if (previousVersion === 1 || previousVersion === 2 || previousHash !== sourceHash) {
       // Validate the old state before DDL. Never bootstrap or rewrite old business rows.
       readDomainState(db); readArchive(db);
       db.run("BEGIN");
       try {
         if (previousVersion === 1) db.run(RECORD_SCHEMA);
-        db.run(MERCHANT_SCHEMA);
+        if (previousVersion === 1 || previousVersion === 2) db.run(MERCHANT_SCHEMA);
+        const incoming = openDatabase(SQL, seed, sourceHash);
+        try { appendReferenceData(db, incoming); } finally { incoming.close(); }
         db.run("UPDATE metadata SET value=? WHERE key='source_hash'", [sourceHash]);
         db.run("PRAGMA user_version=3");
         readDomainState(db);
         if (db.exec("PRAGMA foreign_key_check").length) throw Error("DOMAIN_FOREIGN_KEY_CHECK");
         db.run("COMMIT");
       } catch (error) { db.run("ROLLBACK"); throw error; }
-      try { committed = db.export(); } finally { foreignKeys(db); }
-      try { await persist(committed); } catch { throw new DomainMigrationSaveError(); }
+      try {
+        try { committed = db.export(); } finally { foreignKeys(db); }
+        await persist(committed);
+      } catch { throw new DomainMigrationSaveError(); }
     }
     if (options.initial === undefined) {
       const initNow = now();
@@ -503,7 +546,7 @@ export class DomainSnapshotError extends Error {
 export class DomainMigrationSaveError extends Error {
   readonly retryable = true;
   constructor() {
-    super("기존 거래는 보존했지만 기록 기능 업그레이드를 저장하지 못했습니다. 초기화하지 말고 저장소를 다시 열어 재시도해주세요.");
+    super("기존 거래는 보존했지만 데모 데이터 업그레이드를 저장하지 못했습니다. 초기화하지 말고 저장소를 다시 열어 재시도해주세요.");
     this.name = "DomainMigrationSaveError";
   }
 }

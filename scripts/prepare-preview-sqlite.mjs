@@ -131,10 +131,10 @@ if (process.argv.includes("--check")) {
   // One runnable SQL/save-failure check; persistence is injected, not a browser IndexedDB test.
   const readDb = new SQL.Database(seed);
   const scalar = sql => readDb.exec(sql)[0].values[0][0];
-  assert.equal(scalar("SELECT count(*) FROM products"), 242);
+  assert.equal(scalar("SELECT count(*) FROM products"), 262);
   assert.equal(scalar("SELECT count(*) FROM stores WHERE identity_origin='reference_verified' AND latitude IS NOT NULL AND longitude IS NOT NULL"), 8);
   assert.equal(scalar("SELECT count(*) FROM stores WHERE identity_origin='synthetic' AND latitude IS NULL AND longitude IS NULL"), 2);
-  assert.equal(scalar("SELECT count(*) FROM availability"), 484);
+  assert.equal(scalar("SELECT count(*) FROM availability"), 524);
   assert.equal(scalar("SELECT count(*) FROM availability WHERE store_id IN ('demo-central','demo-neighborhood')"), 0, "legacy availability stays unknown");
   assert.equal(scalar("SELECT count(*) FROM actors WHERE role='customer'"), 20);
   assert.equal(scalar("SELECT count(*) FROM actors WHERE role='merchant'"), 8);
@@ -243,5 +243,5 @@ if (process.argv.includes("--check")) {
   }
   await assert.rejects(restorePreviewStore(SQL, seed, new Uint8Array([1, 2, 3]), async () => { unexpectedWrites += 1; }));
   assert.equal(unexpectedWrites, 0, "unknown/corrupt snapshots require explicit recovery, never auto-reset");
-  console.log("PASS preview-store: 242 shared products, 8 real + 2 legacy stores, 484 availability, 28 actors, 24 requests; SQL/FK, delayed save/reset, v1 upgrade/approval preservation/deduplication, upgrade failure + retry, unknown snapshot rejection.");
+  console.log("PASS preview-store: 262 shared products, 8 real + 2 legacy stores, 524 availability, 28 actors, 24 requests; SQL/FK, delayed save/reset, v1 upgrade/approval preservation/deduplication, upgrade failure + retry, unknown snapshot rejection. DATA-01 v2 preservation is checked by scripts/check-data02.mjs.");
 }
