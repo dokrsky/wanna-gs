@@ -100,9 +100,20 @@ export type Command = CommandContext & {
 export type CommandOutcome =
   | { ok: true; state: DomainState; events: DomainEvent[]; result: CommandResult; replayed: boolean }
   | { ok: false; error: { code: string; message: string } };
+// Read-only customer explanation, never persisted or used to authorize a trade.
+export type CustomerWaiting = {
+  code: "RECONSENT_REQUIRED" | "SUPPLY_CONFIRMATION_PENDING" | "CONDITION_UNKNOWN"
+    | "SIMULATED_SUPPLY_UNAVAILABLE" | "ORDER_WINDOW_CLOSED" | "MINIMUM_OR_PACK_WAIT"
+    | "STORE_REVIEW_PENDING" | "ALLOCATION_PENDING";
+  checkedAt: number; moq?: number; packSize?: number;
+};
+// Customer projections omit all three merchant-only fields, not zero them out.
+export type RequestDetailLine = Omit<OrderLine, "quantity" | "suppliedQuantity" | "unitCost">
+  & Partial<Pick<OrderLine, "quantity" | "suppliedQuantity" | "unitCost">> & { supplied: boolean };
 export type RequestDetail = {
   request: PurchaseRequest; actor: Actor; consentValid: boolean; links: RequestOrderLink[];
-  lines: OrderLine[]; allocations: Allocation[]; payments: Payment[]; reservation: Reservation | null;
+  lines: RequestDetailLine[]; allocations: Allocation[]; payments: Payment[]; reservation: Reservation | null;
+  waiting: CustomerWaiting | null;
 };
 export type Demand = {
   productId: string; validQuantity: number; outstandingQuantity: number; pooledQuantity: number;

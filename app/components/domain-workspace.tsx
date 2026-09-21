@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { getView } from "../../lib/domain/commands";
 import { DOMAIN_POLICY, integer } from "../../lib/domain/policy";
-import type { Command, CommandContext, CommandOutcome, Condition, DomainState, OrderLine, Policy, RequestDetail, Reservation, View } from "../../lib/domain/types";
+import type { Command, CommandContext, CommandOutcome, Condition, CustomerWaiting, DomainState, OrderLine, Policy, RequestDetail, Reservation, View } from "../../lib/domain/types";
 import { AssistantError, errorMessages, isObject, parseMerchantOutput, parseMerchantRequest, resolveMerchantProposal, type AssistantErrorCode, type AssistantStatus, type MerchantOutput, type MerchantResponse } from "../../lib/assistant/contracts";
 import styles from "./domain-workspace.module.css";
 import PolicyAssistant from "./policy-assistant";
@@ -243,10 +243,22 @@ function MerchantAssistant({ state, storeId, revision, budgetWon, selectedProduc
   </section>;
 }
 
+const waitingLabels: Record<CustomerWaiting["code"], string> = {
+  RECONSENT_REQUIRED: "현재 구매 조건을 확인하고 다시 동의해주세요.",
+  SUPPLY_CONFIRMATION_PENDING: "발주 물량의 공급 확정을 기다려요. 아직 확보 완료가 아니에요.",
+  CONDITION_UNKNOWN: "모의 발주 조건 확인을 기다려요. 실제 품절을 뜻하지 않아요.",
+  SIMULATED_SUPPLY_UNAVAILABLE: "현재 모의 조건에서는 공급할 수 없어요. 실제 점포 재고와는 달라요.",
+  ORDER_WINDOW_CLOSED: "모의 발주 가능 기한이 닫혀 있어요.",
+  MINIMUM_OR_PACK_WAIT: "최소 발주·포장 조건 또는 모의 공급 한도 확인을 기다려요.",
+  STORE_REVIEW_PENDING: "점포의 검토를 기다려요. 아직 발주·공급 확보가 확정되지 않았어요.",
+  ALLOCATION_PENDING: "확보 물량의 배정 처리를 기다려요. 아직 구매 완료가 아니에요.",
+};
+
 function CustomerRequest({ detail, condition, name, now, revision, disabled, send }: {
   detail: RequestDetail; condition?: Condition; name: string; now: number; revision: number; disabled: boolean; send: Send;
 }) {
-  const { request, reservation } = detail;
+  const { request, reservation, waiting } = detail;
+  const pickupReady = reservation?.status === "pickup_ready" && reservation.pickupAvailableAt !== null && reservation.pickupDeadlineAt !== null && now < reservation.pickupDeadlineAt;
   const [quantity, setQuantity] = useState(String(request.quantity));
   const [consent, setConsent] = useState(false);
   const [confirmedRevision, setConfirmedRevision] = useState(revision);
@@ -266,13 +278,25 @@ function CustomerRequest({ detail, condition, name, now, revision, disabled, sen
   return <article className={styles.card}>
     <div className={styles.sectionTitle}><h4>{name} · {request.quantity}개</h4><span className={styles.badge}>{labels[reservation?.status ?? (needsConsent ? "review_required" : request.status)]}</span></div>
     <p>동의한 판매가 {won(request.unitPrice)} / 개 · 합계 {won(request.unitPrice * request.quantity)}</p>
+    {waiting && <div className={styles.waiting}>
+      <strong>{waitingLabels[waiting.code]}</strong>
+      {waiting.code === "MINIMUM_OR_PACK_WAIT" && <p>{waiting.moq !== undefined && <>최소 발주량 {waiting.moq}개 (모의)</>}{waiting.moq !== undefined && waiting.packSize !== undefined && " · "}{waiting.packSize !== undefined && <>포장 단위 {waiting.packSize}개 (모의)</>}</p>}
+      <p>상태 확인 {when(waiting.checkedAt)} · KST · 데모 시각</p>
+    </div>}
     <ol className={styles.timeline}>
       <li><strong>요청 접수</strong><span>{when(request.createdAt)} · 접수 순번 {request.sequence}</span></li>
-      <li><strong>발주·공급</strong><span>진행 중 발주 연결 {detail.links.filter(link => link.active).length}건 · 연결 출처 중 공급 확정 {detail.lines.filter(line => line.suppliedQuantity !== null).length}건</span></li>
+      <li><strong>발주·공급</strong><span>진행 중 발주 연결 {detail.links.filter(link => link.active).length}건 · 연결 출처 중 공급 확정 {detail.lines.filter(line => line.supplied).length}건</span></li>
       <li><strong>모의 결제</strong>{detail.payments.length ? detail.payments.map(payment => <span key={payment.id}>{when(payment.createdAt)} · {payment.status === "succeeded" ? "성공" : "실패 · 예약 아님"} · {won(payment.amountWon)}</span>) : <span>아직 결제 전 · 공급 확보·유효 동의 확인 후 처리</span>}</li>
       <li><strong>예약·픽업</strong><span>{reservation ? labels[reservation.status] : "예약 없음"}</span></li>
     </ol>
-    {reservation ? <div className={styles.pickup}><strong>{labels[reservation.status]}</strong><p>예약번호 <code>{reservation.code}</code></p><p>최초 픽업 알림 {when(reservation.pickupAvailableAt)}<br />픽업 마감 {when(reservation.pickupDeadlineAt)} · KST</p>{reservation.status === "pickup_ready" && reservation.pickupDeadlineAt !== null && <p>남은 시간 약 {Math.max(0, Math.ceil((reservation.pickupDeadlineAt - now) / 60_000)).toLocaleString("ko-KR")}분 · 정각부터 수령 불가</p>}<p>{reservation.status === "confirmed" ? "입고 대기예요. 아직 픽업 48시간이 시작되지 않았어요." : reservation.status === "pickup_expired" ? "기한이 지났어요. 자동 환불·재판매·예외 수령은 제공하지 않아요." : reservation.status === "collected" ? `전량 수령 완료 · ${when(reservation.collectedAt)}` : "고객이 직접 수령 완료하지 않아요. 해당 점포 경영주가 예약번호를 확인해 처리해요."}</p></div> : <p className={styles.note}>구매 동의 {when(request.consentAt)} → {when(request.consentExpiresAt)} · 7일<br />입고 후 최초 픽업 알림부터 별도로 정확히 48시간이에요.</p>}
+    {reservation ? <div className={`${styles.pickup} ${pickupReady ? styles.pickupReady : ""}`}>
+      <strong className={pickupReady ? styles.pickupTitle : undefined}>{pickupReady ? "여기 있GS · 픽업 가능" : labels[reservation.status]}</strong>
+      {pickupReady && <div className={styles.pickupDeadline}><span>픽업 마감 · 이 시각 전까지 수령해주세요 (KST)</span><strong>{when(reservation.pickupDeadlineAt)}</strong></div>}
+      <p>예약번호 <code>{reservation.code}</code></p>
+      <p>최초 픽업 알림 {when(reservation.pickupAvailableAt)} · KST{!pickupReady && <><br />픽업 마감 {when(reservation.pickupDeadlineAt)} · KST</>}</p>
+      {pickupReady && reservation.pickupDeadlineAt !== null && <p>최초 알림부터 정확히 48시간 · 남은 시간 약 {Math.max(0, Math.ceil((reservation.pickupDeadlineAt - now) / 60_000)).toLocaleString("ko-KR")}분 · 마감 시각부터 수령 불가</p>}
+      <p>{reservation.status === "confirmed" ? "입고 대기예요. 아직 픽업 48시간이 시작되지 않았어요." : reservation.status === "pickup_expired" ? "기한이 지났어요. 자동 환불·재판매·예외 수령은 제공하지 않아요." : reservation.status === "collected" ? `전량 수령 완료 · ${when(reservation.collectedAt)}` : "고객이 직접 수령 완료하지 않아요. 해당 점포 경영주가 예약번호를 확인해 처리해요."}</p>
+    </div> : <p className={styles.note}>구매 동의 {when(request.consentAt)} → {when(request.consentExpiresAt)} · 7일<br />입고 후 최초 픽업 알림부터 별도로 정확히 48시간이에요.</p>}
     {request.reason && <p className={styles.warning}>{labels[request.reason] ?? request.reason}</p>}
     {actionable && <form className={styles.form} onSubmit={submit}>
       <strong>{needsConsent ? "현재 조건 확인 · 7일 재동의" : "미연결 요청 수량 변경"}</strong>

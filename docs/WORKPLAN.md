@@ -12,7 +12,9 @@
 | UI-04 | Meitner: 순수 거래 도메인. Locke: 정규화 SQL·저장 어댑터. Newton: 거래 화면. 조정자: `/demo` 연결·배포 | `b4a2854` 여섯 번째 Preview Ready. 정상 로컬 요청→발주→공급/모의 결제→입고/48시간→수령·새로고침 복원. Preview 별도 시작·이전 이력 보관 확인. 독립 전체 QA 후속 |
 | UI-05 | Newton: 점포 지도·가상 위치/직선거리. 조정자 통합 | `1012772` 일곱 번째 Preview Ready. 외부 iframe 두 번 지연 fallback, 주소·거리 및 지도 없이 요청 저장 확인. 정상 지도 렌더 미확인 |
 | UI-06 | Meitner: 정책 AI API. Newton: 정책 변경안/확인 UI. 조정자 통합 | `5502200` 여덟 번째 Preview Ready. live1회 변경안→별도 확인→예산1만원/커피1개 자동발주·새로고침 복원, 전체 독립 품질검증 전 |
-| UI-07 | Meitner: 제한 대화 API. Locke: domain DTO/기록 명령/SQL migration 단일 작성. Newton: 고객 대화/기록. 조정자: 페이지/경영주 안전 조회 | ADR-005·DTO/props ACK 후 handback/통합. 자체 검사·TS PASS, build/실제 브라우저 v1 이행·Preview 확인 중. 전체 독립 품질검증 전 |
+| UI-07 | Meitner: 제한 대화 API. Locke: domain DTO/기록 명령/SQL migration 단일 작성. Newton: 고객 대화/기록. 조정자: 페이지/경영주 안전 조회 | `81a4369` 아홉 번째 Preview Ready. 실제 로컬v1 수령이력 보존·니즈 등록/경영주 안전조회, Preview live검색1회→검색/선택/구매연결 저장. live추가질문·전체 독립 품질 후속 |
+| UI-08 | Locke: 읽기 전용 고객 대기/안전 조회 DTO. Newton: 대기 사유·발음·픽업 위계. 조정자: 통합/Preview | [context/UI-08.md](context/UI-08.md). 자체 domain92/needs26/waiting21 PASS, 작은 후보 빌드·화면·게시 진행 중. 전체 검증 후속 |
+| UI-09 후보 | 경영주 최근 변경 문맥·앞으로 정책 연결·실행 이력 | 필수 누락 확인, 의미 있는 기억/이력 경계는 후속 위임 결정 및 소유권 배정 후 구현 |
 | DATA-01/02 | Locke: 242개 상품 초안·실제 점포8/legacy2·합성 역할/availability·SQLite 업그레이드. Newton: 출처/실제 점포 UI | `aa54838` 다섯 번째 Preview Ready. 로컬 기존 요청 보존 확인. 최종 상품 사실/독립 데이터 검증 전 |
 | VERIFY | 전체 seed/독립 검증·정책 검토·E2E·평가·G5/G6 | 구현 후 수행, 최종 완료 조건 유지 |
 

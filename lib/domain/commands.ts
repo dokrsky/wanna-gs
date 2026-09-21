@@ -1,6 +1,6 @@
 import { DOMAIN_POLICY as P, DomainError, amount, identifier, integer, requireRule, sum } from "./policy";
 import { assertSearchState, recordSearch, searchView } from "./needs";
-import type { Actor, Command, CommandOutcome, Condition, ConsentInput, Demand, DomainEvent, DomainState, OrderItem, OrderLine, PurchaseRequest, RequestDetail, Seed, Viewer, View } from "./types";
+import type { Actor, Command, CommandOutcome, Condition, ConsentInput, CustomerWaiting, Demand, DomainEvent, DomainState, OrderItem, OrderLine, PurchaseRequest, RequestDetail, Seed, Viewer, View } from "./types";
 
 const copy = <T>(value: T): T => structuredClone(value);
 const unique = (values: string[]) => new Set(values).size === values.length;
@@ -376,27 +376,49 @@ export function applyCommand(committedState: DomainState, command: Command, wall
   }
 }
 
-function detail(state: DomainState, request: PurchaseRequest, now: number): RequestDetail {
+function waitingFor(state: DomainState, request: PurchaseRequest, now: number): CustomerWaiting | null {
+  if (request.status === "cancelled" || request.status === "reserved") return null;
+  const result = (code: CustomerWaiting["code"]): CustomerWaiting => ({ code, checkedAt: now });
+  if (request.status === "review_required") return result("RECONSENT_REQUIRED");
+  if (state.links.some(l => l.requestId === request.id && l.active)) return result("SUPPLY_CONFIRMATION_PENDING");
+  const demand = demandFor(state, request.storeId, request.productId, now);
+  const throughRequest = sum(pending(state, request.storeId, request.productId, now).filter(r => r.sequence <= request.sequence).map(r => r.quantity));
+  if (throughRequest > 0 && demand.pooledQuantity >= throughRequest) return result("ALLOCATION_PENDING");
+  if (!demand.shortage && demand.outstandingQuantity > 0) return result("SUPPLY_CONFIRMATION_PENDING");
+  const c = state.conditions.find(c => c.storeId === request.storeId && c.productId === request.productId);
+  if (!c || c.supplyStatus === "unknown") return result("CONDITION_UNKNOWN");
+  if (!c.requestable || c.supplyStatus === "unavailable" || c.supplyQuantity === 0) return result("SIMULATED_SUPPLY_UNAVAILABLE");
+  if (demand.reason === "ORDER_WINDOW_CLOSED") return result("ORDER_WINDOW_CLOSED");
+  if (demand.reason === "MINIMUM_OR_PACK_LIMIT") return { ...result("MINIMUM_OR_PACK_WAIT"), moq: c.moq, packSize: c.packSize };
+  // Includes budget restrictions without disclosing finances or other demand.
+  return result("STORE_REVIEW_PENDING");
+}
+
+function detail(state: DomainState, request: PurchaseRequest, now: number, role: Viewer["role"]): RequestDetail {
   const links = state.links.filter(l => l.requestId === request.id), allocations = state.allocations.filter(a => a.requestId === request.id);
   const lineIds = new Set([...links.map(l => l.lineId), ...allocations.map(a => a.lineId)]);
   const reservation = state.reservations.find(b => b.requestId === request.id) ?? null;
   const valid = consentValid(state, request, now);
   // Derived clock display only; no writes/notifications while reading a snapshot.
   const displayRequest = request.status === "pending" && !valid ? { ...request, status: "review_required" as const, reason: now >= request.consentExpiresAt ? "CONSENT_EXPIRED" : "CONDITIONS_CHANGED" } : request;
-  return copy({ request: displayRequest, actor: state.actors.find(a => a.id === request.actorId)!, consentValid: valid && request.status !== "cancelled", links, lines: state.lines.filter(l => lineIds.has(l.id)), allocations, payments: state.payments.filter(p => p.requestId === request.id), reservation: reservation && reservation.status === "pickup_ready" && now >= reservation.pickupDeadlineAt! ? { ...reservation, status: "pickup_expired" as const } : reservation });
+  const lines = state.lines.filter(l => lineIds.has(l.id)).map(line => {
+    const { quantity, suppliedQuantity, unitCost, ...safe } = line;
+    return { ...(role === "merchant" ? line : safe), supplied: suppliedQuantity !== null };
+  });
+  return copy({ request: displayRequest, actor: state.actors.find(a => a.id === request.actorId)!, consentValid: valid && request.status !== "cancelled", links, lines, allocations, payments: state.payments.filter(p => p.requestId === request.id), reservation: reservation && reservation.status === "pickup_ready" && now >= reservation.pickupDeadlineAt! ? { ...reservation, status: "pickup_expired" as const } : reservation, waiting: waitingFor(state, displayRequest, now) });
 }
 
 export function getRequestDetail(state: DomainState, context: Viewer, requestId: string, wallNow: number): RequestDetail {
   viewer(state, context);
   const request = state.requests.find(r => r.id === requestId);
   requireRule(request && request.storeId === context.storeId && (context.role === "merchant" || request.actorId === context.actorId), "FORBIDDEN", "이 요청을 조회할 수 없어요.");
-  return detail(state, request, businessNow(state, wallNow));
+  return detail(state, request, businessNow(state, wallNow), context.role);
 }
 
 export function getView(state: DomainState, context: Viewer, wallNow: number): View {
   viewer(state, context);
   const now = businessNow(state, wallNow);
-  const requests = state.requests.filter(r => r.storeId === context.storeId && (context.role === "merchant" || r.actorId === context.actorId)).sort((a, b) => a.sequence - b.sequence).map(r => detail(state, r, now));
+  const requests = state.requests.filter(r => r.storeId === context.storeId && (context.role === "merchant" || r.actorId === context.actorId)).sort((a, b) => a.sequence - b.sequence).map(r => detail(state, r, now, context.role));
   const reservations = requests.flatMap(r => r.reservation ? [r.reservation] : []);
   const reservationIds = new Set(reservations.map(r => r.id));
   return copy({ revision: state.revision, generation: state.generation, now, requests,

@@ -12,7 +12,7 @@
 .brand { font-size: 21px; font-weight: 850; letter-spacing: -.6px; }
 .brand > span { font-size: 14px; font-weight: 600; color: var(--muted, #526575); }
 .previewBadge { font-size: 12px; font-weight: 650; padding: 3px 9px; background: #ffffffba; border: 1px solid #b6dbe6; border-radius: 30px; }
-.workspace .pronunciation { font-size: 14px; color: var(--muted, #526575); margin-top: 3px; }
+.workspace .pronunciation { display: inline-block; padding: 4px 10px; border: 1px solid #9edce9; border-radius: 999px; background: #c9f2fa; font-size: 14px; font-weight: 650; color: var(--ink, #123344); margin-top: 8px; }
 .heroTitle { display: flex; align-items: center; gap: 16px; padding-top: 28px; }
 .heroTitle > div { flex: 1; min-width: 0; }
 .heroTitle h1 { font-size: clamp(32px, 5vw, 48px); line-height: 1.18; letter-spacing: -1.8px; font-weight: 850; }
@@ -68,6 +68,7 @@
 .storeDirectory ul { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr)); gap: 12px; padding: 0; margin: 12px 0; list-style: none; }
 .storeDirectory li { min-width: 0; padding: 14px; border: 1px solid var(--line, #d9e5ed); border-radius: 10px; background: white; overflow-wrap: anywhere; font-size: 13px; }
 .storeDirectory li p { margin-top: 6px; color: var(--muted, #526575); }
+.workspace .confirmationOrder { margin-top: 12px; padding: 8px 12px; border-radius: 10px; background: var(--soft, #e3f7fc); color: var(--action, #007a9e); font-size: 14px; font-weight: 650; }
 .selectedProduct { display: flex; gap: 14px; align-items: center; padding: 12px 0; }
 .selectedProduct > span { display: grid; place-items: center; flex: 0 0 64px; height: 64px; border-radius: 14px; font-size: 32px; }
 .selectedProduct strong { font-size: 18px; }

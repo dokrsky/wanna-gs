@@ -502,6 +502,7 @@ function CustomerPanel({ requests, onRequest, busy, conditions = previewAvailabi
       {selected && <section className={styles.card} aria-labelledby="customer-confirm-title">
         <span className={styles.step}>03 · 조건 확인 후 요청</span>
         <h2 id="customer-confirm-title" ref={confirmationRef} tabIndex={-1}>이 조건으로 요청할까요?</h2>
+        <p className={styles.confirmationOrder}>수량 → 점포 → 가격 → 구매 동의</p>
         <form onSubmit={request}>
           <div className={styles.selectedProduct}><span style={{ backgroundColor: selected.color }} aria-hidden="true">{selected.emoji}</span><div><strong>{selected.name}</strong><p className={styles.small}>{unitPrice !== null ? `${won(unitPrice)} / 개 · 선택 점포의 모의 가격` : "요청 가능한 점포를 선택하면 모의 가격이 표시돼요."}</p></div></div>
           <label className={styles.fieldLabel} htmlFor="customer-quantity">수량 <span className={styles.small}>1~20개</span></label>
