@@ -1,11 +1,21 @@
 "use client";
 
-import { useRef, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { type PreviewRequest, previewProducts, previewStores, won } from "../demo-preview";
+import { AssistantError, errorMessages, isObject, parseMerchantOutput, parseMerchantRequest, resolveMerchantProposal, type AssistantErrorCode, type AssistantStatus, type MerchantOutput, type MerchantRequest, type MerchantResponse } from "../../lib/assistant/contracts";
 import styles from "./merchant-workspace.module.css";
 
-type View = "requested" | "approved" | "all";
-type Proposal = { description: string; ids: string[] | null; view: View; snapshot: string };
+type View = MerchantOutput["view"];
+type Proposal = MerchantOutput & {
+  ids: string[] | null;
+  snapshot: string;
+  generation: number;
+  model: MerchantResponse["model"];
+  usage: MerchantResponse["usage"];
+};
+const allowedIds = previewProducts.map(product => product.id);
+const allowedStores = previewStores.map(store => store.id);
+const viewLabels: Record<View, string> = { requested: "검토할 수요", approved: "승인 완료", all: "전체 미확보" };
 
 const examples = [
   "미확보 요청만 보여줘",
@@ -36,7 +46,49 @@ export default function MerchantWorkspace({ requests, onApprove, busy }: {
   const [previousInput, setPreviousInput] = useState<string | null>(null);
   const [proposal, setProposal] = useState<Proposal | null>(null);
   const [message, setMessage] = useState("");
+  const [assistantStatus, setAssistantStatus] = useState<AssistantStatus | null>(null);
+  const [statusAttempt, setStatusAttempt] = useState(0);
+  const [statusLoading, setStatusLoading] = useState(true);
+  const [statusError, setStatusError] = useState("");
+  const [thinking, setThinking] = useState(false);
+  const [commandError, setCommandError] = useState("");
   const submitting = useRef(false);
+  const commandController = useRef<AbortController | null>(null);
+  const requestSequence = useRef(0);
+  const commandInput = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    let active = true;
+    const timeout = setTimeout(() => controller.abort(), 10_000);
+    setStatusLoading(true);
+    setStatusError("");
+    setAssistantStatus(null);
+    async function loadStatus() {
+      try {
+        const response = await fetch("/api/assistant/status", { signal: controller.signal, cache: "no-store" });
+        const data: unknown = await response.json();
+        if (!response.ok || !isObject(data) || typeof data.configured !== "boolean"
+          || !["live", "fixture", "unconfigured"].includes(String(data.mode))
+          || (data.model !== undefined && (typeof data.model !== "string" || data.model.length > 120))) {
+          throw new Error("Invalid assistant status");
+        }
+        if (active && !controller.signal.aborted) setAssistantStatus(data as AssistantStatus);
+      } catch {
+        if (active) setStatusError("AI 설정을 확인하지 못했어요. 다시 확인하거나 목록에서 직접 선택해 주세요.");
+      } finally {
+        clearTimeout(timeout);
+        if (active) setStatusLoading(false);
+      }
+    }
+    void loadStatus();
+    return () => { active = false; controller.abort(); clearTimeout(timeout); };
+  }, [statusAttempt]);
+
+  useEffect(() => () => {
+    requestSequence.current += 1;
+    commandController.current?.abort();
+  }, []);
 
   const store = previewStores.find((item) => item.id === storeId)!;
   const storeRequests = requests.filter((item) => item.storeId === storeId);
@@ -45,10 +97,26 @@ export default function MerchantWorkspace({ requests, onApprove, busy }: {
   const selected = storeRequests.filter((item) => selectedIds.includes(item.id) && canSelect(item));
   const selectedTotal = sum(selected);
   const budget = Number(budgetInput);
-  const validBudget = budgetInput.trim() !== "" && Number.isSafeInteger(budget) && budget >= 0;
+  const validBudget = budgetInput.trim() !== "" && Number.isSafeInteger(budget) && budget >= 0 && budget <= 1_000_000_000;
   const overBudget = validBudget && selectedTotal > budget;
-  const snapshot = JSON.stringify([storeRequests, storeId, budgetInput]);
-  const proposalStale = proposal !== null && proposal.snapshot !== snapshot;
+  const snapshot = JSON.stringify([storeRequests, storeId, budgetInput, selectedIds]);
+  const currentSnapshot = useRef(snapshot);
+  currentSnapshot.current = snapshot;
+  const aiReady = assistantStatus?.configured === true && assistantStatus.mode === "live";
+
+  useEffect(() => {
+    requestSequence.current += 1;
+    setProposal(current => current ? { ...current, generation: -1 } : null);
+    if (commandController.current) {
+      commandController.current.abort();
+      commandController.current = null;
+      setThinking(false);
+      setCommandError("점포·요청·선택 또는 예산이 바뀌어 이전 AI 제안을 취소했어요. 현재 조건으로 다시 요청해 주세요.");
+    }
+  }, [snapshot, busy]);
+
+  const proposalStale = proposal !== null && (proposal.snapshot !== snapshot || proposal.generation !== requestSequence.current);
+  const proposalApplicable = proposal?.scope === "current_batch" && proposal.action !== "clarify" && proposal.action !== "unsupported";
   const visible = storeRequests.filter((item) => {
     const product = previewProducts.find((entry) => entry.id === item.productId);
     const text = `${product?.name ?? item.productId} ${product?.category ?? ""} ${product?.aliases.join(" ") ?? ""} ${item.actor}`;
@@ -58,7 +126,22 @@ export default function MerchantWorkspace({ requests, onApprove, busy }: {
   visible.forEach((item) => groups.set(item.productId, [...(groups.get(item.productId) ?? []), item]));
   const visibleEligible = visible.filter(canSelect);
   const allVisibleSelected = visibleEligible.length > 0 && visibleEligible.every((item) => selectedIds.includes(item.id));
-  const proposedItems = proposal?.ids ? storeRequests.filter((item) => proposal.ids!.includes(item.id)) : [];
+  const proposedItems = proposal?.ids ? storeRequests.filter((item) => proposal.ids!.includes(item.id) && canSelect(item)) : selected;
+  const proposedBudget = proposal?.budgetWon ?? budget;
+
+  function cancelCommand() {
+    requestSequence.current += 1;
+    commandController.current?.abort();
+    commandController.current = null;
+    setThinking(false);
+  }
+
+  function editCommand(value: string) {
+    cancelCommand();
+    setCommand(value);
+    setProposal(null);
+    setCommandError("");
+  }
 
   function toggle(items: PreviewRequest[]) {
     if (busy || submitting.current) return;
@@ -68,46 +151,90 @@ export default function MerchantWorkspace({ requests, onApprove, busy }: {
     setMessage("");
   }
 
-  function propose(event: FormEvent<HTMLFormElement>) {
+  async function propose(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (busy || submitting.current) return;
+    if (busy || submitting.current || commandController.current) return;
+    cancelCommand();
     setProposal(null);
     setMessage("");
-    const text = command.trim().replace(/[\s,.!?，。]/g, "");
-    // ponytail: 화면 시연용 제한 문법. 실제 자연어 이해는 후속 서버 모델 연결에서 처리한다.
-    if (/앞으로|항상|자동|매일|정책|다음/.test(text)) {
-      setMessage("앞으로의 정책은 아직 저장할 수 없어요. 이번 묶음만 변경할 수 있으며 자동발주는 연결되지 않았어요.");
+    setCommandError("");
+    if (!command.trim() || !validBudget) {
+      setCommandError(errorMessages.INVALID_MERCHANT_INPUT);
       return;
     }
-    if (/^(미확보|미승인|검토할)(요청|수요)?만?(보여줘|조회해줘|조회)$/.test(text)) {
-      const unfulfilled = text.startsWith("미확보");
-      setProposal({ ids: null, view: unfulfilled ? "all" : "requested", snapshot,
-        description: unfulfilled ? "승인 여부와 관계없이 아직 공급을 확보하지 않은 요청을 모두 보여줘요. 조회만 바뀌어요." : "발주 승인 전인 요청만 보여줘요. 조회만 바뀌어요." });
+    if (!aiReady || statusLoading) {
+      setCommandError("실제 AI 설정을 먼저 확인해 주세요. 목록에서 직접 선택할 수 있으며 로컬 해석으로 자동 전환하지 않아요.");
       return;
     }
-    const excludeSandwich = /^(이번묶음(은|에서)?)?샌드위치(는|를)?(빼고|제외(하고|해줘)?)(나머지는)?(요청(수량)?만큼)?(예산(안에서|이내로))?(제안해줘|보여줘)?$/.test(text);
-    const requestQuantity = /^(이번묶음은?)?요청(수량)?만큼(제안해줘|보여줘)$/.test(text);
-    if (!excludeSandwich && !requestQuantity) {
-      setMessage("이 화면에서는 아래 예시 문장과 간단한 변형만 해석해요. 예시를 선택하거나 상품을 직접 체크해 주세요. 변경된 항목은 없어요.");
-      return;
+    const controller = new AbortController();
+    commandController.current = controller;
+    const generation = ++requestSequence.current;
+    const sentSnapshot = snapshot;
+    let timedOut = false;
+    const timeout = setTimeout(() => { timedOut = true; controller.abort(); }, 45_000);
+    setThinking(true);
+    try {
+      const input: MerchantRequest = parseMerchantRequest({
+        text: command.trim(), id: crypto.randomUUID(), generation, storeId, budgetWon: budget,
+        selectedProductIds: [...new Set(selected.map(item => item.productId))],
+      }, allowedIds, allowedStores);
+      const response = await fetch("/api/assistant/merchant", {
+        method: "POST", headers: { "Content-Type": "application/json" }, signal: controller.signal,
+        body: JSON.stringify(input),
+      });
+      const data: unknown = await response.json().catch(() => { throw new AssistantError("MODEL_MALFORMED"); });
+      if (requestSequence.current !== generation || currentSnapshot.current !== sentSnapshot) return;
+      if (timedOut) throw new AssistantError("MODEL_TIMEOUT");
+      if (controller.signal.aborted) return;
+      if (!response.ok || !isObject(data) || data.ok !== true) {
+        const code = isObject(data) && isObject(data.error) ? data.error.code : undefined;
+        throw new AssistantError(typeof code === "string" && Object.hasOwn(errorMessages, code)
+          ? code as AssistantErrorCode : response.status === 429 ? "RATE_LIMITED" : "MODEL_UPSTREAM");
+      }
+      if (data.id !== input.id || data.generation !== generation || data.mode !== "live"
+        || typeof data.model !== "string" || !data.model.trim() || data.model.length > 120
+        || !isObject(data.usage) || ![data.usage.inputTokens, data.usage.outputTokens].every(value => Number.isSafeInteger(value) && Number(value) >= 0)) {
+        throw new AssistantError("MODEL_MALFORMED");
+      }
+      const output = parseMerchantOutput({ action: data.action, scope: data.scope, view: data.view, selection: data.selection,
+        productIds: data.productIds, budgetWon: data.budgetWon, message: data.message }, allowedIds);
+      let ids: string[] | null = null;
+      if (output.scope === "current_batch" && output.action !== "clarify" && output.action !== "unsupported") {
+        const eligible = pending.filter(canSelect);
+        const resolved = resolveMerchantProposal(input, output, [...new Set(eligible.map(item => item.productId))], allowedIds);
+        if (output.action === "select") {
+          const candidates = output.selection === "exclude" && selected.length ? selected : eligible;
+          ids = candidates.filter(item => resolved.selectedProductIds.includes(item.productId)).map(item => item.id);
+        }
+      }
+      setProposal({ ...output, ids, snapshot: sentSnapshot, generation, model: data.model,
+        usage: { inputTokens: data.usage.inputTokens as number, outputTokens: data.usage.outputTokens as number } });
+    } catch (caught) {
+      if (requestSequence.current !== generation || currentSnapshot.current !== sentSnapshot) return;
+      setCommandError(timedOut ? errorMessages.MODEL_TIMEOUT : caught instanceof AssistantError ? caught.message : errorMessages.MODEL_NETWORK);
+    } finally {
+      clearTimeout(timeout);
+      if (requestSequence.current === generation) {
+        commandController.current = null;
+        setThinking(false);
+      }
     }
-    const ids = pending.filter((item) => canSelect(item) && (!excludeSandwich
-      || !previewProducts.find((product) => product.id === item.productId)?.name.includes("샌드위치"))).map((item) => item.id);
-    setProposal({ ids, view: "requested", snapshot,
-      description: `${excludeSandwich ? "샌드위치를 제외하고, " : ""}현재 점포의 동의된 미승인 요청을 요청 수량 그대로 선택해요. 기존 선택을 바꾸며, 예산 초과 시 승인은 차단돼요.` });
   }
 
   function applyProposal() {
-    if (busy || submitting.current || !proposal || proposalStale) return;
+    if (busy || thinking || submitting.current || !proposal || proposalStale || !proposalApplicable) return;
+    if (proposal.generation !== requestSequence.current || proposal.snapshot !== currentSnapshot.current) return;
     setView(proposal.view);
     setSearch("");
     if (proposal.ids !== null) setSelectedIds(proposal.ids);
-    setMessage(proposal.ids === null ? "조회 조건을 바꿨어요. 발주 승인이나 정책 변경은 없어요." : "이번 묶음의 선택을 바꿨어요. 오른쪽 합계와 예산을 확인한 뒤 발주 승인해 주세요.");
+    if (proposal.budgetWon !== null) setBudgetInput(String(proposal.budgetWon));
+    setMessage(proposal.action === "filter" ? "조회 조건만 바꿨어요. 발주 승인이나 거래 변경은 없어요." : "확인한 변경안을 이번 묶음에 적용했어요. 선택과 예산을 검토한 뒤 발주 승인은 따로 진행해 주세요. 미래 정책은 저장하지 않았어요.");
     setProposal(null);
   }
 
   async function approve() {
     if (busy || submitting.current || !selected.length || !validBudget || overBudget || !Number.isSafeInteger(selectedTotal)) return;
+    cancelCommand();
     submitting.current = true;
     setMessage("");
     try {
@@ -124,7 +251,7 @@ export default function MerchantWorkspace({ requests, onApprove, busy }: {
   }
 
   return (
-    <section className={styles.workspace} aria-label="경영주 수요 관리" aria-busy={busy}>
+    <section className={styles.workspace} aria-label="경영주 수요 관리" aria-busy={busy || thinking}>
       <header className={styles.header}>
         <div>
           <p className={styles.eyebrow}>원하GS · 원하지쓰 <span>경영주</span></p>
@@ -134,6 +261,7 @@ export default function MerchantWorkspace({ requests, onApprove, busy }: {
         <label className={styles.storePicker}>
           <span>관리 점포</span>
           <select value={storeId} disabled={busy} onChange={(event) => {
+            cancelCommand();
             setStoreId(event.target.value); setSelectedIds([]); setProposal(null); setMessage(""); setSearch("");
           }}>
             {previewStores.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
@@ -154,37 +282,52 @@ export default function MerchantWorkspace({ requests, onApprove, busy }: {
           <section className={styles.assistant} aria-labelledby="merchant-command-heading">
             <div className={styles.sectionHeading}>
               <div><span className={styles.kicker}>간단하게 말해보세요</span><h2 id="merchant-command-heading">이번 묶음, 이렇게 바꿔볼까요?</h2></div>
-              <span className={styles.localBadge}>로컬 예시 해석 · AI 아님</span>
+              <span className={styles.localBadge}>실제 AI · 변경안 제안</span>
             </div>
+            <p className={styles.help} role="status">{statusLoading ? "서버의 AI 설정을 확인하고 있어요…" : statusError || (aiReady ? `설정 확인됨${assistantStatus?.model ? ` · ${assistantStatus.model}` : ""}. 입력한 지시를 실제 AI가 해석해요.` : "실제 AI 설정이 필요해요. 서버의 모델·키 설정을 확인해 주세요. 직접 선택과 발주 승인은 사용할 수 있어요.")}</p>
+            <button type="button" className={styles.clearSelection} disabled={busy || thinking || statusLoading} onClick={() => { setStatusLoading(true); setStatusAttempt(current => current + 1); }}>AI 설정 다시 확인</button>
             <form onSubmit={propose}>
               <label htmlFor="merchant-command" className={styles.fieldLabel}>조회 또는 이번 묶음 변경 지시</label>
               <div className={styles.commandRow}>
-                <input id="merchant-command" value={command} disabled={busy} maxLength={240} placeholder="샌드위치는 빼고, 예산 안에서"
-                  onChange={(event) => { setCommand(event.target.value); setProposal(null); }}
+                <input ref={commandInput} id="merchant-command" value={command} disabled={busy} maxLength={300} placeholder="샌드위치는 빼고, 예산 안에서"
+                  onChange={(event) => editCommand(event.target.value)}
                   onKeyDown={(event) => { if (event.key === "Enter" && event.nativeEvent.isComposing) event.preventDefault(); }} />
-                <button className={styles.primaryButton} type="submit" disabled={busy || !command.trim()}>변경안 보기 <span aria-hidden="true">→</span></button>
+                <button className={styles.primaryButton} type="submit" disabled={busy || thinking || statusLoading || !aiReady || !command.trim() || !validBudget}>{thinking ? "AI가 변경안을 만드는 중…" : "AI 변경안 보기"} <span aria-hidden="true">→</span></button>
               </div>
+              {thinking && <div className={styles.proposalActions}><p className={styles.help} role="status">입력이나 검토 조건을 바꾸면 이전 응답을 취소해요.</p><button type="button" className={styles.secondaryButton} onClick={cancelCommand}>AI 요청 취소</button></div>}
+              {commandError && <p className={styles.error} role="alert">{commandError}</p>}
             </form>
             <div className={styles.examples} aria-label="입력 예시">
               {examples.map((example) => <button type="button" key={example} disabled={busy} onClick={() => {
-                setPreviousInput(command); setCommand(example); setProposal(null);
+                setPreviousInput(command); editCommand(example);
               }}>{example}</button>)}
               {previousInput !== null && <button type="button" className={styles.undoButton} disabled={busy} onClick={() => {
-                setCommand(previousInput); setPreviousInput(null); setProposal(null);
+                editCommand(previousInput); setPreviousInput(null);
               }}>이전 입력 복원</button>}
             </div>
-            <p className={styles.help}>예시는 입력만 채워요. 변경안을 확인해 적용한 뒤, 발주 승인은 따로 진행해요.</p>
+            <p className={styles.help}>예시는 입력만 채워요. AI는 변경안만 제시하며 확인 전 선택·예산·거래를 바꾸지 않아요. 설정·응답 오류를 로컬 해석으로 자동 대체하지 않아요.</p>
             {proposal && <div className={styles.proposal}>
-              <strong>{proposal.ids === null ? "조회 변경안" : "이번 묶음 변경안"}</strong>
-              <p>{proposal.description}</p>
-              {proposal.ids !== null && <p><b>{proposedItems.length}건 · {quantity(proposedItems)}개 · {won(sum(proposedItems))}</b> 선택 예정</p>}
-              {proposal.ids !== null && validBudget && sum(proposedItems) > budget && <p className={styles.error}>현재 예산보다 {won(sum(proposedItems) - budget)} 많아요. 적용 후 선택을 줄이거나 예산을 수정해 주세요.</p>}
-              {proposalStale && <p className={styles.error}>요청 또는 예산이 바뀌었어요. 변경안을 다시 만들어 주세요.</p>}
-              <div className={styles.proposalActions}>
-                <button type="button" className={styles.primaryButton} disabled={busy || proposalStale} onClick={applyProposal}>확인하고 {proposal.ids === null ? "조회 적용" : "선택 적용"}</button>
-                <button type="button" className={styles.secondaryButton} disabled={busy} onClick={() => setProposal(null)}>취소</button>
-              </div>
-              <p className={styles.help}>미래 정책으로 저장되지 않으며, 이 단계에서 발주하지 않아요.</p>
+              <div className={styles.sectionHeading}><strong>{proposal.scope === "future_policy" ? "미래 정책 · 아직 미연결" : proposal.action === "clarify" ? "추가 확인이 필요해요" : proposal.action === "unsupported" ? "지원하지 않는 지시예요" : "이번 묶음 변경안"}</strong><span className={styles.localBadge}>실제 AI · {proposal.model}</span></div>
+              <p>{proposal.message}</p>
+              {proposalApplicable ? <>
+                <p>조회 화면: <b>{viewLabels[view]} → {viewLabels[proposal.view]}</b></p>
+                {proposal.action === "filter" ? <p>조회만 바꾸며 기존 선택과 예산은 유지해요.</p> : <>
+                  <p>선택 {selected.length}건 → <b>{proposedItems.length}건 · {quantity(proposedItems)}개 · {won(sum(proposedItems))}</b></p>
+                  {proposal.ids !== null && <p className={styles.help}>{proposedItems.length ? [...new Set(proposedItems.map(item => previewProducts.find(product => product.id === item.productId)?.name ?? item.productId))].join(" · ") : "적용 후 선택된 요청이 없어요."}</p>}
+                  <p>이번 묶음 예산: <b>{won(budget)} → {won(proposedBudget)}</b>{proposal.budgetWon === null ? " (유지)" : " (확인 후 적용)"}</p>
+                  {sum(proposedItems) > proposedBudget && <p className={styles.error}>변경 후에도 예산보다 {won(sum(proposedItems) - proposedBudget)} 많아요. 발주 승인은 차단되며 수량을 자동으로 줄이지 않아요.</p>}
+                </>}
+                {proposalStale && <p className={styles.error}>점포·요청·선택 또는 예산이 바뀌었어요. 이전 변경안은 적용할 수 없으니 다시 만들어 주세요.</p>}
+                <div className={styles.proposalActions}>
+                  <button type="button" className={styles.primaryButton} disabled={busy || thinking || proposalStale} onClick={applyProposal}>확인하고 {proposal.action === "filter" ? "조회 적용" : "변경안 적용"}</button>
+                  <button type="button" className={styles.secondaryButton} disabled={busy} onClick={() => setProposal(null)}>취소</button>
+                </div>
+              </> : <>
+                <p className={styles.help}>{proposal.scope === "future_policy" ? "미래 정책과 자동발주는 아직 저장·실행할 수 없어요. 이번 묶음에 대한 지시로 다시 입력해 주세요." : "선택·예산·거래는 바뀌지 않았어요. 입력을 보완한 뒤 다시 요청해 주세요."}</p>
+                <button type="button" className={styles.secondaryButton} disabled={busy} onClick={() => commandInput.current?.focus()}>지시 입력 수정하기</button>
+              </>}
+              <p className={styles.help}>금액·수량은 현재 점포 요청으로 계산했어요. AI 답변은 실제 공급·가격·재고 확인이 아니며, 변경안 적용으로 발주 승인이나 미래 정책 저장을 하지 않아요.</p>
+              <details className={styles.usage}><summary>이번 AI 사용량</summary><p>입력 {proposal.usage.inputTokens.toLocaleString("ko-KR")} · 출력 {proposal.usage.outputTokens.toLocaleString("ko-KR")} 토큰</p></details>
             </div>}
           </section>
 
@@ -250,9 +393,9 @@ export default function MerchantWorkspace({ requests, onApprove, busy }: {
             </div>
             <div className={styles.total}><span>선택 합계 <small>{quantity(selected)}개</small></span><strong>{won(selectedTotal)}</strong></div>
             <label className={styles.budgetLabel} htmlFor="merchant-budget">이번 묶음 예산</label>
-            <div className={styles.budgetInput}><input id="merchant-budget" type="number" inputMode="numeric" min="0" step="100" value={budgetInput} disabled={busy} aria-invalid={!validBudget || overBudget} aria-describedby="merchant-budget-help" onChange={(event) => setBudgetInput(event.target.value)} /><span>원</span></div>
+            <div className={styles.budgetInput}><input id="merchant-budget" type="number" inputMode="numeric" min="0" max="1000000000" step="1" value={budgetInput} disabled={busy} aria-invalid={!validBudget || overBudget} aria-describedby="merchant-budget-help" onChange={(event) => setBudgetInput(event.target.value)} /><span>원</span></div>
             <p id="merchant-budget-help" className={!validBudget || overBudget ? styles.error : styles.budgetHelp}>
-              {!validBudget ? "예산은 0 이상의 정수로 입력해 주세요." : overBudget ? `예산보다 ${won(selectedTotal - budget)} 초과했어요. 선택을 줄이거나 예산을 수정해 주세요.` : `선택 후 예산 여유 ${won(budget - selectedTotal)}`}
+              {!validBudget ? "예산은 0원부터 10억 원까지 정수로 입력해 주세요." : overBudget ? `예산보다 ${won(selectedTotal - budget)} 초과했어요. 선택을 줄이거나 예산을 수정해 주세요.` : `선택 후 예산 여유 ${won(budget - selectedTotal)}`}
             </p>
             <button type="button" className={styles.approveButton} disabled={busy || !selected.length || !validBudget || overBudget || !Number.isSafeInteger(selectedTotal)} onClick={approve}>{busy ? "승인 저장 중…" : "선택한 요청 발주 승인"} <span aria-hidden="true">→</span></button>
             {selected.length > 0 && <button type="button" className={styles.clearSelection} disabled={busy} onClick={() => setSelectedIds([])}>선택 해제</button>}

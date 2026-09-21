@@ -40,7 +40,7 @@
 .kicker { display: block; color: var(--action, #007a9e); font-size: 12px; font-weight: 700; margin-bottom: 5px; }
 .workspace h2 { font-size: 20px; letter-spacing: -.7px; line-height: 1.4; }
 .workspace h3 { font-size: 15px; line-height: 1.5; letter-spacing: -.3px; }
-.localBadge { background: #e7f2f8; color: #396279; }
+.localBadge { background: #e7f2f8; color: #396279; max-width: 100%; white-space: normal; overflow-wrap: anywhere; }
 .fieldLabel { display: block; font-size: 13px; font-weight: 600; margin: 22px 0 8px; }
 .commandRow { display: flex; gap: 8px; }
 .commandRow input, .search input { width: 100%; min-width: 0; color: var(--ink, #123344); border: 1px solid #a7bfcb; border-radius: 10px; padding: 12px 14px; background: white; min-height: 48px; }
@@ -57,7 +57,10 @@
 .proposal { margin-top: 18px; padding: 18px; border: 1px solid #8ac9dc; border-radius: 12px; background: white; }
 .proposal > strong { color: var(--action, #007a9e); }
 .proposal p { margin-top: 8px; }
-.proposalActions { display: flex; gap: 8px; margin-top: 14px; }
+.proposalActions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+.proposal { overflow-wrap: anywhere; }
+.usage { margin-top: 14px; border-top: 1px solid var(--line, #d9e5ed); color: var(--muted, #526575); font-size: 12px; }
+.usage summary { cursor: pointer; min-height: 44px; padding: 12px 0; }
 .count { color: var(--action, #007a9e); font-size: 16px; margin-left: 5px; }
 .filters { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-top: 20px; }
 .tabs { display: flex; flex-wrap: wrap; gap: 3px; }

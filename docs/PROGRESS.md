@@ -5,13 +5,13 @@
 ## 현재 포인터
 
 ```text
-현재 task: UI-02 Preview 게시 완료, UI-03 실제 AI 검색 연결
+현재 task: UI-03 고객 실제 AI Preview 완료, 경영주 AI·전체 seed 구현
 branch: codex/ui-preview-20260921
 PR: https://github.com/dokrsky/wanna-gs/pull/1 (draft, 최종 검증 전)
 마지막 유효 게이트: 제품 게이트 미실행
 마지막 Production deployment: dpl_GB3Cr8At3Com7eJcTnboJ9W4Sika (기존 최소 데모, 최종 제품 아님)
-현재 Preview: https://wanna-226yzu152-d-01.vercel.app (9c4d41c, SQLite)
-다음 한 가지: 서버 OpenAI 검색·고객 UI 연결 후 소량 실호출과 Preview 게시
+현재 Preview: https://wanna-o4yc9bsi9-d-01.vercel.app (18b0b31, 고객 실제 AI)
+다음 한 가지: 경영주 실제 AI 제안 연결·소량 확인 후 다음 Preview 게시
 ```
 
 ## 현재 상태
@@ -22,9 +22,9 @@ PR: https://github.com/dokrsky/wanna-gs/pull/1 (draft, 최종 검증 전)
 | 위임 운영 결정 | ADR-001 채택, 실행 검증 전 | DECISION_INDEX·ADR-001 |
 | GitHub | dokrsky/wanna-gs, 기준 cf6f95a, 작업 branch에서 UI 개발 중 | 원격 쓰기/Actions 권한 확인, 제품 CI 미구현 |
 | 로컬 설정/사전점검 검사기 | OpenAI 15개 + inventory 10개 테스트 통과 | scripts/ 및 .agents/skills/wanna-gs-preflight/scripts/ |
-| 앱·CI·게이트 실행기·DB seed | 두 역할 UI 첫 Preview Ready. SQLite 연결 구현 중. 제품 CI/게이트/전체 seed는 후속 | D-46·WORKPLAN, 0e43f0d |
+| 앱·CI·게이트 실행기·DB seed | 두 역할 UI·SQLite·고객 실제 AI Preview Ready. 제품 CI/게이트/전체 seed는 후속 | D-46·WORKPLAN, 18b0b31 |
 | SQLite | 실제 sql.js·seed/WASM·IndexedDB 저장 및 로컬 새로고침 복원 연결 | UI-02, 6개 상품/2개 가상 점포의 중간 seed. 전체 상품/도메인은 후속 |
-| Vercel·OpenAI | 로컬 실제 호출 CONNECTED. Vercel Git 연결 복구, probe Preview 서버 env 등록 | 현재 repoId 1379710145 대조. 배포 실제 모델 호출은 미검증 |
+| Vercel·OpenAI | Git 자동 Preview 및 UI branch 서버 env 연결. 고객 검색 로컬·Preview 실제 호출 성공 | 18b0b31, gpt-5-mini, 로컬 719/127·Preview 719/136 tokens |
 | 앱 단위·통합·E2E·실제 모델 평가 | 미실행 | 문서 검사와 구분 |
 | 최종 제출 URL | 미완료 | 기존 wanna-gs.vercel.app은 최소 데모이며 최종 G6 전 |
 
@@ -55,8 +55,8 @@ PR: https://github.com/dokrsky/wanna-gs/pull/1 (draft, 최종 검증 전)
 
 ## 다음 작업
 
-1. D-46에 따라 UI-02의 SQLite 저장/복원을 연결하고 작은 커밋·Preview로 공유한다.
-2. 실제 서버 AI와 발주·공급·모의 결제·입고/픽업을 차례로 연결하고 각각 Preview를 공유한다.
+1. D-46에 따라 경영주 실제 AI 제안을 연결하고 작은 커밋·Preview로 공유한다.
+2. 전체 seed와 발주·공급·모의 결제·입고/픽업을 차례로 연결하고 각각 Preview를 공유한다.
 3. 기능이 갖춰진 뒤 독립 검증·전체 E2E·평가·최종 게이트를 실행한다. 이미 실행 중인 goal을 다시 만들지 않는다.
 
 ## 기록 원칙
@@ -196,3 +196,13 @@ Locke는 초기 조사 확보분을 별도 research worktree에 보존하고 다
 UI-03은 공식 Responses/Structured Outputs 문서에 맞춰 공식 SDK 서버 경로를 사용한다. https://developers.openai.com/api/docs/guides/structured-outputs 및 https://developers.openai.com/api/docs/models/gpt-5-mini 확인. 보호된 Preview 설정을 재조회한 뒤 UI branch에 한정해 서버 모델 env와 ASSISTANT_PREVIEW_ENABLED를 등록했다. Production에는 등록하지 않았으며 실제 AI API도 Production에서는 기본 비활성이다. env 존재/health만으로 연결 성공을 주장하지 않고 실제 검색 결과를 별도로 확인한다. 계정 잔액/전체 한도는 unknown이며 이번 연결 확인은 소량 2회(로컬·Preview 각 1회)를 우선 계획한다.
 
 UI-03 로컬 실행: API offline checker PASS(실제 호출 0회), Next build·타입 PASS, 클라이언트 빌드 19개 파일에 실제 키가 포함되지 않음 확인. 실제 `/api/assistant/search` 1회에서 ‘우유 말고 차갑게 마실 커피를 찾아줘’→gpt-5-mini·candidateIds=[coffee]·matched, 입력 719/출력 127 tokens. 입력의 우유 제외 조건을 반영했다. 로컬 화면은 실제 AI 설정·명시적 로컬 모드 전환을 표시하고 기존 SQLite 요청 1건도 유지했다. 전체 카탈로그/자연어 품질 통과는 아니며, Preview live는 새 배포 후 확인한다.
+
+`18b0b310ad7e7852f09e4ff228cee997279419a5` commit/push로 `dpl_7pX9do6RduNV1aqdKP6XdFa9nuLH` / https://wanna-o4yc9bsi9-d-01.vercel.app 가 Ready가 됐고 source SHA가 일치했다. 최신 브랜치 Preview의 실제 브라우저에서 같은 커피 검색 1회가 성공했다. ‘실제 AI · gpt-5-mini’·콜드브루 커피 후보·입력 719/출력 136 tokens를 확인했다. 이번 UI-03 연결 확인은 계획대로 로컬 1회·Preview 1회로 마쳤다. 전체 품질 평가나 독립 G4/G6 PASS를 의미하지 않는다. 경영주 AI와 DATA-01은 별도 소유 파일에서 병렬 구현 중이다.
+
+## UI-03B 경영주 AI 연결·다음 데이터 단계 — 2026-09-21
+
+경영주 지시도 서버 OpenAI를 호출해 이번 묶음의 조회/선택/예산 변경안으로만 반환한다. 사용자가 변경안을 적용한 뒤 발주 승인은 따로 한다. 미래 정책은 아직 미연결로 표시하고 자동 저장하지 않는다. 서버/client가 같은 허용 ID·예산·선택 후상태 계약을 사용하도록 맞췄다. ‘우유만’의 기존 선택 교체와 ‘우유도’의 명시 합집합을 구별하며, 점포/요청/예산 변경 시 낡은 제안은 적용하지 않는다.
+
+최소 확인: 두 역할 assistant offline checker PASS(실제 호출 0회), Node24 Next build·타입 PASS. Preview 배포 후 경영주 실제 호출 1회로 변경안→사용자 확인을 확인할 계획이다. 전체 품질/도메인/독립 QA는 미실행이며 현재 승인은 공급·결제 완료가 아니다.
+
+DATA-01은 242개 상품 초안(공식 이름 확인 12·미검증 참고 27·합성 203), 실제 점포 8곳, 합성 고객 20/경영주 8, 모의 availability 484행(25%)을 별도로 생성했다. 생성기 일치 자체 검사는 PASS지만 최근 인기/출시와 실제 GS SKU 전체 확인은 미완료다. 현재 앱의 6개 중간 seed와는 아직 별도다. Locke가 전체 SQLite 연결과 기존 snapshot을 지우지 않는 업그레이드를 이어간다. 공급/결제/픽업용 ADR-003 초안은 두 독립 검토에 배정했으며 현재 UI 배포를 막지 않는다.

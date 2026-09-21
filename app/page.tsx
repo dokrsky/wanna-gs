@@ -95,7 +95,7 @@ export default function Home() {
 
   return (
     <div className="site-wrap">
-      <div className="preview-ribbon"><span className="preview-dot" />함께 만드는 원하GS <span className="ribbon-divider">/</span> 미리보기 03 · AI 상품 검색</div>
+      <div className="preview-ribbon"><span className="preview-dot" />함께 만드는 원하GS <span className="ribbon-divider">/</span> 미리보기 03B · 두 역할 AI 연결</div>
       <header className="site-header">
         <a className="brand-lockup" href="/" aria-label="원하GS, 원하지쓰 홈">
           <span className="brand-symbol" aria-hidden="true">w.</span>
@@ -110,7 +110,7 @@ export default function Home() {
       <div className="preview-notice">
         <span className="notice-label">화면 시연</span>
         <p>상품·가격·점포·수요는 예시입니다. 요청은 이 브라우저에 저장되어 같은 주소에서 새로고침해도 이어집니다.</p>
-        <details><summary>연결 상태</summary><p>SQLite 저장·복원과 서버 OpenAI 상품 검색을 연결했어요. AI의 후보는 직접 확인한 뒤 요청해 주세요. 경영주 지시는 아직 로컬 예시 해석이며 공급·결제·픽업은 다음 단계입니다. 실제 GS 거래나 청구는 없어요.</p></details>
+        <details><summary>연결 상태</summary><p>SQLite 저장·복원과 서버 OpenAI 고객 검색·경영주 지시 해석을 연결했어요. 상품 후보와 변경안을 확인한 뒤 직접 요청·승인해 주세요. 지속 정책·공급·결제·픽업은 다음 단계입니다. 실제 GS 거래나 청구는 없어요.</p></details>
       </div>
 
       <main className={`workspace ${role}`}>

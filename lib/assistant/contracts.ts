@@ -9,8 +9,23 @@ export type SearchResponse = SearchOutput & {
 };
 export type AssistantStatus = { configured: boolean; mode: "live" | "fixture" | "unconfigured"; model?: string };
 
+export const merchantActions = ["filter", "select", "budget", "clarify", "unsupported"] as const;
+export const merchantScopes = ["current_batch", "future_policy"] as const;
+export const merchantViews = ["requested", "approved", "all"] as const;
+export const merchantSelections = ["keep", "all_pending", "include", "exclude"] as const;
+export type MerchantRequest = SearchRequest & { storeId: string; budgetWon: number; selectedProductIds: string[] };
+export type MerchantOutput = {
+  action: typeof merchantActions[number]; scope: typeof merchantScopes[number];
+  view: typeof merchantViews[number]; selection: typeof merchantSelections[number];
+  productIds: string[]; budgetWon: number | null; message: string;
+};
+export type MerchantResponse = Pick<SearchResponse, "ok" | "id" | "generation" | "mode" | "model" | "usage"> & MerchantOutput;
+
 export const errorMessages = {
   INVALID_INPUT: "상품 설명을 1~300자로 입력해주세요. 요청 정보도 확인해주세요.",
+  INVALID_MERCHANT_INPUT: "지시문(1~300자)·점포·예산·선택 상품을 확인해주세요.",
+  MERCHANT_NOT_APPLICABLE: "추가 확인이 필요하거나 아직 지원하지 않는 변경안이에요. 현재 선택과 예산은 유지해주세요.",
+  MERCHANT_SELECTION_UNAVAILABLE: "현재 점포의 신규 요청과 선택 상품을 다시 확인해주세요. 변경안은 적용하지 않았어요.",
   INVALID_JSON: "요청 형식을 읽지 못했어요. 다시 시도해주세요.",
   JSON_REQUIRED: "JSON 형식으로 요청해주세요.",
   BODY_TOO_LARGE: "요청 본문은 4KB 이하여야 해요.",
@@ -90,8 +105,8 @@ export function parseSearchOutput(value: unknown, allowedIds: readonly string[])
   return { candidateIds: value.candidateIds, message: value.message.trim(), status: value.status as SearchStatus };
 }
 
-// Consume only Responses fields needed for search; never expose the raw response/refusal.
-export function parseModelResponse(response: unknown, allowedIds: readonly string[]) {
+// Shared Responses envelope parsing; never expose the raw response/refusal.
+export function parseStructuredResponse(response: unknown) {
   if (!isObject(response) || !Array.isArray(response.output)) throw new AssistantError("MODEL_MALFORMED", 502);
   if (response.output.some(item => isObject(item) && item.type === "message" && Array.isArray(item.content) && item.content.some(part => isObject(part) && part.type === "refusal"))) {
     throw new AssistantError("MODEL_REFUSAL", 422);
@@ -102,9 +117,100 @@ export function parseModelResponse(response: unknown, allowedIds: readonly strin
   let value: unknown;
   try { value = JSON.parse(response.output_text); }
   catch { throw new AssistantError("MODEL_MALFORMED", 502); }
-  const result = parseSearchOutput(value, allowedIds);
   if (!isObject(response.usage) || ![response.usage.input_tokens, response.usage.output_tokens].every(n => Number.isSafeInteger(n) && Number(n) >= 0)) {
     throw new AssistantError("MODEL_MALFORMED", 502);
   }
-  return { ...result, usage: { inputTokens: response.usage.input_tokens as number, outputTokens: response.usage.output_tokens as number } };
+  return { value, usage: { inputTokens: response.usage.input_tokens as number, outputTokens: response.usage.output_tokens as number } };
+}
+
+export function parseModelResponse(response: unknown, allowedIds: readonly string[]) {
+  const parsed = parseStructuredResponse(response);
+  return { ...parseSearchOutput(parsed.value, allowedIds), usage: parsed.usage };
+}
+
+const validBudget = (value: unknown): value is number => Number.isSafeInteger(value) && Number(value) >= 0 && Number(value) <= 1_000_000_000;
+function validProductIds(value: unknown, allowedIds: readonly string[]): value is string[] {
+  return Array.isArray(value) && value.length <= 20 && new Set(value).size === value.length &&
+    value.every(id => typeof id === "string" && allowedIds.includes(id));
+}
+
+export function parseMerchantRequest(value: unknown, allowedIds: readonly string[], allowedStores: readonly string[]): MerchantRequest {
+  if (!isObject(value) || !exactKeys(value, ["text", "id", "generation", "storeId", "budgetWon", "selectedProductIds"]) ||
+      typeof value.storeId !== "string" || !allowedStores.includes(value.storeId) ||
+      !validBudget(value.budgetWon) || !validProductIds(value.selectedProductIds, allowedIds)) {
+    throw new AssistantError("INVALID_MERCHANT_INPUT");
+  }
+  let common: SearchRequest;
+  try { common = parseSearchRequest({ text: value.text, id: value.id, generation: value.generation }); }
+  catch { throw new AssistantError("INVALID_MERCHANT_INPUT"); }
+  return { ...common, storeId: value.storeId, budgetWon: value.budgetWon, selectedProductIds: [...value.selectedProductIds] };
+}
+
+export function merchantOutputSchema(allowedIds: readonly string[]) {
+  return {
+    type: "object",
+    properties: {
+      action: { type: "string", enum: [...merchantActions] },
+      scope: { type: "string", enum: [...merchantScopes] },
+      view: { type: "string", enum: [...merchantViews] },
+      selection: { type: "string", enum: [...merchantSelections] },
+      productIds: { type: "array", items: { type: "string", enum: [...allowedIds] }, maxItems: 20 },
+      budgetWon: { type: ["integer", "null"], minimum: 0, maximum: 1_000_000_000 },
+      message: { type: "string", minLength: 1, maxLength: 300 },
+    },
+    required: ["action", "scope", "view", "selection", "productIds", "budgetWon", "message"], additionalProperties: false,
+  };
+}
+
+export function parseMerchantOutput(value: unknown, allowedIds: readonly string[]): MerchantOutput {
+  if (!isObject(value) || !exactKeys(value, ["action", "scope", "view", "selection", "productIds", "budgetWon", "message"]) ||
+      !merchantActions.includes(value.action as MerchantOutput["action"]) || !merchantScopes.includes(value.scope as MerchantOutput["scope"]) ||
+      !merchantViews.includes(value.view as MerchantOutput["view"]) || !merchantSelections.includes(value.selection as MerchantOutput["selection"]) ||
+      !validProductIds(value.productIds, allowedIds) || (value.budgetWon !== null && !validBudget(value.budgetWon)) ||
+      typeof value.message !== "string" || !value.message.trim() || value.message.length > 300) {
+    throw new AssistantError("MODEL_MALFORMED", 502);
+  }
+  const output = value as MerchantOutput;
+  const hasIds = output.productIds.length > 0;
+  const selectionChanges = output.selection !== "keep";
+  // Inert proposals must not smuggle state changes. Future policy is not connected.
+  if ((output.scope === "future_policy" && output.action !== "unsupported") ||
+      (["clarify", "unsupported"].includes(output.action) && (selectionChanges || hasIds || output.budgetWon !== null)) ||
+      (output.action === "filter" && (selectionChanges || hasIds || output.budgetWon !== null)) ||
+      (output.action === "budget" && (selectionChanges || hasIds || output.budgetWon === null)) ||
+      (output.action === "select" && !selectionChanges) ||
+      (["keep", "all_pending"].includes(output.selection) && hasIds) ||
+      (output.selection === "exclude" && !hasIds)) {
+    throw new AssistantError("MODEL_MALFORMED", 502);
+  }
+  // include [] deliberately represents an explicit "clear my selection" proposal.
+  return { ...output, productIds: [...output.productIds], message: output.message.trim() };
+}
+
+// Client-side preview helper, not an order/policy executor. Call only after checking
+// response id/generation AND that store/budget/selection still match the sent input.
+// pendingProductIds comes from current local requested rows in that same store.
+// keep preserves; all_pending replaces; include replaces with the explicit IDs;
+// exclude uses the existing nonempty selection, otherwise all pending IDs.
+export function resolveMerchantProposal(input: MerchantRequest, value: MerchantOutput, pendingProductIds: readonly string[], allowedIds: readonly string[]) {
+  const output = parseMerchantOutput(value, allowedIds);
+  if (output.scope !== "current_batch" || output.action === "clarify" || output.action === "unsupported") {
+    throw new AssistantError("MERCHANT_NOT_APPLICABLE", 409);
+  }
+  if (!validBudget(input.budgetWon) || !validProductIds(input.selectedProductIds, allowedIds) || !validProductIds(pendingProductIds, allowedIds)) {
+    throw new AssistantError("MERCHANT_SELECTION_UNAVAILABLE", 409);
+  }
+  const pending = new Set(pendingProductIds);
+  if (input.selectedProductIds.some(id => !pending.has(id)) || (output.selection === "include" && output.productIds.some(id => !pending.has(id)))) {
+    throw new AssistantError("MERCHANT_SELECTION_UNAVAILABLE", 409);
+  }
+  const removed = new Set(output.productIds);
+  const selectedProductIds = output.selection === "all_pending" ? [...pendingProductIds]
+    : output.selection === "include" ? [...output.productIds]
+    : output.selection === "exclude" ? (input.selectedProductIds.length ? input.selectedProductIds : pendingProductIds).filter(id => !removed.has(id))
+    : [...input.selectedProductIds];
+  if (!validProductIds(selectedProductIds, allowedIds) || selectedProductIds.some(id => !pending.has(id))) {
+    throw new AssistantError("MERCHANT_SELECTION_UNAVAILABLE", 409);
+  }
+  return { view: output.view, selectedProductIds, budgetWon: output.budgetWon ?? input.budgetWon };
 }
