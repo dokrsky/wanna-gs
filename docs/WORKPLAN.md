@@ -17,9 +17,10 @@
 | UI-09A | Meitner: 문맥 v2 계약/API. Newton: 최근 변경·정책 전달 UI. 조정자: 통합/Preview | `cfda3c9` 열두 번째 Preview Ready. 최근5개·합집합 복원→명시 적용·정책 확인 전달 실제2호출, OFF/누적예산 유지·수동draft 보존·정책 저장/복원 확인. 조회-only P2 독립 재확인, 전체 품질 후속 |
 | UI-09B | Locke: domain/SQL 단일 작성. Newton: 실행 이력 UI. 조정자: 저장 어댑터/통합. Meitner: 좁은 독립 검토 | `9e2b6bf` 열세 번째 Preview Ready. trace58/UI13·실제 SQL v1/v2→3 보존·로그/고객 충돌 P2 독립 재확인. 실제2호출→화면적용/정책저장 로그·사용량/시간·새로고침 복원, 기존 픽업/정책 보존. 전체 품질 후속 |
 | UI-10 | 조정자: 지도 지연 진단·동일 공개 좌표 새 탭 링크. Avicenna: 좁은 독립 검토 | `65765f7` Preview Ready. 실제 링크→같은 점포 외부 지도 탭/컨트롤 확인, 기존 거래 유지. React markup/독립 좁은 검사·build PASS. 앱 자체 시각 캡처 실패는 미해결 |
-| DATA-02 | Singer/McClintock 연구, Boyle data/SQL, Herschel 사실·Lagrange 정책 크기 독립 검토, Helmholtz SQL 검토, 조정자 UI/통합 | [context/DATA-02.md](context/DATA-02.md). 20상품 추가262/524·새 예시2개·두 SQLite 사본의 보존 이행 후보 완료. 전체 대상 정책4KiB 회귀→8KiB 최소 복구·독립 좁은 PASS, build/핵심 저장 소비자 PASS. SQL 독립 검토 및 새 Preview 게시 진행 중 |
+| DATA-02 | Singer/McClintock 연구, Boyle data/SQL, Herschel 사실·Lagrange 정책 크기·Helmholtz SQL 독립 검토, 조정자 UI/통합 | [context/DATA-02.md](context/DATA-02.md). `25e1e9d` Preview Ready·262상품/524조건·새 예시2개. 두 SQLite 사본/기존 요청·픽업/경영주 정책·로그 실제 보존. 전체 대상 정책4KiB 회귀→8KiB 복구·좁은 독립 검사/build PASS. 새 상품 live1회 정확 후보·선택·기록 복원, 전체 데이터/eval/UX QA 후속 |
 | DATA-01/02 | Locke: 242개 상품 초안·실제 점포8/legacy2·합성 역할/availability·SQLite 업그레이드. Newton: 출처/실제 점포 UI | `aa54838` 다섯 번째 Preview Ready. 로컬 기존 요청 보존 확인. 최종 상품 사실/독립 데이터 검증 전 |
-| VERIFY | 전체 seed/독립 검증·정책 검토·E2E·평가·G5/G6 | 구현 후 수행, 최종 완료 조건 유지 |
+| UI-11 | Aristotle: 고객 입력 우선 배치, main: 공통 화면/브라우저/게시, Erdos: 좁은 독립 검토 | [context/UI-11.md](context/UI-11.md). 입력·검색 CTA를 보조 안내보다 앞에 배치. 390px 입력 y1336→617, 360px 가로 넘침0·후보/조건·미동의 확인. 초기화 확인창 인접 배치 P2 해소. 작은 Preview 게시 중 |
+| VERIFY | 전체 seed/독립 검증·정책 검토·E2E·평가·G5/G6 | 구현 후 수행, 최종 완료 조건 유지. ADR002 두 관점 초안 검토 완료·보완/채택 전이며 UI11 게시 선행조건 아님 |
 
 연구 Locke는 이미 확보한 초기 근거를 바탕으로 전체 seed를 확장한다. 별도 preflight 시험 앱과 선행 감사는 중단·보존하고 화면 구현으로 인력을 재배정했다. 임시 UI는 합성 데이터·실제 SQLite 저장·실제 AI 연결 범위와 아직 미연결인 거래 단계를 구분하며 제품 완료 증거로 사용하지 않는다.
 

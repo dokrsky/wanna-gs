@@ -5,13 +5,14 @@
 ## 현재 포인터
 
 ```text
-현재 task: UI-09A 열두 번째 Preview·실제 복원/정책 전달 확인 완료
+현재 task: UI-11 고객 입력 우선 화면 구현·좁은 검토 완료, Preview 게시 중
 branch: codex/ui-preview-20260921
 PR: https://github.com/dokrsky/wanna-gs/pull/1 (draft, 최종 검증 전)
 마지막 유효 게이트: 제품 게이트 미실행
 마지막 Production deployment: dpl_GB3Cr8At3Com7eJcTnboJ9W4Sika (기존 최소 데모, 최종 제품 아님)
-현재 Preview: https://wanna-38tb3io8w-d-01.vercel.app/demo (cfda3c9, 경영주 최근 변경·정책 전달)
-다음 한 가지: UI-09B 경영주 AI 영구 실행 이력과 additive SQL 이행
+현재 Ready Preview: https://wanna-3laa9hhbf-d-01.vercel.app/demo (25e1e9d, DATA02)
+공유 브랜치 주소: https://wanna-gs-git-codex-ui-preview-20260921-d-01.vercel.app/demo
+다음 한 가지: UI-11 작은 commit/push·정확한 Ready 확인, 이어 정책 UI 크기 불일치 최소 수정
 ```
 
 ## 현재 상태
@@ -22,8 +23,8 @@ PR: https://github.com/dokrsky/wanna-gs/pull/1 (draft, 최종 검증 전)
 | 위임 운영 결정 | ADR-001/003~006 채택, ADR-002 평가 기준 초안·후속 검토 | DECISION_INDEX, 전체 독립 품질검증 후속 |
 | GitHub | dokrsky/wanna-gs, 기준 cf6f95a, 작업 branch에서 UI 개발 중 | 원격 쓰기/Actions 권한 확인, 제품 CI 미구현 |
 | 로컬 설정/사전점검 검사기 | OpenAI 15개 + inventory 10개 테스트 통과 | scripts/ 및 .agents/skills/wanna-gs-preflight/scripts/ |
-| 앱·CI·게이트 실행기·DB seed | UI01~09A Preview·실제 거래/검색/정책/복원 연결. 제품 CI/전체 게이트 후속 | D-46·WORKPLAN, 최신 cfda3c9 |
-| SQLite | 242개 상품·8점포 거래 schema2, 검색/니즈/추천 기록·기존 거래 사본 보존 | UI07 실제 v1 이행·UI08 픽업 새로고침 복원 |
+| 앱·CI·게이트 실행기·DB seed | UI01~10/DATA02 Preview·실제 거래/검색/정책/복원 연결. 제품 CI/전체 게이트 후속 | D-46·WORKPLAN, 최신 Ready25e1e9d |
+| SQLite | 262개 상품·8점포·524조건 거래 schema3, 고객 검색/니즈/추천·경영주 AI 기록·기존 사본 보존 | DATA02 실제 domain/이전 Preview 이행·거래/픽업/정책 복원 |
 | Vercel·OpenAI | Git 자동 Preview 및 UI branch 서버 env 연결. 두 역할·정책·검색v2 실제 호출 관측 | 아래 UI03/06/07 증거; 계정 총 잔액/쿼터 미확인, Production 미변경 |
 | 앱 단위·통합·E2E·실제 모델 평가 | 좁은 자체/조정자 검사·일부 독립 반례 확인 및 실제 정상 흐름 관측. 전체 독립 평가·G1~G6 미실행 | 아래 단위별 실행/미실행 구분; Ready를 제품 게이트로 세지 않음 |
 | 최종 제출 URL | 미완료 | 기존 wanna-gs.vercel.app은 최소 데모이며 최종 G6 전 |
@@ -378,3 +379,23 @@ Lagrange 독립 검토는 Node24 정책 checker·trace61을 직접 실행하고,
 main 실행: Node24 `npm run build` Next15.5.25·타입 성공. `check:merchant-trace` pure61·client queue·실제 sql.js 로그실패/receipt/복원·UI13 PASS, `check:customer-write` 실제 SQLite 로그→고객 요청/중복 receipt·조건변경 거절 PASS. 앞선 dialogue/policy/merchant-context 소비자 검사도262개를 사용해 PASS, 실제 모델 호출0. `.env.local` 존재·키/모델 설정·live 여부만 boolean으로 확인했고 비밀값은 출력하지 않았다. Helmholtz는 별도 read-only SQL 이행 검토 중이다. 전체 goal/최종 데이터 QA·Production은 미완료이며 작은 Preview 공개 후 실제 저장 사본/검색을 확인한다.
 
 Helmholtz 독립 SQL 검토 인계: 실제 Node24 전용 checker 종료0·diff check PASS. 별도 메모리 반례에서 요청0건·ON정책·revision73/generation9/nextSequence412를 보존했고 조건INSERT 오류 주입 시 저장0회·원본 불변·재시도 성공을 확인했다. manifest/card/CORE/index/verify 실제 ACK. hash: generator `749cab3db308880ce07d1cc7b988d123799d1ebf46dd52bb2be65228e4e88f61`, domain storage `57592ac364eea8478b48d233dbb700ff7a84358560854fc4a46660b1f37bc551`, preview store `4822623c94aef71a5be6f2c5a1f9ba47b75da8fb0efdd791b291ce421e956aa4`, DATA02 checker `6a11148969c2ecf0b1a255e8e5df3b84cd2fc6ff3fbba448d30def56aac578a3`, domain seed script `e36070956969f348a6b8abaeb1f360a82f9d3a14e39161c1bf1e58adb79e6f69`, preview seed script `e35cf31cc9208de2355315af5b5aa8cd0068cbf817533446226e3d86b4bdc691`. 이행 한정 PASS이며 브라우저/모델/전체 데이터 검증이 아니다. 클라이언트23파일·staged27파일에서 실제 서버 키가 없음을 확인했고 `.env.local` ignore·사용자 `.idea/` 미포함을 확인했다. 두 구현/검토자는 인계 후 종료했다.
+
+`25e1e9d71583655679a3fb3dd91ad2cf79accecd` commit/push → Vercel `dpl_GWKTNkPWqkH2ZwMEbuLYSUKiyW9D` / https://wanna-3laa9hhbf-d-01.vercel.app/demo **Ready·source SHA 일치**. GitHub의 Vercel status success는 배포 검사이며 아직 `.github` 실행기/전체 CI 게이트는 없다. 같은 브랜치 주소를 실제 reload해262상품·새 예시2개·revision30/세대1을 확인했다. 기존 고객 내 요청2·보관1, ST01 커피1개/2,500원·픽업 최초09-21 23:47:12/마감09-23 23:47:12 유지. ST04 정책OFF·누적90,000원·대상3종·사용0·발주0, 기존 AI 기록2건의 화면적용/정책저장 상태도 유지했다. `/`의 별도 사본은262개로 이행되고 들깨버섯밥320g·ST03·1개/1,200원·동의함·요청접수1건 그대로다. 저장 오류/초기화/재삽입/자동발주 없이 화면에서 관측했다. SQL 전 행 대조와 이 대표 화면 관측을 구분한다.
+
+새 RP007 예시 버튼은 입력만 채우고 되돌리면 빈 입력으로 복원됐으며 revision30은 유지됐다. 이어 실제 AI 검색을1회 시작했다. 모델 결과/새로고침 기록 복원은 다음 관측에 기록한다. Production은 변경하지 않았다.
+
+DATA02 live1회 완료: ‘라라스윗 그릭 복숭아 쫀득바 찾아줘’ → 새 상품 정확 후보1개·추가 질문0. 화면에 규격/현재 판매·재고·인기 미확인과 모의 가격2,600원이 표시됐다. gpt-5-mini 입력44,672/출력509tokens, UI 종단9,367ms(별도 provider latency 아님). 후보 선택 후 ST01/ST04 요청 가능한 모의 조건·다른 점포 조건 미확인·동의 미선택/요청 버튼 비활성 확인. 새 요청/결제/발주0, 검색/노출/선택 기록만 revision30→33. 실제 reload 후revision33/세대1·새 검색 원문/정확 후보/사용량/시간/노출·선택 이력과 기존 요청2/픽업 마감 복원을 확인했다. 1개 공개 dev 정상 사례이지 보호 holdout/전체 자연어 품질 PASS는 아니다. 큰 모델 입력량은 후속 제한된 최적화 대상이다.
+
+이번 turn은 실제 데이터/화면 게시·정책 크기 회귀 복구·SQL 독립 검사·같은 origin의 저장 사본 보존·실제 새 상품 검색으로 진행했다. 사용자 `.idea/`·키·Production은 보존했다. 다음은 D-39 화면 참고/남은 가시적 UX를 작은 배포로 정리한 뒤, ADR-002 두 검토 및 실행 가능한 CI/평가·두 역할 독립 QA·G5/G6·최종 제출을 진행한다. 미완료 항목을 현재 좁은 PASS로 대체하지 않는다.
+
+## UI-11 입력 우선 화면 — 2026-09-22 KST
+
+[UI11 계약](context/UI-11.md) revision1/hash `50cb496ffef977fbd99c622c6cbab3c14880cf3951b73a85d3d689a262b6ed7e`. D-39 최종 참고 그림을 실제 열람하고 시안/블루·흰 카드·명확한 입력 위계를 적용했다. Aristotle는 고객 JSX/CSS/checker만, main은 공통 안내/고객640px 폭·하단 저장 도구/게시를 담당했다. 새 라이브러리·API·SQL·상품/거래/동의 정책 변경은 없다. 검색 입력·CTA 앞의 반복 안내를 줄이고 모드·대화 도움/자료 안내는 native details로 보존했으며 실제 AI/로컬 구분·설정/검색/기록 실패·질문/재시도는 접지 않았다.
+
+Erdos 독립 검토: Node24 실제 React markup7 PASS, 별도 AST로 고객27/demo12/이전 Preview8 이벤트 바인딩 불변 확인. 하단 초기화 버튼의 확인 영역이 위쪽에 남은 P2를 발견해 main이 기존 JSX를 단일 resetPanel로 추출하고 버튼 뒤에 배치했다. !state 복구는 기존 위치다. 재검토8상태 PASS, demo/page hash `86cc1fa31d4c46fa7b20eae6091d9f94b8068dcc324c047f033ea64f3c965cef`. 실제 브라우저에서 확인창 열기→Tab이 확인 버튼으로 이동→취소까지 관측했고 실제 reset/삭제는 하지 않았다.
+
+로컬 Node24 dev/실제 브라우저 DOM: 390×844에서 입력 y617.18~727.18·CTA y791.98~843.57, 이전 배포의 입력 y1336.08보다 앞이다. 360×800에서 입력 문서좌표 y637.78·CTA y834.98, 가로 scrollWidth360. 360px는 CTA가 첫 viewport 아래이며 첫 화면 전체 시각 PASS라고 주장하지 않는다. 모드 도움 열기→명시 로컬 전환→RP007 예시 입력만 채우기/되돌리기→상품명 검색/키보드 후보 선택→ST01 선택, 2,600원·동의 false/요청 disabled·48시간 안내 유지. 검색/선택 기록 후 revision5/세대1, 새 구매 요청·결제·발주/모델 호출0. 두 마우스 도구 timeout은 실행 불확실로 기록하고 현재 DOM을 다시 읽어 키보드로 진행했다. 캡처/200%/전체 독립 두 역할 UX는 후속이다.
+
+main이 customer-layout7·실제 SQLite customer-write 인접 검사 및 diff check를 실행해 PASS. 전용 dev server만 정상 종료하고 production build를 시작했다. `.env.local` ignore·기존 실제 설정 증거와 사용자 `.idea/`는 보존한다. 전체 goal 검증을 UI11 게시 선행조건으로 만들지 않는다.
+
+동시에 ADR002에 대한 Ptolemy 제품/eval·Planck method/state 독립 보고가 도착했다. 아직 proposed이며 holdout 선소비/분모·UX 부담/호출 상한 등을 보완·재ACK 후 채택해야 한다. Planck가 추가로 발견한 정책 UI의4096B와 API/trace8192B 불일치는 다음 별도 작은 수정 대상이다. 이번 화면 변경으로 그 미검증 경계를 PASS로 승격하지 않는다.

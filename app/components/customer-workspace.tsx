@@ -405,14 +405,13 @@ function CustomerPanel({ requests, onRequest, busy, conditions = previewAvailabi
       <div className={styles.heroTop}><span className={styles.brand}>원하GS <span>· 고객</span></span><span className={styles.previewBadge}>화면 미리보기</span></div>
       <p className={styles.pronunciation}>‘원하지쓰’라고 읽어요.</p>
       <div className={styles.heroTitle}>
-        <div><h1>{tab === "want" ? <>없으면<br />말하<span>GS</span></> : tab === "requests" ? <>내가 원한 것,<br /><span>여기 모아뒀어요.</span></> : <>준비되면,<br /><span>픽업하러 와요.</span></>}</h1>
-          <p>{tab === "want" ? "원하는 말은 상품으로, 모인 수요는 사장님의 쉬운 판단으로." : tab === "requests" ? "내 요청의 현재 상태를 확인해보세요." : "입고 후 픽업 알림을 받은 상품을 확인하는 곳이에요."}</p>
+        <div><h1>{tab === "want" ? <>없으면 말하<span>GS</span></> : tab === "requests" ? <>내가 원한 것,<br /><span>여기 모아뒀어요.</span></> : <>준비되면,<br /><span>픽업하러 와요.</span></>}</h1>
+          <p>{tab === "want" ? "찾는 상품의 이름이나 특징을 알려주세요." : tab === "requests" ? "내 요청의 현재 상태를 확인해보세요." : "입고 후 픽업 알림을 받은 상품을 확인하는 곳이에요."}</p>
         </div>
         <span className={styles.mascot} aria-hidden="true">🦊<span>말해봐요!</span></span>
       </div>
     </header>
 
-    <p className={styles.previewNote}>상품 {previewProducts.length}개의 출처 확인·미검증·합성 여부를 구분한 데모예요. 실제 점포 {requestStores.length}곳의 위치를 참고하지만 가격·취급·재고·거래는 모의이며 현재 영업을 보장하지 않아요. 이 브라우저의 SQLite에 저장해요. 같은 주소에서 새로고침해도 이어져요. 다른 기기와 공유되지 않아요.</p>
     {notice && <p className={styles.success} role="status">{notice}</p>}
     {activity && (pendingRecords.length > 0 || recordError) && <section className={styles.modelReply} aria-label="검색 활동 기록 저장">
       <strong>{recording ? "검색 활동 기록 저장 중…" : "저장을 기다리는 기록이 있어요"}</strong>
@@ -424,37 +423,35 @@ function CustomerPanel({ requests, onRequest, busy, conditions = previewAvailabi
 
     {tab === "want" && <>
       <section className={styles.card} aria-labelledby="customer-input-title">
-        <span className={styles.step}>01 · 원하는 상품 말하기</span>
-        <h2 id="customer-input-title">어떤 상품을 찾고 있나요?</h2>
-        {activity && <>
-          <button type="button" className={styles.textButton} disabled={busy} onClick={() => { newSearch(); setUndo(null); inputRef.current?.focus(); }}>새 상품 찾기 · 대화 새로 시작</button>
-          <p className={styles.small}>추가 질문은 필요할 때만 최대 2회예요. 명확한 후보는 바로 상품·구매 조건을 확인할 수 있어요.</p>
-          {conversation && <details className={styles.usage}><summary>이 대화의 원래 조건 · 추가 질문 {conversation.questionCount}/2</summary><p>처음 입력: {conversation.initialText}</p>{conversation.turns.map((turn, index) => <p key={index}>질문 {index + 1}: {turn.question}<br />내 답변: {turn.answer}</p>)}<p>원래의 필수·제외 조건은 명시적으로 바꾸기 전까지 유지돼요.</p></details>}
-          {conversation?.question && <p className={styles.dialogueQuestion} role="status"><strong>추가 질문 {conversation.questionCount}/2</strong><br />{conversation.question}</p>}
-        </>}
-        <div className={styles.searchModePanel}>
-          <div className={styles.sectionLine}>
-            <strong>{searchMode === "local" ? "로컬 예시 검색 · AI 아님" : "실제 AI 검색"}</strong>
-            <button type="button" className={styles.textButton} disabled={busy} onClick={switchSearchMode}>{searchMode === "live" ? "로컬 예시 검색으로 전환" : "실제 AI 검색으로 전환"}</button>
-          </div>
-          {searchMode === "live" ? <>
-            <p className={styles.small} role="status">{statusLoading ? "서버의 AI 설정을 확인하고 있어요…" : statusError || (aiReady ? `설정 확인됨${assistantStatus?.model ? ` · ${assistantStatus.model}` : ""}. 검색하면 실제 AI를 호출해요.` : "실제 AI 검색이 설정되지 않았어요. 서버의 모델·키 설정을 확인한 뒤 다시 확인해 주세요.")}</p>
-            <button type="button" className={styles.textButton} disabled={busy || statusLoading || searching} onClick={() => { setStatusLoading(true); setStatusAttempt(current => current + 1); }}>AI 설정 다시 확인</button>
-          </> : <p className={styles.small}>직접 선택한 로컬 예시 모드예요. AI를 호출하지 않고 카탈로그 상품명·별칭만 비교해요.</p>}
+        <div className={styles.sectionLine}>
+          <h2 id="customer-input-title">원하는 상품 찾기</h2>
+          <span className={styles.resultMode}>{searchMode === "local" ? "로컬 예시 검색 · AI 아님" : "실제 AI 검색"}</span>
         </div>
+        {activity && conversation?.question && <p className={styles.dialogueQuestion} role="status"><strong>추가 질문 {conversation.questionCount}/2</strong><br />{conversation.question}</p>}
         <form onSubmit={search}>
           <label className={styles.fieldLabel} htmlFor="customer-query">{activity && conversation?.question ? "위 질문에 대한 답변" : "상품 이름이나 특징"}</label>
           <textarea ref={inputRef} id="customer-query" data-testid="customer-query" value={input} disabled={busy} maxLength={300} rows={3} onChange={event => { setUndo(null); editInput(event.target.value); }} onKeyDown={event => { if (event.key === "Enter" && event.nativeEvent.isComposing) event.stopPropagation(); }} placeholder="예: 딸기랑 크림이 들어간 샌드위치 찾아줘" aria-describedby="customer-search-note" />
           <p id="customer-search-note" className={styles.small}>{searchMode === "live" ? "입력한 설명을 AI가 데모 카탈로그와 비교해요. 후보를 확인하기 전에는 요청이나 구매가 실행되지 않아요." : "카탈로그 상품명·별칭을 찾는 로컬 검색이에요. 문장 전체를 이해하는 AI 검색이 아니에요."}</p>
-          <div className={styles.examples}>
-            <div className={styles.sectionLine}><strong>이렇게 말해보세요</strong>{undo !== null && <button className={styles.textButton} type="button" disabled={busy} onClick={() => { editInput(undo); setUndo(null); inputRef.current?.focus(); }}>입력 되돌리기</button>}</div>
-            {examples.map(example => <button key={example} type="button" className={styles.example} disabled={busy} onClick={() => { setUndo(previous => previous ?? input); editInput(example); inputRef.current?.focus(); }}><span aria-hidden="true">↗</span>{example}</button>)}
-            <p className={styles.small}>예시를 누르면 입력만 채워져요.</p>
-          </div>
           <button type="submit" className={styles.primary} data-testid="customer-search" disabled={busy || searching || Boolean(activity && conversation?.finished) || (searchMode === "live" && (!aiReady || statusLoading))}>{searching ? "AI가 상품을 찾고 있어요…" : activity && conversation?.finished ? "후보를 확인하거나 새 상품 찾기를 눌러주세요" : searchMode === "live" ? conversation?.question ? "이 답변으로 AI 상품 찾기" : "AI로 상품 찾기" : "로컬 예시 상품 찾기"} <span aria-hidden="true">→</span></button>
           {searching && <div className={styles.sectionLine}><p className={styles.small} role="status">검색 중이에요. 입력을 바꾸면 이전 검색은 취소돼요.</p><button type="button" className={styles.textButton} onClick={cancelSearch}>검색 취소</button></div>}
           {searchError && <p className={styles.error} role="alert">{searchError} 입력은 그대로 남아 있어요.</p>}
         </form>
+        {searchMode === "live" ? <div className={styles.searchStatus}>
+          <p className={styles.small} role="status">{statusLoading ? "서버의 AI 설정을 확인하고 있어요…" : statusError || (aiReady ? `설정 확인됨${assistantStatus?.model ? ` · ${assistantStatus.model}` : ""}. 검색하면 실제 AI를 호출해요.` : "실제 AI 검색이 설정되지 않았어요. 서버의 모델·키 설정을 확인한 뒤 다시 확인해 주세요.")}</p>
+          <button type="button" className={styles.textButton} disabled={busy || statusLoading || searching} onClick={() => { setStatusLoading(true); setStatusAttempt(current => current + 1); }}>AI 설정 다시 확인</button>
+        </div> : <p className={styles.small}>직접 선택한 로컬 예시 모드예요. AI를 호출하지 않고 카탈로그 상품명·별칭만 비교해요.</p>}
+        {activity && <button type="button" className={styles.textButton} disabled={busy} onClick={() => { newSearch(); setUndo(null); inputRef.current?.focus(); }}>새 상품 찾기 · 대화 새로 시작</button>}
+        <div className={styles.examples}>
+          <div className={styles.sectionLine}><strong>이렇게 말해보세요</strong>{undo !== null && <button className={styles.textButton} type="button" disabled={busy} onClick={() => { editInput(undo); setUndo(null); inputRef.current?.focus(); }}>입력 되돌리기</button>}</div>
+          {examples.map(example => <button key={example} type="button" className={styles.example} disabled={busy} onClick={() => { setUndo(previous => previous ?? input); editInput(example); inputRef.current?.focus(); }}><span aria-hidden="true">↗</span>{example}</button>)}
+          <p className={styles.small}>예시를 누르면 입력만 채워져요.</p>
+        </div>
+        <details className={styles.usage}>
+          <summary>검색 모드·대화 도움</summary>
+          <button type="button" className={styles.textButton} disabled={busy} onClick={switchSearchMode}>{searchMode === "live" ? "로컬 예시 검색으로 전환" : "실제 AI 검색으로 전환"}</button>
+          {activity && <p className={styles.small}>추가 질문은 필요할 때만 최대 2회예요. 명확한 후보는 바로 상품·구매 조건을 확인할 수 있어요.</p>}
+        </details>
+        {activity && conversation && <details className={styles.usage}><summary>이 대화의 원래 조건 · 추가 질문 {conversation.questionCount}/2</summary><p>처음 입력: {conversation.initialText}</p>{conversation.turns.map((turn, index) => <p key={index}>질문 {index + 1}: {turn.question}<br />내 답변: {turn.answer}</p>)}<p>원래의 필수·제외 조건은 명시적으로 바꾸기 전까지 유지돼요.</p></details>}
       </section>
 
       {result !== null && <section className={styles.results} aria-labelledby="customer-results-title">
@@ -570,6 +567,11 @@ function CustomerPanel({ requests, onRequest, busy, conditions = previewAvailabi
     </section>)}
 
     {error && <p className={styles.error} role="alert">{error}</p>}
+    <details className={styles.usage}>
+      <summary>모의 데이터·브라우저 저장 안내</summary>
+      <p className={styles.small}>상품 {previewProducts.length}개의 출처 확인·미검증·합성 여부를 구분한 데모예요. 실제 점포 {requestStores.length}곳의 위치를 참고하지만 가격·취급·재고·거래는 모의이며 현재 영업을 보장하지 않아요. 이 브라우저의 SQLite에 저장해요. 같은 주소에서 새로고침해도 이어져요. 다른 기기와 공유되지 않아요.</p>
+      <p className={styles.small}>원하는 말은 상품으로, 모인 수요는 사장님의 쉬운 판단으로.</p>
+    </details>
     <nav className={styles.bottomNav} aria-label="고객 하단 탐색">
       {([{ id: "want", label: "원하기" }, { id: "requests", label: "내 요청" }, { id: "pickup", label: "픽업" }] as const).map(item => <button type="button" key={item.id} className={tab === item.id ? styles.activeTab : undefined} aria-current={tab === item.id ? "page" : undefined} onClick={() => navigate(item.id)}><NavIcon tab={item.id} /><span>{item.label}{item.id === "requests" && mine.length > 0 && <span className={styles.navCount}>{mine.length}</span>}</span></button>)}
     </nav>

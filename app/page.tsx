@@ -111,7 +111,7 @@ export default function Home() {
 
       <div className="preview-notice">
         <span className="notice-label">화면 시연</span>
-        <p>카탈로그 {previewProducts.length}개·실제 위치 참고 점포 {previewStores.filter(entry => entry.identityOrigin === "reference_verified").length}곳을 연결했습니다. 상품은 합성·참고 자료가 섞인 초안이며 가격·취급·재고·수요는 모두 모의입니다.</p>
+        <p>상품 {previewProducts.length}개·실제 위치 참고 점포 {previewStores.filter(entry => entry.identityOrigin === "reference_verified").length}곳. 가격·취급·재고·거래는 모의예요.</p>
         <a href="/demo">새 거래 데모 열기 →</a>
         <details><summary>연결 상태</summary><p>이 화면의 이전 요청·승인은 보존했어요. 새 거래 데모에서 고객 검색·요청, 경영주 발주·공급·모의 결제·입고·픽업을 이어볼 수 있습니다. 두 데모의 거래는 별도로 저장돼요. 실제 GS 거래나 청구는 없어요.</p></details>
       </div>

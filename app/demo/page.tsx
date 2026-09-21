@@ -150,6 +150,8 @@ export default function TransactionDemo() {
   const customerView = state && role === "customer" && storeId ? getView(state, {
     sessionId: state.sessionId, generation: state.generation, actorId: LOCAL_CUSTOMER_ID, role: "customer", storeId,
   }, Date.now()) : null;
+  const resetPanel = resetConfirm && <section className="storage-warning"><strong>현재 거래 데모를 초기화할까요?</strong><p>현재 거래 데모의 추가 요청·발주·결제·픽업은 삭제됩니다. 이전 Preview 원본과 보관 이력은 유지됩니다.</p><button disabled={busy} onClick={reset}>확인하고 거래 데모 초기화</button><button disabled={busy} onClick={() => setResetConfirm(false)}>취소</button></section>;
+  const storageToolbar = state && <><div className={`storage-toolbar ${role === "customer" ? "storage-secondary" : ""}`}><span role="status">{busy ? "SQLite에 저장 중…" : `✓ 저장됨 · revision ${state.revision} · 세대 ${state.generation}`}</span><button disabled={busy} onClick={() => setResetConfirm(true)}>거래 데모 초기화</button></div>{resetPanel}</>;
 
   return <div className="site-wrap">
     <div className="preview-ribbon"><span className="preview-dot" />함께 만드는 원하GS <span className="ribbon-divider">/</span> 거래 데모 · 공급부터 픽업까지</div>
@@ -157,18 +159,19 @@ export default function TransactionDemo() {
       <a className="brand-lockup" href="/demo" aria-label="원하GS, 원하지쓰 거래 데모"><span className="brand-symbol" aria-hidden="true">w.</span><span><strong>원하<span>GS</span></strong><small>‘원하지쓰’라고 읽어요.</small></span></a>
       <div className="role-switch" role="group" aria-label="데모 역할 선택"><button disabled={busy} aria-pressed={role === "customer"} onClick={() => setRole("customer")}>고객</button><button disabled={busy} aria-pressed={role === "merchant"} onClick={() => setRole("merchant")}>경영주</button></div>
     </header>
-    <div className="preview-notice"><span className="notice-label">모의 거래</span><p>실제 GS 거래·청구가 없는 한 탭 데모입니다. 실제 위치 참고 점포, 합성/참고 상품, 모의 가격·공급을 사용합니다. 데이터는 이 브라우저의 SQLite에만 저장됩니다.</p><a href="/">이전 Preview</a></div>
+    <div className="preview-notice"><span className="notice-label">모의 거래</span><p>실제 GS 거래·청구는 없어요. 거래는 이 브라우저에만 저장돼요.</p><a href="/">이전 Preview</a></div>
     <main className={`workspace ${role}`}>
       {startRequired && <section className="storage-warning"><h1>공급·결제·픽업까지 이어볼까요?</h1><p>새 거래 데모를 별도로 시작합니다. 이전 Preview 요청과 승인은 읽기 전용 이력으로 보관하며 원본을 삭제하지 않습니다. 기존 승인을 실제 발주로 바꾸거나 새 동의를 대신 만들지 않아요.</p><p>새 데모의 초기 고객 20명은 합성 데이터입니다. 고객 역할에서 만든 새 요청에만 직접 상품·가격·수량·점포를 확인하고 동의해주세요.</p><button disabled={busy} onClick={start}>이전 이력을 보관하고 새 거래 데모 시작</button></section>}
       {!state && !startRequired && !error && <p className="storage-loading" role="status">거래 SQLite 사본을 불러오고 있어요…</p>}
       {error && <section className="storage-warning" role="alert"><p>{error}</p>{!state && !startRequired && <button disabled={busy} onClick={() => { setError(""); setLoadAttempt(value => value + 1); }}>다시 불러오기</button>}{recovery.current && <button disabled={busy} onClick={() => setResetConfirm(true)}>새 거래 사본 초기화 검토</button>}</section>}
-      {resetConfirm && <section className="storage-warning"><strong>현재 거래 데모를 초기화할까요?</strong><p>현재 거래 데모의 추가 요청·발주·결제·픽업은 삭제됩니다. 이전 Preview 원본과 보관 이력은 유지됩니다.</p><button disabled={busy} onClick={reset}>확인하고 거래 데모 초기화</button><button disabled={busy} onClick={() => setResetConfirm(false)}>취소</button></section>}
+      {!state && resetPanel}
       {state && <>
-        <div className="storage-toolbar"><span role="status">{busy ? "SQLite에 저장 중…" : `✓ 저장됨 · revision ${state.revision} · 세대 ${state.generation}`}</span><button disabled={busy} onClick={() => setResetConfirm(true)}>거래 데모 초기화</button></div>
-        <div className="domain-store-picker"><label htmlFor="domain-current-store">{role === "customer" ? "요청·픽업을 확인할 점포" : "관리할 점포"}</label><select id="domain-current-store" value={storeId} disabled={busy} onChange={event => setStoreId(event.target.value)}>{state.stores.map(entry => <option key={entry.id} value={entry.id}>{entry.name}</option>)}</select><p>{previewStores.find(entry => entry.id === storeId)?.address} · 위치 참고 자료이며 영업·실제 취급을 보장하지 않아요.</p></div>
+        {role === "merchant" && storageToolbar}
+        <div className="domain-store-picker"><label htmlFor="domain-current-store">{role === "customer" ? "확인할 점포" : "관리할 점포"}</label><select id="domain-current-store" aria-label={role === "customer" ? "요청·픽업을 확인할 점포" : "관리할 점포"} value={storeId} disabled={busy} onChange={event => setStoreId(event.target.value)}>{state.stores.map(entry => <option key={entry.id} value={entry.id}>{entry.name}</option>)}</select><p>{previewStores.find(entry => entry.id === storeId)?.address} · 위치 참고 · 실제 영업·취급 미확인</p></div>
         {role === "customer" ? <CustomerWorkspace key={`${state.sessionId}:${state.generation}`} requests={mine} onRequest={requestProduct} busy={busy} conditions={state.conditions} consentDurationDays={DOMAIN_POLICY.consentMs / 86400000} requestContent={detail} pickupContent={pickup}
           activity={{ contextKey: `${state.sessionId}:${state.generation}:customer:${LOCAL_CUSTOMER_ID}`, onRecord: recordActivity,
             historyContent: customerView ? <SearchHistory actorId={LOCAL_CUSTOMER_ID} searchRuns={customerView.searchRuns} needs={customerView.needs} recommendationEvents={customerView.recommendationEvents} /> : undefined }} /> : detail}
+        {role === "customer" && storageToolbar}
         <details className="domain-archive"><summary>이전 Preview 보관 이력 · {archived.length}건</summary><p>{archive?.message}</p><p>보관 이력은 현재 거래 수요에 합산하지 않습니다. 다른 점포 또는 가상 점포 이력은 <a href="/">이전 Preview</a>에서도 볼 수 있어요.</p>{archived.map(request => <article key={request.id}><strong>{request.productName} · {request.quantity}개</strong><p>{request.storeName} · {won(request.unitPrice * request.quantity)} · 이전 {request.stage === "approved" ? "화면 승인" : "화면 요청"}</p></article>)}</details>
       </>}
     </main>
