@@ -73,6 +73,7 @@ export type DomainState = Seed & {
   reservations: Reservation[]; notifications: Notification[]; events: DomainEvent[];
   policies: Policy[]; receipts: Receipt[];
   searchRuns: SearchRun[]; needs: NeedRecord[]; recommendationEvents: RecommendationEvent[];
+  merchantRuns: MerchantRun[];
 };
 export type Viewer = { sessionId: string; generation: number; actorId: string; role: Role; storeId: string };
 export type CommandContext = Viewer & { expectedRevision: number; idempotencyKey: string };
@@ -96,6 +97,7 @@ export type Command = CommandContext & {
   | { type: "clock.advance"; milliseconds: number }
   | { type: "clock.tick" }
   | SearchRecordCommand | NeedRecordCommand | RecommendationRecordCommand
+  | MerchantTraceCommand
 );
 export type CommandOutcome =
   | { ok: true; state: DomainState; events: DomainEvent[]; result: CommandResult; replayed: boolean }
@@ -124,4 +126,7 @@ export type View = {
   orders: Order[]; lines: OrderLine[]; reservations: Reservation[]; notifications: Notification[];
   demand: Demand[]; policy: Policy | null;
   searchRuns: SearchRun[]; needs: NeedView[]; recommendationEvents: RecommendationEvent[];
+  merchantRuns: MerchantRun[];
 };
+import type { MerchantRun, MerchantTraceCommand } from "./merchant-trace-types";
+export type { MerchantRun, MerchantTraceCommand } from "./merchant-trace-types";

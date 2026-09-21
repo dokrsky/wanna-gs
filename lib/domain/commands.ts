@@ -1,5 +1,6 @@
 import { DOMAIN_POLICY as P, DomainError, amount, identifier, integer, requireRule, sum } from "./policy";
 import { assertSearchState, recordSearch, searchView } from "./needs";
+import { assertMerchantTraceState, recordMerchantTrace } from "./merchant-trace";
 import type { Actor, Command, CommandOutcome, Condition, ConsentInput, CustomerWaiting, Demand, DomainEvent, DomainState, OrderItem, OrderLine, PurchaseRequest, RequestDetail, Seed, Viewer, View } from "./types";
 
 const copy = <T>(value: T): T => structuredClone(value);
@@ -87,7 +88,7 @@ export function createInitialState(seed: Seed, context: { sessionId: string; gen
     sessionId: context.sessionId, generation: context.generation, lastNow: context.now, revision: 0, nextSequence: 1, clockOffsetMs: 0,
     requests: [], orders: [], lines: [], links: [], allocations: [], payments: [], reservations: [], notifications: [], events: [], receipts: [],
     policies: seed.stores.map(s => ({ storeId: s.id, enabled: false, productIds: [], budgetWon: 0, spentWon: 0, version: 0 })),
-    searchRuns: [], needs: [], recommendationEvents: [],
+    searchRuns: [], needs: [], recommendationEvents: [], merchantRuns: [],
   };
   assertState(state);
   return state;
@@ -97,6 +98,7 @@ export function createInitialState(seed: Seed, context: { sessionId: string; gen
 // returned by applyCommand; callers must never persist a partially built result.
 export function assertState(s: DomainState) {
   assertSearchState(s);
+  assertMerchantTraceState(s);
   requireRule(identifier(s.sessionId) && integer(s.generation) && integer(s.revision) && integer(s.nextSequence, 1) && integer(s.lastNow) && integer(s.clockOffsetMs), "INVALID_STATE", "데모 상태 버전을 확인해주세요.");
   for (const rows of [s.products, s.stores, s.actors, s.requests, s.orders, s.lines, s.links, s.allocations, s.payments, s.reservations, s.notifications, s.events]) {
     requireRule(Array.isArray(rows) && rows.every(r => identifier(r.id)) && unique(rows.map(r => r.id)), "INVALID_STATE", "중복되거나 잘못된 식별자가 있어요.");
@@ -166,8 +168,8 @@ export function applyCommand(committedState: DomainState, command: Command, wall
       const event = { id: id("event"), commandKey: command.idempotencyKey, type, entityId, storeId: command.storeId, at: now };
       events.push(event); state.events.push(event);
     };
-    if (["search.record", "needs.record", "recommendation.record"].includes(command.type)) {
-      const entityId = recordSearch(state, command, now);
+    if (["search.record", "needs.record", "recommendation.record"].includes(command.type) || command.type.startsWith("merchant.run.")) {
+      const entityId = command.type.startsWith("merchant.run.") ? recordMerchantTrace(state, command) : recordSearch(state, command, now);
       emit(command.type, entityId);
       state.revision++;
       const result = { commandKey: command.idempotencyKey, revision: state.revision, entityIds: [entityId] };
@@ -428,5 +430,6 @@ export function getView(state: DomainState, context: Viewer, wallNow: number): V
     demand: context.role === "merchant" ? [...new Set(state.requests.filter(r => r.storeId === context.storeId).map(r => r.productId))].map(id => demandFor(state, context.storeId, id, now)) : [],
     policy: context.role === "merchant" ? policyFor(state, context.storeId) : null,
     ...searchView(state, context),
+    merchantRuns: context.role === "merchant" ? state.merchantRuns.filter(r => r.actorId === context.actorId && r.storeId === context.storeId) : [],
   });
 }

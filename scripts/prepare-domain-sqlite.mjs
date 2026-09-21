@@ -14,10 +14,10 @@ import provenance from "../data/provenance.json" with { type: "json" };
 
 // Match the pure-domain Node24 checker without changing its Next-compatible imports.
 registerHooks({ resolve(specifier, context, next) {
-  if (context.parentURL?.includes("/lib/domain/") && specifier.startsWith(".") && !/\.[a-z]+$/i.test(specifier)) specifier += ".ts";
+  if (context.parentURL?.includes("/lib/") && specifier.startsWith(".") && !/\.[a-z]+$/i.test(specifier)) specifier += ".ts";
   return next(specifier, context);
 } });
-const { DOMAIN_SCHEMA_VERSION, DOMAIN_V1_SOURCE_HASH, DomainMigrationSaveError, LOCAL_CUSTOMER_ID, createDomainSeed, createDomainStore, readDomainState, writeDomainState, readPreviewArchive } = await import("../lib/domain/storage.ts");
+const { DOMAIN_SCHEMA_VERSION, DOMAIN_V1_SOURCE_HASH, DOMAIN_V2_SOURCE_HASH, DomainMigrationSaveError, LOCAL_CUSTOMER_ID, createDomainSeed, createDomainStore, readDomainState, writeDomainState, readPreviewArchive } = await import("../lib/domain/storage.ts");
 const { DOMAIN_POLICY } = await import("../lib/domain/policy.ts");
 const SQL = await initSqlJs();
 const hash = bytes => createHash("sha256").update(bytes).digest("hex");
@@ -180,6 +180,7 @@ if (process.argv.includes("--check")) {
   // Shipped-v1-shaped snapshot with a completed transaction and legacy archive.
   // New record tables are empty here; removing only those restores the exact v1 table set.
   const legacy = open(saved);
+  legacy.run("DROP TABLE merchant_runs");
   for (const table of ["recommendation_events", "needs", "search_candidate_evidence", "search_candidates", "search_clues", "search_turns", "search_runs"]) legacy.run(`DROP TABLE ${table}`);
   legacy.run("PRAGMA user_version=1");
   legacy.run("UPDATE metadata SET value=? WHERE key='source_hash'", [DOMAIN_V1_SOURCE_HASH]);
@@ -188,7 +189,7 @@ if (process.argv.includes("--check")) {
     const db = open(bytes);
     try {
       const tables = db.exec("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' ORDER BY name")[0].values.flat();
-      return Object.fromEntries(tables.filter(name => !["recommendation_events", "needs", "search_candidate_evidence", "search_candidates", "search_clues", "search_turns", "search_runs"].includes(name)).map(name =>
+      return Object.fromEntries(tables.filter(name => !["merchant_runs", "recommendation_events", "needs", "search_candidate_evidence", "search_candidates", "search_clues", "search_turns", "search_runs"].includes(name)).map(name =>
         [name, db.exec(`SELECT * FROM ${name}${name === "metadata" ? " WHERE key!='source_hash'" : ""} ORDER BY rowid`)]));
     } finally { db.close(); }
   };
@@ -246,6 +247,72 @@ if (process.argv.includes("--check")) {
   assert.deepEqual(recordRestored.state, upgraded.state);
   for (const key of ["requests", "orders", "lines", "links", "allocations", "payments", "reservations", "notifications", "policies", "conditions", "lastNow", "clockOffsetMs", "nextSequence", "generation", "sessionId"]) assert.deepEqual(upgraded.state[key], committed[key], key);
   console.log("PASS UI07 SQL: v1 all-row/receipt/clock/archive preservation; delayed/failed migration retains old bytes, retry/reopen, exact-known-v1 whitelist; seven normalized record tables roundtrip/FK, failed record save + same-command retry, unchanged trade state.");
+
+  // Published-v2-shaped fixture contains ALL UI07 rows plus completed pickup/archive.
+  const legacy2 = open(upgradeBytes);
+  legacy2.run("DROP TABLE merchant_runs; PRAGMA user_version=2");
+  legacy2.run("UPDATE metadata SET value=? WHERE key='source_hash'", [DOMAIN_V2_SOURCE_HASH]);
+  const v2 = legacy2.export(); legacy2.close();
+  const allV2Rows = bytes => {
+    const db = open(bytes);
+    try {
+      const tables = db.exec("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' AND name!='merchant_runs' ORDER BY name")[0].values.flat();
+      return Object.fromEntries(tables.map(name => [name, db.exec(`SELECT * FROM ${name}${name === "metadata" ? " WHERE key!='source_hash'" : ""} ORDER BY rowid`)]));
+    } finally { db.close(); }
+  };
+  let v3Bytes = v2.slice(), traceFail = true, traceWrites = 0;
+  const persistTrace = async bytes => { if (traceFail) throw Error("trace-quota"); v3Bytes = bytes.slice(); traceWrites++; };
+  await assert.rejects(createDomainStore({ SQL, seed, initial: v3Bytes, persist: persistTrace }), e => e instanceof DomainMigrationSaveError && e.retryable && !("reset" in e));
+  assert.deepEqual(v3Bytes, v2); assert.equal(traceWrites, 0);
+  traceFail = false;
+  const traceStore = await createDomainStore({ SQL, seed, initial: v3Bytes, persist: persistTrace, now: () => wallNow });
+  assert.equal(traceWrites, 1); assert.deepEqual(allV2Rows(v3Bytes), allV2Rows(v2), "ALL v2 rows including raw receipts/search/needs/recommendations/clock/archive unchanged");
+  assert.deepEqual(traceStore.state, upgraded.state); assert.deepEqual(traceStore.archive, archive);
+  assert.equal((await traceStore.execute(recordCommand)).replayed, true); assert.equal(traceWrites, 1);
+  const unknownV2 = open(v2); unknownV2.run("UPDATE metadata SET value='unknown-v2' WHERE key='source_hash'");
+  await assert.rejects(createDomainStore({ SQL, seed, initial: unknownV2.export(), persist: persistTrace })); unknownV2.close();
+  const brokenV2 = open(v2); brokenV2.run("PRAGMA foreign_keys=OFF; UPDATE needs SET actorId='missing'");
+  await assert.rejects(createDomainStore({ SQL, seed, initial: brokenV2.export(), persist: persistTrace })); brokenV2.close();
+  assert.equal(traceWrites, 1);
+  const { enabled, productIds, budgetWon, version, spentWon } = traceStore.state.policies.find(p => p.storeId === condition.storeId);
+  const traceInput = { id: "sql-batch-run", text: "요청만 표시", generation: 81, storeId: condition.storeId, budgetWon: 1000, selectedProductIds: [],
+    context: { uiSeq: 1, changes: [], pendingProductIds: [], currentPolicy: { enabled, productIds, budgetWon, version, spentWon } } };
+  const traceResponse = { ok: true, id: traceInput.id, generation: traceInput.generation, storeId: traceInput.storeId, uiSeq: 1,
+    mode: "live", model: "sql-fixture-model", usage: { inputTokens: 3, outputTokens: 4 }, action: "filter", scope: "current_batch", view: "requested",
+    selection: "keep", productIds: [], budgetWon: null, message: "요청만 표시", restoreSelectionChangeId: null, restoreBudgetChangeId: null, policyDraft: null };
+  // Synthetic wire response tests parser/persistence only, not an actual model call.
+  const traceCommand = body => ({ ...command(body), expectedRevision: traceStore.state.revision, sessionId: traceStore.state.sessionId, generation: traceStore.state.generation });
+  const traceStart = traceCommand({ type: "merchant.run.start", run: { id: traceInput.id, kind: "batch", inputJson: JSON.stringify(traceInput), startedAt: wallNow } });
+  const preTraceBytes = v3Bytes.slice(), preTraceState = traceStore.state;
+  traceFail = true; await assert.rejects(traceStore.execute(traceStart), /trace-quota/);
+  assert.deepEqual(v3Bytes, preTraceBytes); assert.deepEqual(traceStore.state, preTraceState);
+  traceFail = false; assert.equal((await traceStore.execute(traceStart)).ok, true);
+  for (const body of [
+    { type: "merchant.run.finish", runId: traceInput.id, terminal: "success", finishedAt: wallNow + 10, latencyMs: 10, terminalErrorCode: null, observation: { status: "success", responseJson: JSON.stringify(traceResponse) } },
+    { type: "merchant.run.apply", runId: traceInput.id, application: "screen_applied", commandKey: null, appliedAt: wallNow + 20 },
+  ]) { const out = await traceStore.execute(traceCommand(body)); assert.equal(out.ok, true, JSON.stringify(out)); }
+  for (const terminal of ["cancelled", "stale", "interrupted", "error"]) {
+    const runId = `sql-${terminal}`, req = { ...traceInput, id: runId }, res = { ...traceResponse, id: runId };
+    for (const body of [
+      { type: "merchant.run.start", run: { id: runId, kind: "batch", inputJson: JSON.stringify(req), startedAt: wallNow } },
+      { type: "merchant.run.finish", runId, terminal, finishedAt: wallNow + 10, latencyMs: 10, terminalErrorCode: terminal === "error" ? "MODEL_TIMEOUT" : null, observation: null },
+    ]) { const out = await traceStore.execute(traceCommand(body)); assert.equal(out.ok, true, JSON.stringify(out)); }
+    assert.equal(traceStore.state.merchantRuns.at(-1).usage, null);
+    const observed = await traceStore.execute(traceCommand({ type: "merchant.run.observe", runId, observation: { status: "success", responseJson: JSON.stringify(res) } }));
+    assert.equal(observed.ok, true, JSON.stringify(observed)); assert.equal(traceStore.state.merchantRuns.at(-1).terminal, terminal);
+  }
+  inspect(v3Bytes, db => {
+    assert.equal(scalar(db, "PRAGMA user_version"), 3); assert.equal(scalar(db, "SELECT count(*) FROM merchant_runs"), 5);
+    assert.throws(() => db.run("UPDATE merchant_runs SET storeId='missing'"), /FOREIGN KEY/);
+    assert.throws(() => db.run("UPDATE merchant_runs SET observationStatus=NULL"), /CHECK/);
+    assert.throws(() => db.run("UPDATE merchant_runs SET finishedAt=NULL"), /CHECK/);
+    assert.throws(() => db.run("UPDATE merchant_runs SET application='policy_saved', applicationCommandKey='missing' WHERE terminal='success'"), /FOREIGN KEY/);
+    assert.deepEqual(readDomainState(db), traceStore.state); assert.deepEqual(db.exec("PRAGMA foreign_key_check"), []);
+  });
+  const traceRestore = await createDomainStore({ SQL, seed, initial: v3Bytes, persist: async () => { throw Error("unexpected trace restore write"); } });
+  assert.deepEqual(traceRestore.state, traceStore.state); assert.deepEqual(traceRestore.archive, archive);
+  for (const key of ["requests", "orders", "lines", "links", "allocations", "payments", "reservations", "notifications", "policies", "conditions", "lastNow", "clockOffsetMs", "nextSequence", "generation", "sessionId", "searchRuns", "needs", "recommendationEvents"]) assert.deepEqual(traceStore.state[key], preTraceState[key], key);
+  console.log("PASS UI09B SQL: known v1/v2→3 additive; every v2 table row/receipt/search/clock/archive preserved; migration failure retry (no reset); unknown/corrupt v2 rejected; normalized merchant run CHECK/FK, failed save/same-command retry, finish/apply roundtrip/reopen, trade/clock frozen. No browser/live.");
   wallNow += 1000;
   const queuedBeforeReset = store.execute(command({ type: "clock.tick" }));
   const staleCheck = assert.rejects(queuedBeforeReset, /DOMAIN_STALE_COMMAND/);

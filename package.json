@@ -16,8 +16,10 @@
     "check:store-map": "node lib/store-map.check.mjs",
     "check:policy-assistant": "node --conditions=react-server lib/assistant/policy.check.mjs",
     "check:merchant-context": "node --conditions=react-server lib/assistant/merchant-context.check.mjs && node app/components/merchant-context-ui.check.mjs",
+    "check:merchant-trace": "node lib/domain/merchant-trace.check.mjs && node lib/merchant-trace-client.check.mjs && node lib/merchant-trace-integration.check.mjs && node app/components/merchant-run-history.check.mjs",
     "check:dialogue": "node --conditions=react-server lib/assistant/dialogue.check.mjs",
     "check:search-needs": "node lib/domain/needs.check.mjs",
+    "check:customer-write": "node lib/customer-command-client.check.mjs",
     "start": "next start",
     "lint": "next lint"
   },

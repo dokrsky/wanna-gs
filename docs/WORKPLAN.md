@@ -14,8 +14,8 @@
 | UI-06 | Meitner: 정책 AI API. Newton: 정책 변경안/확인 UI. 조정자 통합 | `5502200` 여덟 번째 Preview Ready. live1회 변경안→별도 확인→예산1만원/커피1개 자동발주·새로고침 복원, 전체 독립 품질검증 전 |
 | UI-07 | Meitner: 제한 대화 API. Locke: domain DTO/기록 명령/SQL migration 단일 작성. Newton: 고객 대화/기록. 조정자: 페이지/경영주 안전 조회 | `81a4369` 아홉 번째 Preview Ready. 실제 로컬v1 수령이력 보존·니즈 등록/경영주 안전조회, Preview live검색1회→검색/선택/구매연결 저장. live추가질문·전체 독립 품질 후속 |
 | UI-08 | Locke: 읽기 전용 고객 대기/안전 조회 DTO. Newton: 대기 사유·발음·픽업 위계. 조정자: 통합/Preview | [context/UI-08.md](context/UI-08.md), `e8a5b69` 열 번째 Preview Ready·실제 공급→입고/픽업 확인. `af1dce1` 잔량 우선 안내 보완·열한 번째 Preview Ready·픽업/마감 복원, domain92/needs26/waiting24·독립 좁은 P2 재확인 PASS. 전체 검증 후속 |
-| UI-09A | Meitner: 문맥 v2 계약/API. Newton: 최근 변경·정책 전달 UI. 조정자: 통합/Preview | ADR-006·[context/UI-09A.md](context/UI-09A.md) ACK 후 구현·handback. 최근5개 복원/예산 편집 완료/정책 최종확인 재사용, 자체 계약 및 기존 거래 회귀 PASS. 후보 빌드·게시·실제 화면 확인 진행 |
-| UI-09B | 경영주 AI 실행 이력·SQL additive migration | UI09A 이후 별도 작은 단위로 구현. 기록과 모델/정책 적용 결과 분리·receipt 기반 재시도. 단일 SQL 소유자 배정 후 진행, 아직 미구현 |
+| UI-09A | Meitner: 문맥 v2 계약/API. Newton: 최근 변경·정책 전달 UI. 조정자: 통합/Preview | `cfda3c9` 열두 번째 Preview Ready. 최근5개·합집합 복원→명시 적용·정책 확인 전달 실제2호출, OFF/누적예산 유지·수동draft 보존·정책 저장/복원 확인. 조회-only P2 독립 재확인, 전체 품질 후속 |
+| UI-09B | Locke: domain/SQL 단일 작성. Newton: 실행 이력 UI. 조정자: 저장 어댑터/통합. Meitner: 좁은 독립 검토 | [context/UI-09B.md](context/UI-09B.md) 구현·자체 trace58/UI13·실제 SQL v1/v2→3 보존 PASS. 로그/고객 저장 충돌 P2 최소 수정·독립 재확인 후 작은 Preview 게시 중. 전체 품질 후속 |
 | DATA-01/02 | Locke: 242개 상품 초안·실제 점포8/legacy2·합성 역할/availability·SQLite 업그레이드. Newton: 출처/실제 점포 UI | `aa54838` 다섯 번째 Preview Ready. 로컬 기존 요청 보존 확인. 최종 상품 사실/독립 데이터 검증 전 |
 | VERIFY | 전체 seed/독립 검증·정책 검토·E2E·평가·G5/G6 | 구현 후 수행, 최종 완료 조건 유지 |
 

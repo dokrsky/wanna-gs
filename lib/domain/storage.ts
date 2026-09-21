@@ -6,8 +6,9 @@ import { applyCommand, assertState, createInitialState } from "./commands.ts";
 import { DOMAIN_POLICY } from "./policy.ts";
 import type { Command, CommandOutcome, DomainState, SearchRun, Seed } from "./types";
 
-export const DOMAIN_SCHEMA_VERSION = 2;
+export const DOMAIN_SCHEMA_VERSION = 3;
 export const DOMAIN_V1_SOURCE_HASH = "13bc7a6a7a88bb3d60e80444fa24731b29feeaafc7a0a71c546a19a60014403e";
+export const DOMAIN_V2_SOURCE_HASH = "3d15fce9caf74e0293ce5908bb532cbd3dc69e4639df573b5f76553f1fc72bc0";
 export const LOCAL_CUSTOMER_ID = "DEMO-CUSTOMER-LOCAL";
 export type ArchivedPreviewRequest = {
   id: string; actor: string; productId: string; productName: string; storeId: string;
@@ -30,7 +31,7 @@ export type DomainStore = {
 // Presentation/provenance on read-only masters may retain the original JSON record.
 const SCHEMA = `
  PRAGMA foreign_keys=ON;
- PRAGMA user_version=2;
+ PRAGMA user_version=3;
  CREATE TABLE metadata(key TEXT PRIMARY KEY NOT NULL, value TEXT NOT NULL) STRICT;
  CREATE TABLE session(
    singleton INTEGER PRIMARY KEY CHECK(singleton=1), sessionId TEXT NOT NULL,
@@ -147,6 +148,28 @@ const RECORD_SCHEMA = `
    CHECK((action='requested' AND requestId IS NOT NULL) OR (action!='requested' AND requestId IS NULL))) STRICT;
 `;
 const recordTables = ["recommendation_events", "needs", "search_candidate_evidence", "search_candidates", "search_clues", "search_turns", "search_runs"];
+const MERCHANT_SCHEMA = `
+ CREATE TABLE merchant_runs(id TEXT PRIMARY KEY NOT NULL, actorId TEXT NOT NULL REFERENCES actors(id),
+   storeId TEXT NOT NULL REFERENCES stores(id), kind TEXT NOT NULL CHECK(kind IN ('batch','policy')),
+   inputJson TEXT NOT NULL CHECK(json_valid(inputJson) AND length(CAST(inputJson AS BLOB))<=65536),
+   startedAt INTEGER NOT NULL CHECK(startedAt BETWEEN 0 AND 9007199254740991), terminal TEXT NOT NULL CHECK(terminal IN ('running','success','error','cancelled','stale','interrupted')),
+   finishedAt INTEGER CHECK(finishedAt BETWEEN startedAt AND 9007199254740991), latencyMs INTEGER CHECK(latencyMs BETWEEN 0 AND 9007199254740991), terminalErrorCode TEXT,
+   observationStatus TEXT CHECK(observationStatus IN ('success','error')), responseJson TEXT CHECK(json_valid(responseJson) AND length(CAST(responseJson AS BLOB))<=16384), observationErrorCode TEXT,
+   model TEXT, inputTokens INTEGER CHECK(inputTokens BETWEEN 0 AND 9007199254740991), outputTokens INTEGER CHECK(outputTokens BETWEEN 0 AND 9007199254740991),
+   application TEXT NOT NULL CHECK(application IN ('not_applied','screen_applied','policy_saved')),
+   applicationCommandKey TEXT REFERENCES receipts(key), appliedAt INTEGER CHECK(appliedAt BETWEEN finishedAt AND 9007199254740991), position INTEGER NOT NULL UNIQUE,
+   CHECK((terminal='running' AND finishedAt IS NULL AND latencyMs IS NULL AND terminalErrorCode IS NULL AND observationStatus IS NULL) OR
+         (terminal!='running' AND finishedAt IS NOT NULL AND latencyMs IS NOT NULL)),
+   CHECK((observationStatus IS NULL AND responseJson IS NULL AND observationErrorCode IS NULL AND model IS NULL AND inputTokens IS NULL AND outputTokens IS NULL) OR
+         (observationStatus IS 'success' AND responseJson IS NOT NULL AND observationErrorCode IS NULL AND model IS NOT NULL AND inputTokens IS NOT NULL AND outputTokens IS NOT NULL) OR
+         (observationStatus IS 'error' AND responseJson IS NULL AND observationErrorCode IS NOT NULL AND model IS NULL AND inputTokens IS NULL AND outputTokens IS NULL)),
+   CHECK(terminal!='success' OR (observationStatus IS 'success' AND terminalErrorCode IS NULL)),
+   CHECK(terminal!='error' OR terminalErrorCode IS NOT NULL),
+   CHECK((application='not_applied' AND applicationCommandKey IS NULL AND appliedAt IS NULL) OR
+         (application='screen_applied' AND terminal='success' AND applicationCommandKey IS NULL AND appliedAt IS NOT NULL) OR
+         (application='policy_saved' AND terminal='success' AND applicationCommandKey IS NOT NULL AND appliedAt IS NOT NULL))) STRICT;
+`;
+const merchantColumns = "id,actorId,storeId,kind,inputJson,startedAt,terminal,finishedAt,latencyMs,terminalErrorCode,observationStatus,responseJson,observationErrorCode,model,inputTokens,outputTokens,application,applicationCommandKey,appliedAt";
 
 // Static mappings for the canonical DTO; no ORM, migrations framework or dynamic schema.
 const COLUMNS = {
@@ -175,14 +198,14 @@ function foreignKeys(db: Database) {
   db.run("PRAGMA foreign_keys=ON");
   if (scalar(db, "PRAGMA foreign_keys") !== 1) throw Error("DOMAIN_FK_DISABLED");
 }
-function openDatabase(SQL: SqlJsStatic, bytes: Uint8Array, sourceHash?: string, allowV1 = false) {
+function openDatabase(SQL: SqlJsStatic, bytes: Uint8Array, sourceHash?: string, allowLegacy = false) {
   const db = new SQL.Database(bytes);
   try {
     foreignKeys(db);
     const version = scalar(db, "PRAGMA user_version");
     const observedHash = scalar(db, "SELECT value FROM metadata WHERE key='source_hash'");
-    const knownV1 = allowV1 && version === 1 && observedHash === DOMAIN_V1_SOURCE_HASH;
-    if ((!knownV1 && (version !== DOMAIN_SCHEMA_VERSION || (sourceHash !== undefined && observedHash !== sourceHash))) ||
+    const knownLegacy = allowLegacy && ((version === 1 && observedHash === DOMAIN_V1_SOURCE_HASH) || (version === 2 && observedHash === DOMAIN_V2_SOURCE_HASH));
+    if ((!knownLegacy && (version !== DOMAIN_SCHEMA_VERSION || (sourceHash !== undefined && observedHash !== sourceHash))) ||
       scalar(db, "PRAGMA integrity_check") !== "ok" || db.exec("PRAGMA foreign_key_check").length) {
       throw Error("DOMAIN_SNAPSHOT_INCOMPATIBLE");
     }
@@ -240,7 +263,12 @@ export function readDomainState(db: Database): DomainState {
     key: receipt.key, fingerprint: receipt.fingerprint, result: { commandKey: receipt.commandKey, revision: receipt.revision,
       entityIds: rows(db, "SELECT receiptKey,entityId FROM receipt_entities ORDER BY position").filter(row => row.receiptKey === receipt.key).map(row => String(row.entityId)) },
   }));
-  const state = { ...session, ...arrays, policies, receipts, ...readSearchState(db),
+  const merchantRuns = scalar(db, "PRAGMA user_version") === 3 ? rows(db, `SELECT ${merchantColumns} FROM merchant_runs ORDER BY position`).map(row => {
+    const { observationStatus, responseJson, observationErrorCode, inputTokens, outputTokens, ...run } = row;
+    return { ...run, observation: observationStatus === null ? null : observationStatus === "success" ? { status: "success", responseJson } : { status: "error", errorCode: observationErrorCode },
+      usage: inputTokens === null ? null : { inputTokens, outputTokens } };
+  }) : [];
+  const state = { ...session, ...arrays, policies, receipts, ...readSearchState(db), merchantRuns,
     products: rows(db, "SELECT id,name,json_extract(details,'$.category') AS category FROM products ORDER BY position").map(p => p.category === null ? { id: p.id, name: p.name } : p),
     stores: rows(db, "SELECT id,name FROM stores ORDER BY position"),
     actors: rows(db, "SELECT id,role,displayName,storeId FROM actors ORDER BY position").map(row => row.storeId === null
@@ -255,6 +283,7 @@ export function writeDomainState(db: Database, state: DomainState) {
   db.run("BEGIN");
   try {
     db.run("PRAGMA defer_foreign_keys=ON");
+    db.run("DELETE FROM merchant_runs");
     for (const table of recordTables) db.run(`DELETE FROM ${table}`);
     db.run("DELETE FROM policy_products; DELETE FROM receipt_entities;");
     for (const table of Object.keys(COLUMNS).reverse()) db.run(`DELETE FROM ${table}`);
@@ -270,6 +299,10 @@ export function writeDomainState(db: Database, state: DomainState) {
     for (const receipt of state.receipts) receipt.result.entityIds.forEach((entityId, position) =>
       db.run("INSERT INTO receipt_entities VALUES (?,?,?)", [receipt.key, entityId, position]));
     writeSearchState(db, state);
+    state.merchantRuns.forEach((run, i) => insert(db, "merchant_runs", merchantColumns, { ...run, ...run.usage,
+      observationStatus: run.observation?.status ?? null,
+      responseJson: run.observation?.status === "success" ? run.observation.responseJson : null,
+      observationErrorCode: run.observation?.status === "error" ? run.observation.errorCode : null }, i));
     if (db.exec("PRAGMA foreign_key_check").length) throw Error("DOMAIN_FOREIGN_KEY_CHECK");
     db.run("COMMIT");
   } catch (error) { db.run("ROLLBACK"); throw error; }
@@ -333,6 +366,7 @@ export function createDomainSeed(SQL: SqlJsStatic, seed: Seed, sourceHash: strin
   try {
     db.run(SCHEMA);
     db.run(RECORD_SCHEMA);
+    db.run(MERCHANT_SCHEMA);
     db.run("INSERT INTO metadata VALUES ('source_hash',?),('data_provenance',?)", [sourceHash, JSON.stringify(masters.provenance)]);
     seed.products.forEach((product, position) => insert(db, "products", "id,name,details", { ...product, details: JSON.stringify(masters.products[position]) }, position));
     seed.stores.forEach((store, position) => insert(db, "stores", "id,name,address,latitude,longitude,details",
@@ -366,14 +400,16 @@ export async function createDomainStore(options: {
   let published: DomainState;
   let archive: PreviewArchive;
   try {
-    if (scalar(db, "PRAGMA user_version") === 1) {
+    const previousVersion = scalar(db, "PRAGMA user_version");
+    if (previousVersion === 1 || previousVersion === 2) {
       // Validate the old state before DDL. Never bootstrap or rewrite old business rows.
       readDomainState(db); readArchive(db);
       db.run("BEGIN");
       try {
-        db.run(RECORD_SCHEMA);
+        if (previousVersion === 1) db.run(RECORD_SCHEMA);
+        db.run(MERCHANT_SCHEMA);
         db.run("UPDATE metadata SET value=? WHERE key='source_hash'", [sourceHash]);
-        db.run("PRAGMA user_version=2");
+        db.run("PRAGMA user_version=3");
         readDomainState(db);
         if (db.exec("PRAGMA foreign_key_check").length) throw Error("DOMAIN_FOREIGN_KEY_CHECK");
         db.run("COMMIT");

@@ -8,7 +8,9 @@ import { previewStores, won, type PreviewDraft, type PreviewRequest } from "../d
 import { DOMAIN_POLICY } from "../../lib/domain/policy";
 import { getView } from "../../lib/domain/commands";
 import { DomainSnapshotError, DomainTransitionRequiredError, LOCAL_CUSTOMER_ID, openDomainStore, type DomainStore, type PreviewArchive } from "../../lib/domain/storage";
-import type { Command, CommandOutcome, DomainState, SearchRecordCommand, NeedRecordCommand, RecommendationRecordCommand } from "../../lib/domain/types";
+import type { Command, CommandOutcome, DomainState, SearchRecordCommand, NeedRecordCommand, RecommendationRecordCommand, Viewer } from "../../lib/domain/types";
+import { createMerchantTraceManager } from "../../lib/merchant-trace-client";
+import { executeCustomerWrite } from "../../lib/customer-command-client";
 
 const failure = (code: string, message: string): CommandOutcome => ({ ok: false, error: { code, message } });
 
@@ -27,6 +29,10 @@ export default function TransactionDemo() {
   const writing = useRef(false);
   const drafts = useRef(new Map<string, Command>());
   const activityDrafts = useRef(new Map<string, { signature: string; command: Command }>());
+  const traceViewer = useRef<Viewer | null>(null);
+  const traceManager = useRef<ReturnType<typeof createMerchantTraceManager> | null>(null);
+  if (!traceManager.current) traceManager.current = createMerchantTraceManager({ getStore: () => store.current,
+    getViewer: () => traceViewer.current, publish: setState });
 
   function accept(opened: DomainStore) {
     store.current = opened;
@@ -56,6 +62,8 @@ export default function TransactionDemo() {
   }
 
   const actorId = role === "customer" ? LOCAL_CUSTOMER_ID : state?.actors.find(actor => actor.role === "merchant" && actor.storeId === storeId)?.id ?? "";
+  traceViewer.current = state && actorId && storeId ? { sessionId: state.sessionId, generation: state.generation, actorId, role, storeId } : null;
+  const merchantActivity = traceViewer.current?.role === "merchant" ? traceManager.current.forViewer(traceViewer.current) : undefined;
 
   async function execute(command: Command, creating = false, recording = false): Promise<CommandOutcome> {
     if (!store.current || writing.current) return failure("BUSY", "저장이 끝난 뒤 다시 시도해주세요.");
@@ -64,7 +72,13 @@ export default function TransactionDemo() {
       || (recording && (role !== "customer" || !["search.record", "needs.record", "recommendation.record"].includes(command.type)))) return failure("FORBIDDEN", "현재 역할·점포를 확인해주세요.");
     writing.current = true; setBusy(true); setError("");
     try {
-      const result = await store.current.execute(command);
+      const result = await executeCustomerWrite(store.current, command, rebased => {
+        if (rebased.type === "request.create") drafts.current.set(rebased.requestId, rebased);
+        else {
+          const cached = activityDrafts.current.get(rebased.idempotencyKey);
+          if (cached) cached.command = rebased;
+        }
+      });
       if (result.ok) {
         setState(store.current.state);
         if (creating) setStoreId(command.storeId);
@@ -131,7 +145,7 @@ export default function TransactionDemo() {
     unitPrice: request.unitPrice, consent: true, createdAt: new Date(request.createdAt).toISOString(), stage: "requested",
   })) ?? [];
   const archived = archive?.requests.filter(request => role === "customer" ? request.actor === "나" : request.storeId === storeId) ?? [];
-  const detail = state && actorId && storeId ? <DomainWorkspace state={state} role={role} actorId={actorId} storeId={storeId} busy={busy} onCommand={execute} /> : null;
+  const detail = state && actorId && storeId ? <DomainWorkspace state={state} role={role} actorId={actorId} storeId={storeId} busy={busy} onCommand={execute} activity={merchantActivity} /> : null;
   const pickup = state && actorId && storeId ? <DomainWorkspace state={state} role="customer" actorId={actorId} storeId={storeId} busy={busy} onCommand={execute} pickupOnly /> : null;
   const customerView = state && role === "customer" && storeId ? getView(state, {
     sessionId: state.sessionId, generation: state.generation, actorId: LOCAL_CUSTOMER_ID, role: "customer", storeId,

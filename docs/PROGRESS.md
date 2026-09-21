@@ -5,13 +5,13 @@
 ## 현재 포인터
 
 ```text
-현재 task: UI-08 열한 번째 Preview 완료, UI-09A 경영주 최근 변경·정책 전달 통합
+현재 task: UI-09A 열두 번째 Preview·실제 복원/정책 전달 확인 완료
 branch: codex/ui-preview-20260921
 PR: https://github.com/dokrsky/wanna-gs/pull/1 (draft, 최종 검증 전)
 마지막 유효 게이트: 제품 게이트 미실행
 마지막 Production deployment: dpl_GB3Cr8At3Com7eJcTnboJ9W4Sika (기존 최소 데모, 최종 제품 아님)
-현재 Preview: https://wanna-2lj36g22u-d-01.vercel.app/demo (af1dce1, 실제 픽업·48시간 복원)
-다음 한 가지: UI-09A 작은 Preview·실제 복원/정책 전달 확인 후 UI-09B 영구 실행 이력
+현재 Preview: https://wanna-38tb3io8w-d-01.vercel.app/demo (cfda3c9, 경영주 최근 변경·정책 전달)
+다음 한 가지: UI-09B 경영주 AI 영구 실행 이력과 additive SQL 이행
 ```
 
 ## 현재 상태
@@ -22,7 +22,7 @@ PR: https://github.com/dokrsky/wanna-gs/pull/1 (draft, 최종 검증 전)
 | 위임 운영 결정 | ADR-001/003~006 채택, ADR-002 평가 기준 초안·후속 검토 | DECISION_INDEX, 전체 독립 품질검증 후속 |
 | GitHub | dokrsky/wanna-gs, 기준 cf6f95a, 작업 branch에서 UI 개발 중 | 원격 쓰기/Actions 권한 확인, 제품 CI 미구현 |
 | 로컬 설정/사전점검 검사기 | OpenAI 15개 + inventory 10개 테스트 통과 | scripts/ 및 .agents/skills/wanna-gs-preflight/scripts/ |
-| 앱·CI·게이트 실행기·DB seed | UI01~08 Preview·실제 거래/검색/정책 연결, UI09A 통합 중. 제품 CI/전체 게이트 후속 | D-46·WORKPLAN, 최신 af1dce1 |
+| 앱·CI·게이트 실행기·DB seed | UI01~09A Preview·실제 거래/검색/정책/복원 연결. 제품 CI/전체 게이트 후속 | D-46·WORKPLAN, 최신 cfda3c9 |
 | SQLite | 242개 상품·8점포 거래 schema2, 검색/니즈/추천 기록·기존 거래 사본 보존 | UI07 실제 v1 이행·UI08 픽업 새로고침 복원 |
 | Vercel·OpenAI | Git 자동 Preview 및 UI branch 서버 env 연결. 두 역할·정책·검색v2 실제 호출 관측 | 아래 UI03/06/07 증거; 계정 총 잔액/쿼터 미확인, Production 미변경 |
 | 앱 단위·통합·E2E·실제 모델 평가 | 좁은 자체/조정자 검사·일부 독립 반례 확인 및 실제 정상 흐름 관측. 전체 독립 평가·G1~G6 미실행 | 아래 단위별 실행/미실행 구분; Ready를 제품 게이트로 세지 않음 |
@@ -308,3 +308,23 @@ OpenAI Docs로 2026-09-21 공식 [gpt-5-mini](https://developers.openai.com/api/
 Meitner 자체 계약/strict TS, Newton 인메모리 hook+mock fetch 자체검사는 독립 품질 검증이 아니다. 조정자는 새 `check:merchant-context`, 기존 policy/dialogue·domain92/needs26/waiting24를 직접 실행해 PASS를 확인했다. stale 선택을 명시 해제/교체하는 정상 지시를 보존했고, 순수 filter도 무관한 stale 선택 때문에 실패하던 반례는 Meitner가 수정 전 FAIL→filter만 좁게 허용 후 PASS로 확인했다. 선택/예산 변경·정책에는 후보/업무 snapshot 검사를 유지한다. 아직 새로운 live·빌드/배포 결과는 없으며 이어서 작은 후보로 게시한다.
 
 UI09A-P2: Newton의 추가 지적과 Locke의 좁은 독립 검토에서 filter 적용 콜백이 빈 한도(남은 예산 자동값)를 숫자로 고정하고 stale 선택 확인을 갱신하는 문제를 확인했다. Newton이 실제 컴포넌트/도메인을 읽는 인메모리 checker로 수정 전 4개 FAIL을 재현했다. 조정자는 action을 콜백으로 전달하고 filter는 uiSeq/조회만 바꾼 뒤 즉시 반환하도록 수정했다. 같은 checker 9개 PASS를 조정자/Newton이 실행했다. UI source SHA256 `1c004122f7a77c40b55bfb0cf6c22987e71edb0c17f65ec7210c1b5b643077f0`, helper `62b2385ead0e86daa417ac8da9f3100f25b9cb973e53b5cf6074b72b64e3b169`. 수정 후 Node24 Next build/타입 PASS, 클라이언트23파일의 실제 키 비포함 확인. `.env.local`은 CONFIGURED·Git ignore이며 정적 검사만으로 goal 준비 완료를 선언하지 않는다. 이번 좁은 복구는 거래/선택/정책 기준을 바꾸지 않았고 브라우저/전체 독립 UX 검사는 아니다.
+
+Locke도 위 최종 UI hash를 직접 읽고 동일 checker9/9 PASS로 그 P2만 독립 재확인했다. `cfda3c90c670597dbfb50dc9325999276a8d753a` commit/push 완료, 게시17파일 실제 키 비포함. Vercel `dpl_9AodSphPaxwBpDMHKZYifFXKzXAB`가 정확한 SHA로 생성됐으며 실제 Preview 확인을 이어간다. 기존 ST04 사본은 화면에서 수동 누적 예산100,000원을 OFF로 확인 저장해 revision10/세대1, 사용0/발주0·수요3종을 준비했다. 초기화하지 않았고 실제 거래/청구가 아니다.
+
+UI09A Preview `dpl_9AodSphPaxwBpDMHKZYifFXKzXAB` / https://wanna-38tb3io8w-d-01.vercel.app/demo Ready·source 전체 SHA 일치 확인. 같은 브랜치 주소의 SQLite revision10/세대1 복원 후 ST04에서 토스트/스콘 선택→스콘 제외→소보로 추가→이번 한도20,000원을 수동 적용(최근5개)했다. 실제 OpenAI gpt-5-mini 호출1 ‘아까 뺀 것 다시’ 입력24,478/출력465 tokens: 토스트·소보로 유지+스콘 복원 초안, 적용 전 선택2종·한도2만원·revision10/발주0 유지. 명시 적용 후3종·합계10,600원, 발주 실행 없음.
+
+호출2 ‘앞으로도 이렇게’ 입력24,486/출력551 tokens: 상품 재입력이나 후속 모델 호출 없이 기존 정책 최종확인으로 전달. 아래 수동 미저장9만원 초안은 전달 시 보존했고, 비교는 저장된 OFF→OFF·누적100,000→100,000원 유지·대상0→3종이었다. 이번 묶음2만원/수동9만원을 누적 예산으로 복사하지 않았다. 명시 AI 정책 저장 후 revision11·OFF·대상3종·예산100,000/사용0/발주0. 실제 새로고침 후 동일 정책·revision/세대·기존 이력 유지, 단기 최근 변경0/5·선택0으로 종료 확인. 신규 모델 호출 총2회이며 정확한 API latency 계측은 이번 UI에 없어 기록하지 않는다.
+
+실제 응답 문구에는 내부 SKU 표기와 ‘활성화/예산을 지정해 주세요’ 같은 불필요한 추가 지시 표현이 관측됐다. 코드/최종확인 화면은 유지값과 미저장 상태를 명시하며 추가 입력을 요구하지 않았지만, 이를 전체 자연어 품질 PASS로 취급하지 않는다. 후속 NL 실험/카피 검사에서 문구 품질과 입력 약24k 비용을 함께 개선한다. UI09A는 좁은 정상 흐름 관측이며 독립 두 역할 UX·전체 G5/G6·Production은 여전히 후속이다. 다음 UI09B는 영구 실행 기록/SQL만 분리해 진행한다.
+
+## UI-09B 경영주 AI 실행 기록 — 2026-09-22 KST
+
+목적: CORE-05/06/23/25/26·ADR006 규칙6~8의 시도/종료·관측 응답·실제 적용을 구분하고, 성공한 정책을 기록 오류 때문에 재실행하지 않는다. UI09B manifest `7de64a401f53af892ca7ff451c21cf6342591624c73a535f1b82403c7e9d8136`, DTO `6da2f617337f929854db9cdc64bcd6fcf25e06691e73376b9d7b6922a060e0a7` 실제 ACK 후 Locke(domain/SQL)·Newton(UI) handback, 조정자가 어댑터/페이지 통합했다. 모델 API·프롬프트·거래 정책은 유지한다. 전체 goal 검증을 Preview 선행조건으로 추가하지 않았다.
+
+두 AI 입력 경로에 시작/종료·늦은 응답·화면 적용/정책 receipt를 연결했다. 저장 오류는 명시적 ‘미저장 AI 기록만 다시 저장’으로 처리하며 모델/정책 재호출이 아니다. 기존 거래 busy와 부가기록 저장을 분리하고 알려진 schema1/2만 additive schema3으로 이행한다. sourceHash `b665391bac2a443ae0a42f850828e3c0ceaafaad4c9f7c8058c1b67453f24051`, seed SHA256 `02028bb5e30d0c4b933d429a15c0da1af26a705783619eb616894f4feaa4b445`. 시작 로그 실패→정책 C 성공→이후 로그 재시도도 허용하며 C receipt 원문·거래/시계를 보존한다.
+
+조정자 실행: `check:merchant-trace` trace58·client queue·실제 sql.js 실패 시작 로그/C/복원·UI helper13 PASS. `check:domain-store` v1/v2 모든 이전 행/receipt/search/archive/clock 보존·저장 실패 후 reset 없는 재시도·unknown/corrupt 거절·FK/CHECK·정상 거래 PASS. 독립 needs26/waiting24 PASS. standalone checker의 transitive 순수 계약 import를 위해 resolve hook 범위만 `/lib/`로 맞췄다. 모두 합성 입력/Node 저장 seam이며 실제 모델/브라우저 실패 주입과 구분한다.
+
+UI09B-P2(계약/순차 저장): Meitner의 읽기 전용 검토에서 경영주 로그 직후 고객 요청의 cached revision이 낡아 같은 명령 재시도가 계속 실패할 수 있음을 발견했다. 조정자 소유 app/demo/page.tsx에만 연결된 작은 고객 저장 helper를 추가했다. 실제 SQL 최소 재현은 명시 고객 actor 누락 fixture를 바로잡은 뒤 수정 전 STALE/assertion FAIL, 수정 후 PASS. 확정 STALE·receipt 없음·동일 세션/세대의 신규 고객 요청/부가기록에만 1회 revision 재시도를 허용한다. 동의/가격/조건 version/명령 키는 그대로이며 실제 domain이 다시 검증한다. 재시도 전 exact command를 cache하므로 결과 불명확 시 다른 명령을 만들지 않는다. 조건 변경은 거절, 정상 요청/같은 receipt 재전송은 단1건, merchant/이전 세대/불확실 결과는 rebase하지 않는 검사 PASS. 기대값/제품 정책 변경 없음. helper hash `64bbd0c2a374f8f857c233e3f94fa2ef44b3d5e31e3cbfabcb1d99973714347b`, page `c9d6ec759ab8315799322807dba0d36dbc232c52de4f63b688ae288b7ba6f5b5`.
+
+Meitner 독립 재확인: 위 exact helper/page hash와 checker `dbd187bc6c44a7bce077de196d312cb6817fd14f51e0bc5cd07e491c3189c1f1` 검사 전후 일치, `check:customer-write` 직접 종료0·P2 해소. 좁은 코드/실제 SQL 검토이며 브라우저/live/전체 QA는 아니다. 최종 후보 Node24 Next build/타입 PASS, 클라이언트23파일·staged25파일 실제 서버 키 비포함 확인. 실제 Preview migration/두 입력 경로 호출·복원은 게시 후 확인한다. 전체 독립 UX·최종 데이터/eval·GATE-BOOTSTRAP·G5/G6·Production은 아직 미실행/미완료다.

@@ -6,14 +6,19 @@ import { parsePolicyOutput, parsePolicyRequest, resolvePolicyProposal, type Curr
 import type { DomainState, Policy } from "../../lib/domain/types";
 import { getView } from "../../lib/domain/commands";
 import styles from "./domain-workspace.module.css";
+import { beginMerchantAttempt } from "./merchant-run-history";
+import type { MerchantTracePort } from "../../lib/merchant-trace-client";
+import type { MerchantObservation } from "../../lib/domain/merchant-trace-types";
 
 type Props = {
   policy: Policy; state: DomainState; actorId: string; revision: number; disabled: boolean;
   draftRevision: number; hasManualDraft: boolean;
-  onSave: (setting: PolicySetting, revision: number) => Promise<boolean>;
+  onSave: (setting: PolicySetting, revision: number, stableKey: string) => Promise<boolean>;
   forwarded?: ForwardedPolicyProposal | null;
+  activity?: MerchantTracePort;
 };
 export type ForwardedPolicyProposal = {
+  runId: string;
   input: PolicyRequest; output: PolicyOutput; model: string; usage: PolicyResponse["usage"];
   isCurrent: () => boolean;
 };
@@ -24,6 +29,7 @@ export function merchantBusinessSnapshot(state: DomainState, actorId: string, st
     view.requests.map(({ waiting: _waiting, ...detail }) => detail), view.demand, view.orders, view.lines]);
 }
 type Proposal = {
+  runId: string;
   input: PolicyRequest; output: PolicyOutput; setting: PolicySetting | null;
   snapshot: string; sequence: number; model: string; usage: PolicyResponse["usage"];
   isCurrent?: () => boolean;
@@ -31,7 +37,7 @@ type Proposal = {
 const won = (value: number) => `${value.toLocaleString("ko-KR")}원`;
 const tokenCount = (value: unknown): value is number => typeof value === "number" && Number.isSafeInteger(value) && value >= 0;
 
-export default function PolicyAssistant({ policy, state, actorId, revision, disabled, draftRevision, hasManualDraft, onSave, forwarded }: Props) {
+export default function PolicyAssistant({ policy, state, actorId, revision, disabled, draftRevision, hasManualDraft, onSave, forwarded, activity }: Props) {
   const [text, setText] = useState("");
   const [status, setStatus] = useState<AssistantStatus | null>(null);
   const [statusAttempt, setStatusAttempt] = useState(0);
@@ -44,6 +50,7 @@ export default function PolicyAssistant({ policy, state, actorId, revision, disa
   const [confirmed, setConfirmed] = useState(false);
   const controller = useRef<AbortController | null>(null);
   const sequence = useRef(0);
+  const attempt = useRef<ReturnType<typeof beginMerchantAttempt> | null>(null);
   const saveLock = useRef(false);
   const mounted = useRef(false);
   const received = useRef<string | null>(null);
@@ -60,15 +67,17 @@ export default function PolicyAssistant({ policy, state, actorId, revision, disa
 
   useEffect(() => {
     mounted.current = true;
-    return () => { mounted.current = false; sequence.current++; controller.current?.abort(); };
+    return () => { attempt.current?.finish("interrupted"); mounted.current = false; sequence.current++; controller.current?.abort(); };
   }, []);
   useEffect(() => {
+    attempt.current?.finish("stale");
     sequence.current++; controller.current?.abort(); controller.current = null;
     setThinking(false); setConfirmed(false);
   }, [snapshot]);
   useEffect(() => {
     if (!forwarded || received.current === forwarded.input.id) return;
     received.current = forwarded.input.id;
+    attempt.current?.finish("cancelled");
     sequence.current++; controller.current?.abort(); controller.current = null; setThinking(false);
     setConfirmed(false); setError("");
     try {
@@ -81,6 +90,7 @@ export default function PolicyAssistant({ policy, state, actorId, revision, disa
   }, [forwarded]);
   useEffect(() => {
     if (disabled && controller.current) {
+      attempt.current?.finish("stale");
       sequence.current++; controller.current.abort(); controller.current = null; setThinking(false);
     }
   }, [disabled]);
@@ -102,6 +112,7 @@ export default function PolicyAssistant({ policy, state, actorId, revision, disa
   }, [statusAttempt]);
 
   function edit(value: string) {
+    attempt.current?.finish("cancelled");
     sequence.current++; controller.current?.abort(); controller.current = null;
     setText(value); setThinking(false); setProposal(null); setConfirmed(false); setError("");
   }
@@ -112,26 +123,35 @@ export default function PolicyAssistant({ policy, state, actorId, revision, disa
     const abort = new AbortController(); controller.current = abort;
     const generation = ++sequence.current;
     let timedOut = false;
+    let trace: ReturnType<typeof beginMerchantAttempt> | null = null;
+    let observation: MerchantObservation | null = null;
     const timer = setTimeout(() => { timedOut = true; abort.abort(); }, 45_000);
     setThinking(true);
     try {
       const input = parsePolicyRequest({ text: text.trim(), id: crypto.randomUUID(), generation, storeId: policy.storeId, currentPolicy }, allowedIds, state.stores.map(store => store.id));
       const body = JSON.stringify(input);
       if (new TextEncoder().encode(body).byteLength > 4096) throw new AssistantError("BODY_TOO_LARGE");
+      trace = beginMerchantAttempt(activity, input.id, "policy", body); attempt.current = trace;
       const response = await fetch("/api/assistant/policy", { method: "POST", headers: { "Content-Type": "application/json" }, body, signal: abort.signal });
       const data: unknown = await response.json().catch(() => { throw new AssistantError("MODEL_MALFORMED"); });
-      if (!mounted.current || sequence.current !== generation || latest.current.snapshot !== snapshot || latest.current.disabled) return;
-      if (timedOut) throw new AssistantError("MODEL_TIMEOUT");
       if (!response.ok || !isObject(data) || data.ok !== true) {
         const code = isObject(data) && isObject(data.error) ? data.error.code : undefined;
+        if (typeof code === "string" && Object.hasOwn(errorMessages, code)) observation = { status: "error", errorCode: code };
         throw new AssistantError(typeof code === "string" && Object.hasOwn(errorMessages, code) ? code as AssistantErrorCode : "MODEL_UPSTREAM");
       }
       if (data.id !== input.id || data.generation !== generation || data.storeId !== input.storeId || data.policyVersion !== input.currentPolicy.version || data.mode !== "live"
         || typeof data.model !== "string" || !data.model.trim() || data.model.length > 120 || !isObject(data.usage) || !tokenCount(data.usage.inputTokens) || !tokenCount(data.usage.outputTokens)) throw new AssistantError("MODEL_MALFORMED");
       const output = parsePolicyOutput({ action: data.action, enabled: data.enabled, productIds: data.productIds, budgetWon: data.budgetWon, message: data.message }, allowedIds, currentPolicy);
+      const wire: PolicyResponse = { ...output, ok: true, id: input.id, generation, storeId: input.storeId, policyVersion: input.currentPolicy.version,
+        mode: "live", model: data.model, usage: { inputTokens: data.usage.inputTokens, outputTokens: data.usage.outputTokens } };
+      observation = { status: "success", responseJson: JSON.stringify(wire) };
+      const outdated = !mounted.current || sequence.current !== generation || latest.current.snapshot !== snapshot || latest.current.disabled;
+      trace.finish(timedOut || outdated ? "stale" : "success", null, observation);
+      if (outdated || timedOut) return;
       const setting = output.action === "propose" ? resolvePolicyProposal(input, output, currentPolicy, allowedIds) : null;
-      setProposal({ input, output, setting, snapshot, sequence: generation, model: data.model, usage: { inputTokens: data.usage.inputTokens, outputTokens: data.usage.outputTokens } });
+      setProposal({ runId: input.id, input, output, setting, snapshot, sequence: generation, model: data.model, usage: wire.usage });
     } catch (caught) {
+      trace?.finish("error", timedOut ? "MODEL_TIMEOUT" : caught instanceof AssistantError ? caught.code : "MODEL_NETWORK", observation);
       if (mounted.current && sequence.current === generation && latest.current.snapshot === snapshot) setError(timedOut ? errorMessages.MODEL_TIMEOUT : caught instanceof AssistantError ? caught.message : errorMessages.MODEL_NETWORK);
     } finally {
       clearTimeout(timer);
@@ -143,7 +163,7 @@ export default function PolicyAssistant({ policy, state, actorId, revision, disa
     saveLock.current = true; setSaving(true); setError("");
     try {
       const setting = resolvePolicyProposal(proposal.input, proposal.output, currentPolicy, allowedIds);
-      const saved = await onSave(setting, revision);
+      const saved = await onSave(setting, revision, `merchant-policy:${proposal.runId}`);
       if (!mounted.current) return;
       if (saved) { setProposal(null); setConfirmed(false); }
       else setError("정책을 저장하지 못했어요. 위 거래 알림을 확인하고 같은 변경안으로 다시 시도해주세요.");
@@ -161,7 +181,7 @@ export default function PolicyAssistant({ policy, state, actorId, revision, disa
     <form className={styles.form} onSubmit={propose}><label>앞으로 적용할 정책 지시<input value={text} maxLength={300} disabled={disabled || saving} placeholder="앞으로 누적 매입 예산을 8만원으로 바꿔줘" onChange={event => edit(event.target.value)} onKeyDown={event => { if (event.key === "Enter" && event.nativeEvent.isComposing) event.preventDefault(); }} /></label><button className={styles.primary} disabled={disabled || saving || thinking || !ready || statusLoading || !text.trim()}>{thinking ? "정책 AI 변경안 만드는 중…" : error ? "같은 입력으로 AI 다시 요청" : "AI 정책 변경안 보기"}</button></form>
     <div className={styles.actions}>{["앞으로 누적 매입 예산을 8만원으로 바꿔줘", "자동발주를 꺼줘"].map(example => <button type="button" key={example} disabled={disabled || saving} onClick={() => edit(example)}>{example}</button>)}{thinking && <button type="button" onClick={() => edit(text)}>AI 요청 취소</button>}</div>
     <p className={styles.note}>예시는 입력만 채워요. ‘이번 묶음’은 위 묶음 화면을 사용해주세요. AI는 실제 재고·공급·가격·예약 성공을 판단하지 않아요.</p>
-    <p className={styles.note}>이번 묶음에서 전달한 정책 초안은 상품명 재입력·추가 AI 호출 없이 아래에서 확인해요. AI 실행 이력의 영구 저장은 아직 연결되지 않았어요.</p>
+    <p className={styles.note}>이번 묶음에서 전달한 정책 초안은 상품명 재입력·추가 AI 호출 없이 같은 실행 기록으로 확인해요. {activity ? "기록 저장 오류는 아래 AI 실행 기록에서 따로 확인하고 기록만 재시도할 수 있어요." : "현재 AI 실행 기록 저장은 연결되지 않았어요."}</p>
     {error && <p role="alert" className={styles.error}>{error} 입력은 유지했어요.</p>}
     {proposal && <div className={styles.batch}>
       <span className={styles.badge}>실제 AI · {proposal.model}</span><p>{proposal.output.message}</p>
