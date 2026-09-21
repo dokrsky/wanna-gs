@@ -7,6 +7,7 @@ import type { Command, CommandContext, CommandOutcome, Condition, DomainState, O
 import { AssistantError, errorMessages, isObject, parseMerchantOutput, parseMerchantRequest, resolveMerchantProposal, type AssistantErrorCode, type AssistantStatus, type MerchantOutput, type MerchantResponse } from "../../lib/assistant/contracts";
 import styles from "./domain-workspace.module.css";
 import PolicyAssistant from "./policy-assistant";
+import MerchantNeeds from "./merchant-needs";
 
 type Props = {
   state: DomainState;
@@ -37,6 +38,7 @@ const commandLabels: Record<Command["type"], string> = {
   "order.approve": "묶음 발주 승인", "policy.set": "자동발주·예산 설정", "auto.run": "승인된 자동발주 정책 실행",
   "supply.finalize": "모의 공급 최종 확정", "receive.full": "모의 전량 입고", "reservation.collect": "모의 전량 수령",
   "condition.update": "모의 조건 변경", "clock.advance": "데모 시간 이동", "clock.tick": "현재 시각으로 상태 처리",
+  "search.record": "검색 이력 저장", "needs.record": "니즈 기록", "recommendation.record": "추천 이력 저장",
 };
 
 export default function DomainWorkspace(props: Props) {
@@ -126,6 +128,7 @@ function DomainPanel({ state, onCommand, role, actorId, storeId, busy, pickupOnl
       {customerRequests.length ? <div className={styles.grid}>{customerRequests.map(detail => <CustomerRequest key={detail.request.id} detail={detail} condition={state.conditions.find(condition => condition.storeId === storeId && condition.productId === detail.request.productId)} name={productName(detail.request.productId)} now={view.now} revision={view.revision} disabled={disabled} send={send} />)}</div> : <p className={styles.empty}>{pickupOnly ? "아직 예약이 없어요. 모의 결제 성공 후 예약이 생기고, 입고 후 픽업 가능 알림부터 48시간이에요." : "이 점포에 남긴 요청이 없어요. 기존 상품 검색에서 상품·점포·가격을 확인하고 요청해주세요."}</p>}
     </section> : <>
       <MerchantDemand state={state} view={view} storeId={storeId} disabled={disabled} send={send} />
+      <MerchantNeeds needs={view.needs} products={state.products} actors={state.actors} storeId={storeId} />
       {view.policy && <PolicyEditor key={view.policy.version} policy={view.policy} state={state} actorId={actorId} revision={view.revision} disabled={disabled} send={send} />}
       <section className={styles.section}><div className={styles.sectionTitle}><h3>발주 · 공급 확정 · 입고</h3><span>{view.lines.length}개 라인</span></div>
         <p className={styles.note}>발주 승인은 공급 확보가 아니에요. 공급 최종 확정 후 FIFO 배정·모의 결제가 처리되고, 모든 출처가 입고돼야 픽업 알림이 생겨요.</p>

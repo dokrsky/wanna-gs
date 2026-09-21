@@ -3,10 +3,12 @@
 import { useEffect, useRef, useState } from "react";
 import CustomerWorkspace from "../components/customer-workspace";
 import DomainWorkspace from "../components/domain-workspace";
+import SearchHistory from "../components/search-history";
 import { previewStores, won, type PreviewDraft, type PreviewRequest } from "../demo-preview";
 import { DOMAIN_POLICY } from "../../lib/domain/policy";
+import { getView } from "../../lib/domain/commands";
 import { DomainSnapshotError, DomainTransitionRequiredError, LOCAL_CUSTOMER_ID, openDomainStore, type DomainStore, type PreviewArchive } from "../../lib/domain/storage";
-import type { Command, CommandOutcome, DomainState } from "../../lib/domain/types";
+import type { Command, CommandOutcome, DomainState, SearchRecordCommand, NeedRecordCommand, RecommendationRecordCommand } from "../../lib/domain/types";
 
 const failure = (code: string, message: string): CommandOutcome => ({ ok: false, error: { code, message } });
 
@@ -24,6 +26,7 @@ export default function TransactionDemo() {
   const recovery = useRef<(() => Promise<DomainStore>) | null>(null);
   const writing = useRef(false);
   const drafts = useRef(new Map<string, Command>());
+  const activityDrafts = useRef(new Map<string, { signature: string; command: Command }>());
 
   function accept(opened: DomainStore) {
     store.current = opened;
@@ -54,10 +57,11 @@ export default function TransactionDemo() {
 
   const actorId = role === "customer" ? LOCAL_CUSTOMER_ID : state?.actors.find(actor => actor.role === "merchant" && actor.storeId === storeId)?.id ?? "";
 
-  async function execute(command: Command, creating = false): Promise<CommandOutcome> {
+  async function execute(command: Command, creating = false, recording = false): Promise<CommandOutcome> {
     if (!store.current || writing.current) return failure("BUSY", "저장이 끝난 뒤 다시 시도해주세요.");
-    if (command.role !== role || command.actorId !== actorId || (!creating && command.storeId !== storeId)
-      || (creating && (role !== "customer" || command.type !== "request.create"))) return failure("FORBIDDEN", "현재 역할·점포를 확인해주세요.");
+    if (command.role !== role || command.actorId !== actorId || (!creating && !recording && command.storeId !== storeId)
+      || (creating && (role !== "customer" || command.type !== "request.create"))
+      || (recording && (role !== "customer" || !["search.record", "needs.record", "recommendation.record"].includes(command.type)))) return failure("FORBIDDEN", "현재 역할·점포를 확인해주세요.");
     writing.current = true; setBusy(true); setError("");
     try {
       const result = await store.current.execute(command);
@@ -91,13 +95,33 @@ export default function TransactionDemo() {
     return result.ok;
   }
 
+  async function recordActivity(payload: SearchRecordCommand | NeedRecordCommand | RecommendationRecordCommand, targetStoreId?: string) {
+    if (!store.current || role !== "customer" || writing.current) return false;
+    if (payload.type === "needs.record" && !targetStoreId) { setError("니즈를 전달할 점포를 직접 선택해주세요."); return false; }
+    const id = payload.type === "search.record" ? payload.run.id : payload.type === "needs.record" ? payload.needId : payload.eventId;
+    const key = `${payload.type}:${id}`;
+    const existing = activityDrafts.current.get(key);
+    const selectedStoreId = targetStoreId ?? existing?.command.storeId ?? storeId;
+    const signature = JSON.stringify({ payload, storeId: selectedStoreId });
+    if (existing && existing.signature !== signature) { setError("같은 기록의 내용이 바뀌었어요. 원래 결과로 저장을 다시 확인해주세요."); return false; }
+    let command = existing?.command;
+    if (!command) {
+      const current = store.current.state;
+      command = { ...payload, sessionId: current.sessionId, generation: current.generation, expectedRevision: current.revision,
+        actorId: LOCAL_CUSTOMER_ID, role: "customer", storeId: selectedStoreId, idempotencyKey: key };
+      activityDrafts.current.set(key, { signature, command });
+    }
+    try { return (await execute(command, false, true)).ok; }
+    catch { return false; } // The caller keeps the valid response and retries this exact write, not the model.
+  }
+
   async function reset() {
     if (writing.current || (!store.current && !recovery.current)) return;
     writing.current = true; setBusy(true);
     try {
       if (recovery.current) accept(await recovery.current());
       else { await store.current!.reset(); accept(store.current!); }
-      drafts.current.clear(); setResetConfirm(false);
+      drafts.current.clear(); activityDrafts.current.clear(); setResetConfirm(false);
     } catch { setError("초기화를 저장하지 못했어요. 기존 저장 내용을 유지했어요."); }
     finally { writing.current = false; setBusy(false); }
   }
@@ -109,6 +133,9 @@ export default function TransactionDemo() {
   const archived = archive?.requests.filter(request => role === "customer" ? request.actor === "나" : request.storeId === storeId) ?? [];
   const detail = state && actorId && storeId ? <DomainWorkspace state={state} role={role} actorId={actorId} storeId={storeId} busy={busy} onCommand={execute} /> : null;
   const pickup = state && actorId && storeId ? <DomainWorkspace state={state} role="customer" actorId={actorId} storeId={storeId} busy={busy} onCommand={execute} pickupOnly /> : null;
+  const customerView = state && role === "customer" && storeId ? getView(state, {
+    sessionId: state.sessionId, generation: state.generation, actorId: LOCAL_CUSTOMER_ID, role: "customer", storeId,
+  }, Date.now()) : null;
 
   return <div className="site-wrap">
     <div className="preview-ribbon"><span className="preview-dot" />함께 만드는 원하GS <span className="ribbon-divider">/</span> 거래 데모 · 공급부터 픽업까지</div>
@@ -125,7 +152,9 @@ export default function TransactionDemo() {
       {state && <>
         <div className="storage-toolbar"><span role="status">{busy ? "SQLite에 저장 중…" : `✓ 저장됨 · revision ${state.revision} · 세대 ${state.generation}`}</span><button disabled={busy} onClick={() => setResetConfirm(true)}>거래 데모 초기화</button></div>
         <div className="domain-store-picker"><label htmlFor="domain-current-store">{role === "customer" ? "요청·픽업을 확인할 점포" : "관리할 점포"}</label><select id="domain-current-store" value={storeId} disabled={busy} onChange={event => setStoreId(event.target.value)}>{state.stores.map(entry => <option key={entry.id} value={entry.id}>{entry.name}</option>)}</select><p>{previewStores.find(entry => entry.id === storeId)?.address} · 위치 참고 자료이며 영업·실제 취급을 보장하지 않아요.</p></div>
-        {role === "customer" ? <CustomerWorkspace key={`${state.sessionId}:${state.generation}`} requests={mine} onRequest={requestProduct} busy={busy} conditions={state.conditions} consentDurationDays={DOMAIN_POLICY.consentMs / 86400000} requestContent={detail} pickupContent={pickup} /> : detail}
+        {role === "customer" ? <CustomerWorkspace key={`${state.sessionId}:${state.generation}`} requests={mine} onRequest={requestProduct} busy={busy} conditions={state.conditions} consentDurationDays={DOMAIN_POLICY.consentMs / 86400000} requestContent={detail} pickupContent={pickup}
+          activity={{ contextKey: `${state.sessionId}:${state.generation}:customer:${LOCAL_CUSTOMER_ID}`, onRecord: recordActivity,
+            historyContent: customerView ? <SearchHistory actorId={LOCAL_CUSTOMER_ID} searchRuns={customerView.searchRuns} needs={customerView.needs} recommendationEvents={customerView.recommendationEvents} /> : undefined }} /> : detail}
         <details className="domain-archive"><summary>이전 Preview 보관 이력 · {archived.length}건</summary><p>{archive?.message}</p><p>보관 이력은 현재 거래 수요에 합산하지 않습니다. 다른 점포 또는 가상 점포 이력은 <a href="/">이전 Preview</a>에서도 볼 수 있어요.</p>{archived.map(request => <article key={request.id}><strong>{request.productName} · {request.quantity}개</strong><p>{request.storeName} · {won(request.unitPrice * request.quantity)} · 이전 {request.stage === "approved" ? "화면 승인" : "화면 요청"}</p></article>)}</details>
       </>}
     </main>

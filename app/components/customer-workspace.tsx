@@ -5,15 +5,26 @@ import { previewAvailability, previewProducts, previewStores, won, type PreviewD
 import { AssistantError, errorMessages, isObject, parseSearchOutput, type AssistantErrorCode, type AssistantStatus, type SearchOutput, type SearchResponse } from "../../lib/assistant/contracts";
 import styles from "./customer-workspace.module.css";
 import StoreMap from "./store-map";
+import { catalogEvidenceFor, parseDialogueRequest, parseDialogueResponse, type DialogueRequest, type DialogueResponse } from "../../lib/assistant/dialogue-contracts";
+import type { NeedReason, NeedRecordCommand, RecommendationRecordCommand, SearchRecordCommand, SearchRunInput } from "../../lib/domain/types";
 
-type RequestCondition = { storeId: string; productId: string; requestable: boolean; unitPrice: number; version?: string };
+export type CustomerActivity = {
+  contextKey: string;
+  onRecord: (payload: SearchRecordCommand | NeedRecordCommand | RecommendationRecordCommand, targetStoreId?: string) => Promise<boolean>;
+  historyContent?: ReactNode;
+};
+type PendingRecord = { key: string; payload: SearchRecordCommand | NeedRecordCommand | RecommendationRecordCommand; targetStoreId?: string; label: string };
+type Conversation = DialogueRequest["dialogue"] & { question: string | null; questionCount: number; finished: boolean };
+
+type RequestCondition = { storeId: string; productId: string; requestable: boolean; unitPrice: number; version?: string; supplyStatus?: string };
 type Props = {
   requests: PreviewRequest[]; onRequest: (draft: PreviewDraft) => Promise<boolean>; busy: boolean;
   conditions?: RequestCondition[]; requestContent?: ReactNode; pickupContent?: ReactNode; consentDurationDays?: number;
+  activity?: CustomerActivity;
 };
 type Tab = "want" | "requests" | "pickup";
 type SearchMode = "live" | "local";
-type SearchResult = SearchOutput & { mode: SearchMode; model?: string; usage?: SearchResponse["usage"] };
+type SearchResult = SearchOutput & { mode: SearchMode; model?: string; usage?: SearchResponse["usage"]; dialogue?: DialogueResponse["dialogue"]; run?: SearchRunInput };
 const examples = ["딸기랑 크림이 들어간 샌드위치 찾아줘", "매일우유 900ml가 있었으면 좋겠어", "고소한 버터 소금빵을 찾고 있어"];
 const normalize = (value: string) => value.normalize("NFKC").toLowerCase().replace(/\s+/g, "");
 const allowedIds = previewProducts.map(product => product.id);
@@ -33,7 +44,11 @@ function NavIcon({ tab }: { tab: Tab }) {
   </svg>;
 }
 
-export default function CustomerWorkspace({ requests, onRequest, busy, conditions = previewAvailability, requestContent, pickupContent, consentDurationDays }: Props) {
+export default function CustomerWorkspace(props: Props) {
+  return <CustomerPanel key={props.activity?.contextKey ?? "legacy"} {...props} />;
+}
+
+function CustomerPanel({ requests, onRequest, busy, conditions = previewAvailability, requestContent, pickupContent, consentDurationDays, activity }: Props) {
   const [tab, setTab] = useState<Tab>("want");
   const [input, setInput] = useState("");
   const [undo, setUndo] = useState<string | null>(null);
@@ -58,6 +73,62 @@ export default function CustomerWorkspace({ requests, onRequest, busy, condition
   const submitted = useRef(false);
   const searchController = useRef<AbortController | null>(null);
   const requestSequence = useRef(0);
+  const [conversation, setConversation] = useState<Conversation | null>(null);
+  const [rejected, setRejected] = useState<string[]>([]);
+  const [needStoreId, setNeedStoreId] = useState("");
+  const [needReason, setNeedReason] = useState<NeedReason>("unidentified");
+  const [recording, setRecording] = useState(false);
+  const [recordError, setRecordError] = useState("");
+  const [pendingRecords, setPendingRecords] = useState<PendingRecord[]>([]);
+  const [savedKeys, setSavedKeys] = useState<string[]>([]);
+  const queue = useRef<PendingRecord[]>([]);
+  const saved = useRef(new Set<string>());
+  const recordLock = useRef(false);
+  const recordFailed = useRef(false);
+  const needDrafts = useRef(new Map<string, PendingRecord>());
+  const mounted = useRef(false);
+  const activityRef = useRef(activity);
+  activityRef.current = activity;
+
+  useEffect(() => {
+    mounted.current = true;
+    return () => { mounted.current = false; };
+  }, []);
+  async function flushRecords(retry = false) {
+    if (!activity || busy || recordLock.current || !mounted.current || (recordFailed.current && !retry)) return;
+    recordFailed.current = false; recordLock.current = true; setRecording(true); setRecordError("");
+    try {
+      while (queue.current.length && mounted.current) {
+        const item = queue.current[0];
+        let ok = false;
+        try { ok = await activityRef.current!.onRecord(item.payload, item.targetStoreId); } catch { /* Keep this exact command for a storage-only retry. */ }
+        if (!mounted.current) return;
+        if (!ok) {
+          recordFailed.current = true;
+          setRecordError(`${item.label} 저장을 확인하지 못했어요. 검색 결과·구매 결과는 바꾸지 않았어요.`);
+          return;
+        }
+        saved.current.add(item.key); setSavedKeys([...saved.current]);
+        queue.current.shift(); setPendingRecords([...queue.current]);
+      }
+    } finally { recordLock.current = false; if (mounted.current) setRecording(false); }
+  }
+  function enqueue(items: PendingRecord[]) {
+    if (!activity || !mounted.current) return;
+    for (const item of items) if (!saved.current.has(item.key) && !queue.current.some(row => row.key === item.key)) queue.current.push(item);
+    setPendingRecords([...queue.current]);
+    void flushRecords();
+  }
+  useEffect(() => { if (!busy && queue.current.length && !recordFailed.current) void flushRecords(); }, [busy]);
+  function recommendation(run: SearchRunInput, id: string, action: RecommendationRecordCommand["action"], requestId: string | null = null, targetStoreId?: string): PendingRecord {
+    const eventId = crypto.randomUUID();
+    return { key: eventId, label: action === "requested" ? "구매 요청 연결 이력 (구매 요청은 이미 저장됨)" : "후보 행동 이력", targetStoreId,
+      payload: { type: "recommendation.record", eventId, runId: run.id, productId: id, action, requestId } };
+  }
+  function recordRun(run: SearchRunInput) {
+    enqueue([{ key: run.id, label: run.status === "error" ? "검색 오류 이력" : "검색 이력", payload: { type: "search.record", run } },
+      ...run.candidates.map(candidate => recommendation(run, candidate.productId, "shown"))]);
+  }
 
   useEffect(() => {
     const controller = new AbortController();
@@ -135,8 +206,12 @@ export default function CustomerWorkspace({ requests, onRequest, busy, condition
     clearConfirmation();
   }
 
+  function newSearch(value = "") {
+    editInput(value); setConversation(null); setRejected([]); setNeedStoreId(""); setNeedReason("unidentified");
+  }
+
   function switchSearchMode() {
-    editInput(input);
+    newSearch(input);
     setSearchMode(current => current === "live" ? "local" : "live");
   }
 
@@ -149,18 +224,57 @@ export default function CustomerWorkspace({ requests, onRequest, busy, condition
       inputRef.current?.focus();
       return;
     }
+    if (activity && conversation?.finished) {
+      setSearchError("이 대화의 상품 확인은 마쳤어요. 다른 설명으로 찾으려면 ‘새 상품 찾기’를 눌러주세요.");
+      return;
+    }
+    if (activity && conversation && !conversation.question && input.trim() !== conversation.initialText) {
+      setSearchError("이 대화의 최초 입력은 보존해요. 첫 설명을 바꾸려면 ‘새 상품 찾기’를 눌러주세요. 현재 입력은 유지했어요.");
+      return;
+    }
     cancelSearch();
     clearConfirmation();
     setProductId(null);
     setResult(null);
     setNotice("");
     const text = input.trim();
+    const base: Conversation = conversation ?? { conversationId: crypto.randomUUID(), initialText: text, turns: [], question: null, questionCount: 0, finished: false };
+    const turns = base.question ? [...base.turns, { question: base.question, answer: text }] : base.turns;
+    const id = crypto.randomUUID();
+    const generation = ++requestSequence.current;
+    const started = performance.now();
+    let dialogueInput: DialogueRequest | null = null;
+    try {
+      if (activity) dialogueInput = parseDialogueRequest({ text, id, generation, dialogue: { conversationId: base.conversationId, initialText: base.initialText, turns } });
+    } catch (caught) {
+      setSearchError(caught instanceof AssistantError ? caught.message : "대화 입력을 확인하지 못했어요. 입력을 확인하거나 새 상품 찾기를 시작해주세요.");
+      return;
+    }
+    if (activity) setConversation(base);
+    const makeRun = (output: SearchResult | null, errorCode: string | null): SearchRunInput => ({
+      id, conversationId: base.conversationId,
+      dialogue: { initialText: base.initialText, currentText: text, turns },
+      mode: searchMode, model: output?.model ?? null, usage: output?.usage ?? null,
+      status: output ? "success" : "error", action: !output ? null : output.status === "matched" ? "candidates" : output.status === "unknown" ? "unidentified" : output.status,
+      question: output?.dialogue?.question ?? null, clues: output?.dialogue?.clues ?? [],
+      candidates: output?.dialogue?.candidates ?? [], latencyMs: Math.max(0, Math.round(performance.now() - started)), errorCode,
+    });
+    function accept(output: SearchResult) {
+      const run = activity ? makeRun(output, null) : undefined;
+      setResult({ ...output, run }); setRejected([]); setNeedReason(output.status === "clarify" ? "clarification_stopped" : output.status === "unknown" ? "unidentified" : "candidates_rejected");
+      if (activity) {
+        setConversation({ ...base, turns, question: output.dialogue?.question ?? null, questionCount: base.questionCount + (output.status === "clarify" ? 1 : 0), finished: output.status !== "clarify" });
+        if (output.status === "clarify") setInput("");
+        recordRun(run!);
+      }
+    }
     if (searchMode === "local") {
       // ponytail: 명시적으로 선택한 예시 모드에서만 키워드 검색. AI 실패의 fallback이 아니다.
       const ids = previewProducts
         .map(product => ({ product, score: [product.name, ...product.aliases].filter(term => normalize(text).includes(normalize(term))).length }))
         .filter(item => item.score > 0).sort((a, b) => b.score - a.score).slice(0, 3).map(item => item.product.id);
-      setResult({ mode: "local", candidateIds: ids, status: ids.length ? "matched" : "unknown",
+      accept({ mode: "local", candidateIds: ids, status: ids.length ? "matched" : "unknown",
+        ...(activity ? { dialogue: { conversationId: base.conversationId, question: null, clues: [], candidates: ids.map(productId => ({ productId, kind: "needs_confirmation" as const, reason: "로컬 이름·별칭 일치 후보예요. 조건과 상품을 직접 확인해주세요.", catalogEvidence: catalogEvidenceFor(previewProducts.find(product => product.id === productId)!).slice(0, 1) })) } } : {}),
         message: ids.length ? `데모 카탈로그의 이름·별칭이 겹치는 후보 ${ids.length}개예요. 맛과 용량을 직접 확인해주세요.` : "로컬 예시 목록에서 일치하는 이름·별칭이 없어요. 실제 상품의 판매 여부를 뜻하지 않아요." });
       return;
     }
@@ -170,15 +284,18 @@ export default function CustomerWorkspace({ requests, onRequest, busy, condition
     }
     const controller = new AbortController();
     searchController.current = controller;
-    const generation = ++requestSequence.current;
     let timedOut = false;
     const timeout = setTimeout(() => { timedOut = true; controller.abort(); }, 45_000);
     setSearching(true);
     try {
-      const id = crypto.randomUUID();
+      const body = JSON.stringify(dialogueInput ?? { text, id, generation });
+      if (activity && new TextEncoder().encode(body).byteLength > 8192) {
+        setSearchError("대화 요청은 UTF-8 8KiB 이하여야 해요. 내용을 자동으로 잘라 보내지 않았어요.");
+        return;
+      }
       const response = await fetch("/api/assistant/search", {
         method: "POST", headers: { "Content-Type": "application/json" }, signal: controller.signal,
-        body: JSON.stringify({ text, id, generation }),
+        body,
       });
       const data: unknown = await response.json().catch(() => { throw new AssistantError("MODEL_MALFORMED"); });
       if (requestSequence.current !== generation) return;
@@ -194,12 +311,17 @@ export default function CustomerWorkspace({ requests, onRequest, busy, condition
         || !isObject(data.usage) || ![data.usage.inputTokens, data.usage.outputTokens].every(value => Number.isSafeInteger(value) && Number(value) >= 0)) {
         throw new AssistantError("MODEL_MALFORMED");
       }
-      const output = parseSearchOutput({ candidateIds: data.candidateIds, message: data.message, status: data.status }, allowedIds);
-      setResult({ ...output, mode: "live", model: data.model,
-        usage: { inputTokens: data.usage.inputTokens as number, outputTokens: data.usage.outputTokens as number } });
+      if (dialogueInput) {
+        const output = parseDialogueResponse(data, dialogueInput, previewProducts);
+        accept({ ...output, mode: "live" });
+      } else {
+        const output = parseSearchOutput({ candidateIds: data.candidateIds, message: data.message, status: data.status }, allowedIds);
+        accept({ ...output, mode: "live", model: data.model, usage: { inputTokens: data.usage.inputTokens as number, outputTokens: data.usage.outputTokens as number } });
+      }
     } catch (caught) {
       if (requestSequence.current !== generation) return;
       setSearchError(timedOut ? errorMessages.MODEL_TIMEOUT : caught instanceof AssistantError ? caught.message : errorMessages.MODEL_NETWORK);
+      if (activity) recordRun(makeRun(null, timedOut ? "MODEL_TIMEOUT" : caught instanceof AssistantError ? caught.code : "MODEL_NETWORK"));
     } finally {
       clearTimeout(timeout);
       if (requestSequence.current === generation) {
@@ -237,7 +359,9 @@ export default function CustomerWorkspace({ requests, onRequest, busy, condition
       setTab("requests");
       setProductId(null);
       setConsent(false);
+      if (activity && result?.run) enqueue([recommendation(result.run, draft.productId, "requested", draft.id, draft.storeId)]);
     } catch {
+      if (submitted.current) { setRecordError("구매 요청은 저장됐지만 후속 이력 연결을 확인하지 못했어요. 다시 구매하지 말고 내 요청을 확인해주세요."); return; }
       setError("요청을 저장하지 못했어요. 입력과 선택은 유지했으니 내 요청을 확인한 뒤 다시 시도해주세요.");
     } finally { submitting.current = false; }
   }
@@ -245,6 +369,34 @@ export default function CustomerWorkspace({ requests, onRequest, busy, condition
   function navigate(next: Tab) {
     setTab(next);
     setError("");
+  }
+
+  function selectCandidate(id: string) {
+    if (busy) return;
+    if (result?.run && productId !== id) enqueue([recommendation(result.run, id, "selected")]);
+    clearConfirmation(); setProductId(id); setQuantity("1"); setStoreId("");
+    setTimeout(() => confirmationRef.current?.focus(), 0);
+  }
+  function rejectCandidate(id: string) {
+    if (busy || rejected.includes(id) || !result?.run) return;
+    enqueue([recommendation(result.run, id, "rejected")]); setRejected(current => [...current, id]); setNeedReason("candidates_rejected");
+    if (productId === id) { setProductId(null); clearConfirmation(); }
+  }
+  const needRun = result?.run;
+  const fixedNeed = needRun ? needDrafts.current.get(needRun.conversationId) : undefined;
+  const canLeaveNeed = needRun?.status === "success" && needRun.action !== "unsupported";
+  const reasonOptions: { value: NeedReason; label: string }[] = needRun ? [
+    ...(needRun.action === "unidentified" ? [{ value: "unidentified" as const, label: "상품을 식별하지 못함" }] : []),
+    ...(needRun.action === "clarify" ? [{ value: "clarification_stopped" as const, label: "추가 설명을 여기서 멈춤" }] : []),
+    ...(rejected.length ? [{ value: "candidates_rejected" as const, label: "제안된 후보가 원하는 상품이 아님" }] : []),
+    ...(needRun.candidates.some(candidate => { const row = conditions.find(row => row.storeId === needStoreId && row.productId === candidate.productId); return !row || row.supplyStatus === "unknown"; }) ? [{ value: "condition_unknown" as const, label: "이 점포의 상품 조건을 확인하지 못함" }] : []),
+    ...(needRun.candidates.some(candidate => conditions.some(row => row.storeId === needStoreId && row.productId === candidate.productId && !row.requestable && row.supplyStatus !== "unknown")) ? [{ value: "not_requestable" as const, label: "이 점포의 모의 조건에서 요청 불가" }] : []),
+  ] : [];
+  function leaveNeed() {
+    if (!needRun || !canLeaveNeed || busy || fixedNeed || !requestStores.some(store => store.id === needStoreId) || !reasonOptions.some(reason => reason.value === needReason)) return;
+    const needId = crypto.randomUUID();
+    const item: PendingRecord = { key: needId, label: "니즈", targetStoreId: needStoreId, payload: { type: "needs.record", needId, runId: needRun.id, reason: needReason, confirmed: true } };
+    needDrafts.current.set(needRun.conversationId, item); enqueue([item]);
   }
 
   return <div className={styles.workspace} aria-busy={busy || searching}>
@@ -261,11 +413,24 @@ export default function CustomerWorkspace({ requests, onRequest, busy, condition
 
     <p className={styles.previewNote}>상품 {previewProducts.length}개의 출처 확인·미검증·합성 여부를 구분한 데모예요. 실제 점포 {requestStores.length}곳의 위치를 참고하지만 가격·취급·재고·거래는 모의이며 현재 영업을 보장하지 않아요. 이 브라우저의 SQLite에 저장해요. 같은 주소에서 새로고침해도 이어져요. 다른 기기와 공유되지 않아요.</p>
     {notice && <p className={styles.success} role="status">{notice}</p>}
+    {activity && (pendingRecords.length > 0 || recordError) && <section className={styles.modelReply} aria-label="검색 활동 기록 저장">
+      <strong>{recording ? "검색 활동 기록 저장 중…" : "저장을 기다리는 기록이 있어요"}</strong>
+      <p className={styles.small}>대기 {pendingRecords.length}건 · 검색·후보·니즈 이력은 구매 요청과 별개예요. 새 검색으로 대기 기록을 지우지 않아요.</p>
+      {recordError && <p className={styles.error} role="alert">{recordError}</p>}
+      <button type="button" className={styles.secondary} disabled={busy || recording || !pendingRecords.length} onClick={() => void flushRecords(true)}>같은 기록 저장만 재시도 · AI 재호출 없음</button>
+      <p className={styles.small}>미저장 기록은 이 화면을 떠나거나 새로고침하면 사라질 수 있어요. 구매 요청 성공은 이력 저장 실패로 취소되거나 재구매되지 않아요.</p>
+    </section>}
 
     {tab === "want" && <>
       <section className={styles.card} aria-labelledby="customer-input-title">
         <span className={styles.step}>01 · 원하는 상품 말하기</span>
         <h2 id="customer-input-title">어떤 상품을 찾고 있나요?</h2>
+        {activity && <>
+          <button type="button" className={styles.textButton} disabled={busy} onClick={() => { newSearch(); setUndo(null); inputRef.current?.focus(); }}>새 상품 찾기 · 대화 새로 시작</button>
+          <p className={styles.small}>추가 질문은 필요할 때만 최대 2회예요. 명확한 후보는 바로 상품·구매 조건을 확인할 수 있어요.</p>
+          {conversation && <details className={styles.usage}><summary>이 대화의 원래 조건 · 추가 질문 {conversation.questionCount}/2</summary><p>처음 입력: {conversation.initialText}</p>{conversation.turns.map((turn, index) => <p key={index}>질문 {index + 1}: {turn.question}<br />내 답변: {turn.answer}</p>)}<p>원래의 필수·제외 조건은 명시적으로 바꾸기 전까지 유지돼요.</p></details>}
+          {conversation?.question && <p className={styles.dialogueQuestion} role="status"><strong>추가 질문 {conversation.questionCount}/2</strong><br />{conversation.question}</p>}
+        </>}
         <div className={styles.searchModePanel}>
           <div className={styles.sectionLine}>
             <strong>{searchMode === "local" ? "로컬 예시 검색 · AI 아님" : "실제 AI 검색"}</strong>
@@ -277,7 +442,7 @@ export default function CustomerWorkspace({ requests, onRequest, busy, condition
           </> : <p className={styles.small}>직접 선택한 로컬 예시 모드예요. AI를 호출하지 않고 카탈로그 상품명·별칭만 비교해요.</p>}
         </div>
         <form onSubmit={search}>
-          <label className={styles.fieldLabel} htmlFor="customer-query">상품 이름이나 특징</label>
+          <label className={styles.fieldLabel} htmlFor="customer-query">{activity && conversation?.question ? "위 질문에 대한 답변" : "상품 이름이나 특징"}</label>
           <textarea ref={inputRef} id="customer-query" data-testid="customer-query" value={input} disabled={busy} maxLength={300} rows={3} onChange={event => { setUndo(null); editInput(event.target.value); }} onKeyDown={event => { if (event.key === "Enter" && event.nativeEvent.isComposing) event.stopPropagation(); }} placeholder="예: 딸기랑 크림이 들어간 샌드위치 찾아줘" aria-describedby="customer-search-note" />
           <p id="customer-search-note" className={styles.small}>{searchMode === "live" ? "입력한 설명을 AI가 데모 카탈로그와 비교해요. 후보를 확인하기 전에는 요청이나 구매가 실행되지 않아요." : "카탈로그 상품명·별칭을 찾는 로컬 검색이에요. 문장 전체를 이해하는 AI 검색이 아니에요."}</p>
           <div className={styles.examples}>
@@ -285,7 +450,7 @@ export default function CustomerWorkspace({ requests, onRequest, busy, condition
             {examples.map(example => <button key={example} type="button" className={styles.example} disabled={busy} onClick={() => { setUndo(previous => previous ?? input); editInput(example); inputRef.current?.focus(); }}><span aria-hidden="true">↗</span>{example}</button>)}
             <p className={styles.small}>예시를 누르면 입력만 채워져요.</p>
           </div>
-          <button type="submit" className={styles.primary} data-testid="customer-search" disabled={busy || searching || (searchMode === "live" && (!aiReady || statusLoading))}>{searching ? "AI가 상품을 찾고 있어요…" : searchMode === "live" ? "AI로 상품 찾기" : "로컬 예시 상품 찾기"} <span aria-hidden="true">→</span></button>
+          <button type="submit" className={styles.primary} data-testid="customer-search" disabled={busy || searching || Boolean(activity && conversation?.finished) || (searchMode === "live" && (!aiReady || statusLoading))}>{searching ? "AI가 상품을 찾고 있어요…" : activity && conversation?.finished ? "후보를 확인하거나 새 상품 찾기를 눌러주세요" : searchMode === "live" ? conversation?.question ? "이 답변으로 AI 상품 찾기" : "AI로 상품 찾기" : "로컬 예시 상품 찾기"} <span aria-hidden="true">→</span></button>
           {searching && <div className={styles.sectionLine}><p className={styles.small} role="status">검색 중이에요. 입력을 바꾸면 이전 검색은 취소돼요.</p><button type="button" className={styles.textButton} onClick={cancelSearch}>검색 취소</button></div>}
           {searchError && <p className={styles.error} role="alert">{searchError} 입력은 그대로 남아 있어요.</p>}
         </form>
@@ -297,12 +462,15 @@ export default function CustomerWorkspace({ requests, onRequest, busy, condition
         <div className={styles.modelReply}>
           <span className={styles.resultMode}>{result.mode === "live" ? `실제 AI · ${result.model}` : "로컬 예시 검색 · AI 아님"}</span>
           <p role="status">{result.message}</p>
+          {result.run && <p className={styles.small}>{savedKeys.includes(result.run.id) ? "이 검색 이력을 브라우저에 저장했어요. 원문·실행 상세는 고객 본인만 조회해요." : "유효한 검색 결과예요. 이력 저장은 별도로 진행하며 아직 저장 완료가 아니에요."}</p>}
           {result.status === "clarify" && <button type="button" className={styles.textButton} onClick={() => inputRef.current?.focus()}>질문에 맞게 설명 보완하기</button>}
           <p className={styles.small}>답변은 후보 제안이며 실제 공급·가격·재고 확인 결과가 아니에요. 출처 확인은 자료의 일부 상품 정보에만 해당해요. 아래 금액은 요청 가능한 점포의 모의 가격이며, 점포 선택 후 정확한 조건을 확인해요.</p>
           {result.mode === "live" && result.usage && <details className={styles.usage}><summary>이번 AI 검색 사용량</summary><p>입력 {result.usage.inputTokens.toLocaleString("ko-KR")} · 출력 {result.usage.outputTokens.toLocaleString("ko-KR")} 토큰</p></details>}
+          {!!result.dialogue?.clues.length && <details className={styles.usage}><summary>해석한 필수·제외·선호 단서 확인</summary>{result.dialogue.clues.map((clue, index) => <p key={index}>{clue.polarity === "excluded" ? "제외" : clue.polarity === "required" ? "필수" : "선호"}: {clue.value} · {clue.certainty === "explicit" ? "입력 근거에서 추출" : "모델 추정 · 확인 필요"}</p>)}<p>모델의 해석은 고객의 구매 동의가 아니에요.</p></details>}
         </div>
         {candidates.length ? <div className={styles.productGrid}>
           {candidates.map(product => {
+            const candidate = result.dialogue?.candidates.find(candidate => candidate.productId === product.id);
             const prices = conditions.filter(row => row.productId === product.id && canRequestAt(row)
               && requestStores.some(store => store.id === row.storeId)).map(row => row.unitPrice);
             const lowestPrice = Math.min(...prices);
@@ -310,13 +478,25 @@ export default function CustomerWorkspace({ requests, onRequest, busy, condition
             return <article key={product.id} className={`${styles.productCard} ${productId === product.id ? styles.selectedCard : ""}`}>
             <div className={styles.productArt} style={{ backgroundColor: product.color }} aria-hidden="true">{product.emoji}<span>데모 카탈로그</span></div>
             <div className={styles.productBody}><span className={styles.small}>{product.category}</span><h3>{product.name}</h3>
+              {candidate && <><span className={styles.resultMode}>{candidate.kind === "alternative" ? "찾으신 상품과 다른 대체 상품" : candidate.kind === "needs_confirmation" ? "확인 필요한 후보" : "정확 후보 · 직접 확인 필요"}</span><p>{candidate.reason}</p><details className={styles.usage}><summary>카탈로그 근거 · 공통점/차이 확인</summary>{candidate.catalogEvidence.map(evidence => <p key={evidence.code}>{evidence.value}</p>)}<p>자료 속 속성 근거이며 실제 판매·재고 보장이 아니에요.</p></details></>}
               <span className={styles.provenance}>{provenanceLabels[product.identityOrigin ?? ""] ?? "출처 정보 없음"}</span>
               <p className={styles.small}>출처 ID: {product.sourceIds?.join(", ") || "미등록"} · 확인 항목: {product.verifiedFields?.join(", ") || "없음"}</p>
               <p>{product.description}</p><strong>{prices.length ? <>{won(lowestPrice)}{highestPrice !== lowestPrice && ` ~ ${won(highestPrice)}`} <span className={styles.small}>/ 개 · 점포별 모의 가격</span></> : "요청 가능한 점포 조건 없음"}</strong>
-              <button type="button" className={productId === product.id ? styles.primary : styles.secondary} disabled={busy} aria-pressed={productId === product.id} aria-label={`${product.name} ${productId === product.id ? "선택됨" : "이 상품 선택"}`} onClick={() => { clearConfirmation(); setProductId(product.id); setQuantity("1"); setStoreId(""); setTimeout(() => confirmationRef.current?.focus(), 0); }}>{productId === product.id ? "선택했어요 ✓" : "이 상품 선택"}</button>
+              <button type="button" className={productId === product.id ? styles.primary : styles.secondary} disabled={busy} aria-pressed={productId === product.id} aria-label={`${product.name} ${productId === product.id ? "선택됨" : "이 상품 선택"}`} onClick={() => { selectCandidate(product.id); setRejected(current => current.filter(id => id !== product.id)); }}>{productId === product.id ? "선택했어요 ✓" : "이 상품 선택"}</button>
+              {activity && result.run && <button type="button" className={styles.textButton} disabled={busy || rejected.includes(product.id)} onClick={() => rejectCandidate(product.id)}>{rejected.includes(product.id) ? "원하는 상품이 아니라고 표시했어요" : "이 상품은 아니에요"}</button>}
             </div>
           </article>; })}
-        </div> : <div className={styles.empty}><span className={styles.emptyIcon} aria-hidden="true">⌕</span><h3>{result.status === "clarify" ? "맛·브랜드·용량을 더 알려주세요" : result.status === "unsupported" ? "찾을 상품 하나를 글로 설명해주세요" : "다른 이름이나 특징으로 찾아볼까요?"}</h3><p>{result.status === "unknown" ? "후보가 없다는 결과는 실제 품절이나 판매 종료를 뜻하지 않아요." : result.status === "unsupported" ? "이 요청은 상품 검색으로 처리되지 않았어요. 입력을 수정해 다시 검색할 수 있어요." : "위 질문을 참고해 입력을 보완한 뒤 다시 검색해주세요."}<br />미식별 기록 저장은 아직 연결되지 않아, 별도의 요청 기록은 저장되지 않았어요.</p><button type="button" className={styles.secondary} onClick={() => inputRef.current?.focus()}>입력 수정하기</button></div>}
+        </div> : <div className={styles.empty}><span className={styles.emptyIcon} aria-hidden="true">⌕</span><h3>{result.status === "clarify" ? "질문에 답하거나 니즈만 남길 수 있어요" : result.status === "unsupported" ? "찾을 상품 하나를 글로 설명해주세요" : "다른 이름이나 특징으로 찾아볼까요?"}</h3><p>{result.status === "unknown" ? "후보가 없다는 결과는 실제 품절이나 판매 종료를 뜻하지 않아요." : result.status === "unsupported" ? "이 입력은 지원 범위 밖이에요. 미식별 니즈로 저장하지 않아요." : "위 질문에 답하면 원래 조건과 함께 다시 확인해요."}<br />{activity ? "검색 이력과 점포에 명시 전달하는 니즈는 별개예요." : "미식별 기록 저장은 아직 연결되지 않아, 별도의 요청 기록은 저장되지 않았어요."}</p><button type="button" className={styles.secondary} onClick={() => { if (activity && conversation?.finished) newSearch(); inputRef.current?.focus(); }}>{activity && conversation?.finished ? "새 상품 찾기" : "입력 수정하기"}</button></div>}
+        {activity && canLeaveNeed && <details className={styles.storeDirectory}>
+          <summary>못 찾은 니즈 남기기 · 구매 요청 아님</summary>
+          <p className={styles.small}>선택한 한 점포에 상품 관련 안전한 단서만 전달해요. 원문·대화·사용량은 경영주에게 공개하지 않아요. 수요·발주·예약·결제를 만들지 않으며 답변이나 공급을 보장하지 않아요.</p>
+          {fixedNeed ? <p role="status">{requestStores.find(store => store.id === fixedNeed.targetStoreId)?.name}에 {savedKeys.includes(fixedNeed.key) ? "니즈를 저장했어요." : "니즈 저장을 기다리고 있어요. 위에서 같은 기록 저장만 재시도할 수 있어요."} 이 대화는 다른 점포로 이동·복제하지 않아요.</p> : <>
+            <label className={styles.fieldLabel} htmlFor="customer-need-store">니즈를 전달할 점포</label><select id="customer-need-store" value={needStoreId} disabled={busy} onChange={event => setNeedStoreId(event.target.value)}><option value="">한 점포를 직접 선택해주세요</option>{requestStores.map(store => <option key={store.id} value={store.id}>{store.name}</option>)}</select>
+            <label className={styles.fieldLabel} htmlFor="customer-need-reason">남길 사유</label><select id="customer-need-reason" value={reasonOptions.some(reason => reason.value === needReason) ? needReason : ""} disabled={busy} onChange={event => setNeedReason(event.target.value as NeedReason)}><option value="" disabled>현재 결과에 맞는 사유를 선택해주세요</option>{reasonOptions.map(reason => <option key={reason.value} value={reason.value}>{reason.label}</option>)}</select>
+            {!reasonOptions.length && <p className={styles.small}>후보가 다르면 ‘이 상품은 아니에요’를 눌러주세요. 점포 조건도 니즈 사유와 구별해요.</p>}
+            <button type="button" className={styles.secondary} disabled={busy || !needStoreId || !reasonOptions.some(reason => reason.value === needReason)} onClick={leaveNeed}>이 점포에 못 찾은 니즈 남기기</button>
+          </>}
+        </details>}
       </section>}
 
       {selected && <section className={styles.card} aria-labelledby="customer-confirm-title">
@@ -377,6 +557,8 @@ export default function CustomerWorkspace({ requests, onRequest, busy, condition
         </article>;
       })}</div> : <div className={styles.empty}><NavIcon tab="requests" /><h3>아직 남긴 요청이 없어요</h3><p>원하는 상품을 찾아 조건을 확인하면<br />이곳에서 요청 상태를 볼 수 있어요.</p><button type="button" className={styles.primary} onClick={() => navigate("want")}>첫 상품 찾아보기</button></div>}
     </section>)}
+
+    {tab === "requests" && activity?.historyContent}
 
     {tab === "pickup" && (pickupContent ?? <section className={styles.card} aria-labelledby="customer-pickup-title">
       <span className={styles.step}>픽업 안내</span><h2 id="customer-pickup-title">아직 픽업 가능한 상품이 없어요</h2>

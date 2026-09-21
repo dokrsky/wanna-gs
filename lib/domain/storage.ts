@@ -4,9 +4,10 @@ import type { Database, SqlJsStatic, SqlValue } from "sql.js";
 import { applyCommand, assertState, createInitialState } from "./commands.ts";
 // @ts-ignore -- see the shared Node24/Next import above.
 import { DOMAIN_POLICY } from "./policy.ts";
-import type { Command, CommandOutcome, DomainState, Seed } from "./types";
+import type { Command, CommandOutcome, DomainState, SearchRun, Seed } from "./types";
 
-export const DOMAIN_SCHEMA_VERSION = 1;
+export const DOMAIN_SCHEMA_VERSION = 2;
+export const DOMAIN_V1_SOURCE_HASH = "13bc7a6a7a88bb3d60e80444fa24731b29feeaafc7a0a71c546a19a60014403e";
 export const LOCAL_CUSTOMER_ID = "DEMO-CUSTOMER-LOCAL";
 export type ArchivedPreviewRequest = {
   id: string; actor: string; productId: string; productName: string; storeId: string;
@@ -29,7 +30,7 @@ export type DomainStore = {
 // Presentation/provenance on read-only masters may retain the original JSON record.
 const SCHEMA = `
  PRAGMA foreign_keys=ON;
- PRAGMA user_version=1;
+ PRAGMA user_version=2;
  CREATE TABLE metadata(key TEXT PRIMARY KEY NOT NULL, value TEXT NOT NULL) STRICT;
  CREATE TABLE session(
    singleton INTEGER PRIMARY KEY CHECK(singleton=1), sessionId TEXT NOT NULL,
@@ -106,6 +107,47 @@ const SCHEMA = `
    stage TEXT NOT NULL CHECK(stage IN ('requested','approved')), position INTEGER NOT NULL UNIQUE) STRICT;
 `;
 
+// The same additive DDL is used for new seeds and the one supported v1 upgrade.
+const RECORD_SCHEMA = `
+ CREATE TABLE search_runs(id TEXT PRIMARY KEY NOT NULL, actorId TEXT NOT NULL REFERENCES actors(id),
+   conversationId TEXT NOT NULL, initialText TEXT NOT NULL CHECK(length(initialText) BETWEEN 1 AND 300),
+   currentText TEXT NOT NULL CHECK(length(currentText) BETWEEN 1 AND 300), mode TEXT NOT NULL CHECK(mode IN ('live','local','fixture')),
+   model TEXT, status TEXT NOT NULL CHECK(status IN ('success','error')),
+   action TEXT CHECK(action IN ('candidates','clarify','unidentified','unsupported')), question TEXT,
+   inputTokens INTEGER CHECK(inputTokens>=0), outputTokens INTEGER CHECK(outputTokens>=0),
+   latencyMs INTEGER NOT NULL CHECK(latencyMs>=0), errorCode TEXT, createdAt INTEGER NOT NULL CHECK(createdAt>=0),
+   position INTEGER NOT NULL UNIQUE, UNIQUE(id,actorId,conversationId), UNIQUE(id,actorId),
+   CHECK((inputTokens IS NULL)=(outputTokens IS NULL)),
+   CHECK(mode!='local' OR (model IS NULL AND inputTokens IS NULL)),
+   CHECK(mode!='live' OR status!='success' OR (model IS NOT NULL AND inputTokens IS NOT NULL)),
+   CHECK((status='error' AND action IS NULL AND errorCode IS NOT NULL AND question IS NULL) OR
+         (status='success' AND action IS NOT NULL AND errorCode IS NULL)),
+   CHECK((action='clarify' AND question IS NOT NULL) OR (action IS NOT 'clarify' AND question IS NULL))) STRICT;
+ CREATE TABLE search_turns(runId TEXT NOT NULL REFERENCES search_runs(id), position INTEGER NOT NULL CHECK(position BETWEEN 0 AND 1),
+   question TEXT NOT NULL, answer TEXT NOT NULL, PRIMARY KEY(runId,position)) STRICT;
+ CREATE TABLE search_clues(runId TEXT NOT NULL REFERENCES search_runs(id), position INTEGER NOT NULL CHECK(position BETWEEN 0 AND 5),
+   field TEXT NOT NULL CHECK(field IN ('name','brand','category','flavor','size','feature')), value TEXT NOT NULL,
+   polarity TEXT NOT NULL CHECK(polarity IN ('required','excluded','preferred')), certainty TEXT NOT NULL CHECK(certainty IN ('explicit','inferred')),
+   source TEXT NOT NULL CHECK(source IN ('initial','answer1','answer2')), start INTEGER NOT NULL CHECK(start>=0),
+   end INTEGER NOT NULL CHECK(end>start), PRIMARY KEY(runId,position)) STRICT;
+ CREATE TABLE search_candidates(runId TEXT NOT NULL REFERENCES search_runs(id), position INTEGER NOT NULL CHECK(position BETWEEN 0 AND 2),
+   productId TEXT NOT NULL REFERENCES products(id), kind TEXT NOT NULL CHECK(kind IN ('exact','needs_confirmation','alternative')),
+   reason TEXT NOT NULL, PRIMARY KEY(runId,position), UNIQUE(runId,productId)) STRICT;
+ CREATE TABLE search_candidate_evidence(runId TEXT NOT NULL, candidatePosition INTEGER NOT NULL, position INTEGER NOT NULL CHECK(position BETWEEN 0 AND 2),
+   code TEXT NOT NULL, value TEXT NOT NULL, PRIMARY KEY(runId,candidatePosition,position),
+   FOREIGN KEY(runId,candidatePosition) REFERENCES search_candidates(runId,position)) STRICT;
+ CREATE TABLE needs(id TEXT PRIMARY KEY NOT NULL, actorId TEXT NOT NULL REFERENCES actors(id), storeId TEXT NOT NULL REFERENCES stores(id),
+   conversationId TEXT NOT NULL, runId TEXT NOT NULL, reason TEXT NOT NULL CHECK(reason IN ('unidentified','clarification_stopped','candidates_rejected','condition_unknown','not_requestable')),
+   createdAt INTEGER NOT NULL CHECK(createdAt>=0), position INTEGER NOT NULL UNIQUE, UNIQUE(actorId,conversationId),
+   FOREIGN KEY(runId,actorId,conversationId) REFERENCES search_runs(id,actorId,conversationId)) STRICT;
+ CREATE TABLE recommendation_events(id TEXT PRIMARY KEY NOT NULL, actorId TEXT NOT NULL REFERENCES actors(id), runId TEXT NOT NULL,
+   productId TEXT NOT NULL, action TEXT NOT NULL CHECK(action IN ('shown','selected','rejected','requested')),
+   requestId TEXT REFERENCES requests(id), createdAt INTEGER NOT NULL CHECK(createdAt>=0), position INTEGER NOT NULL UNIQUE,
+   FOREIGN KEY(runId,actorId) REFERENCES search_runs(id,actorId), FOREIGN KEY(runId,productId) REFERENCES search_candidates(runId,productId),
+   CHECK((action='requested' AND requestId IS NOT NULL) OR (action!='requested' AND requestId IS NULL))) STRICT;
+`;
+const recordTables = ["recommendation_events", "needs", "search_candidate_evidence", "search_candidates", "search_clues", "search_turns", "search_runs"];
+
 // Static mappings for the canonical DTO; no ORM, migrations framework or dynamic schema.
 const COLUMNS = {
   conditions: "storeId,productId,requestable,unitPrice,unitCost,moq,packSize,supplyStatus,supplyQuantity,version,orderClosesAt",
@@ -133,16 +175,52 @@ function foreignKeys(db: Database) {
   db.run("PRAGMA foreign_keys=ON");
   if (scalar(db, "PRAGMA foreign_keys") !== 1) throw Error("DOMAIN_FK_DISABLED");
 }
-function openDatabase(SQL: SqlJsStatic, bytes: Uint8Array, sourceHash?: string) {
+function openDatabase(SQL: SqlJsStatic, bytes: Uint8Array, sourceHash?: string, allowV1 = false) {
   const db = new SQL.Database(bytes);
   try {
     foreignKeys(db);
-    if (scalar(db, "PRAGMA user_version") !== DOMAIN_SCHEMA_VERSION || scalar(db, "PRAGMA integrity_check") !== "ok" ||
-      db.exec("PRAGMA foreign_key_check").length || (sourceHash !== undefined && scalar(db, "SELECT value FROM metadata WHERE key='source_hash'") !== sourceHash)) {
+    const version = scalar(db, "PRAGMA user_version");
+    const observedHash = scalar(db, "SELECT value FROM metadata WHERE key='source_hash'");
+    const knownV1 = allowV1 && version === 1 && observedHash === DOMAIN_V1_SOURCE_HASH;
+    if ((!knownV1 && (version !== DOMAIN_SCHEMA_VERSION || (sourceHash !== undefined && observedHash !== sourceHash))) ||
+      scalar(db, "PRAGMA integrity_check") !== "ok" || db.exec("PRAGMA foreign_key_check").length) {
       throw Error("DOMAIN_SNAPSHOT_INCOMPATIBLE");
     }
     return db;
   } catch (error) { db.close(); throw error; }
+}
+
+function readSearchState(db: Database): Pick<DomainState, "searchRuns" | "needs" | "recommendationEvents"> {
+  if (scalar(db, "PRAGMA user_version") === 1) return { searchRuns: [], needs: [], recommendationEvents: [] };
+  const searchRuns = rows(db, "SELECT * FROM search_runs ORDER BY position").map(row => {
+    const runId = row.id;
+    const owned = (table: string) => rows(db, `SELECT * FROM ${table} ORDER BY position`).filter(r => r.runId === runId);
+    return { id: row.id, actorId: row.actorId, conversationId: row.conversationId, mode: row.mode, model: row.model,
+      status: row.status, action: row.action, question: row.question, latencyMs: row.latencyMs, errorCode: row.errorCode, createdAt: row.createdAt,
+      usage: row.inputTokens === null ? null : { inputTokens: row.inputTokens, outputTokens: row.outputTokens },
+      dialogue: { initialText: row.initialText, currentText: row.currentText, turns: owned("search_turns").map(r => ({ question: r.question, answer: r.answer })) },
+      clues: owned("search_clues").map(r => ({ field: r.field, value: r.value, polarity: r.polarity, certainty: r.certainty,
+        rawSourceRange: { source: r.source, start: r.start, end: r.end } })),
+      candidates: owned("search_candidates").map(r => ({ productId: r.productId, kind: r.kind, reason: r.reason,
+        catalogEvidence: owned("search_candidate_evidence").filter(e => e.candidatePosition === r.position).map(e => ({ code: e.code, value: e.value })) })),
+    };
+  }) as SearchRun[];
+  return { searchRuns, needs: rows(db, "SELECT id,actorId,storeId,conversationId,runId,reason,createdAt FROM needs ORDER BY position") as DomainState["needs"],
+    recommendationEvents: rows(db, "SELECT id,actorId,runId,productId,action,requestId,createdAt FROM recommendation_events ORDER BY position") as DomainState["recommendationEvents"] };
+}
+function writeSearchState(db: Database, state: DomainState) {
+  state.searchRuns.forEach((run, position) => {
+    insert(db, "search_runs", "id,actorId,conversationId,initialText,currentText,mode,model,status,action,question,inputTokens,outputTokens,latencyMs,errorCode,createdAt",
+      { ...run, ...run.dialogue, ...run.usage }, position);
+    run.dialogue.turns.forEach((turn, i) => insert(db, "search_turns", "runId,question,answer", { runId: run.id, ...turn }, i));
+    run.clues.forEach((clue, i) => insert(db, "search_clues", "runId,field,value,polarity,certainty,source,start,end", { runId: run.id, ...clue, ...clue.rawSourceRange }, i));
+    run.candidates.forEach((candidate, i) => {
+      insert(db, "search_candidates", "runId,productId,kind,reason", { runId: run.id, ...candidate }, i);
+      candidate.catalogEvidence.forEach((evidence, j) => insert(db, "search_candidate_evidence", "runId,candidatePosition,code,value", { runId: run.id, candidatePosition: i, ...evidence }, j));
+    });
+  });
+  state.needs.forEach((need, i) => insert(db, "needs", "id,actorId,storeId,conversationId,runId,reason,createdAt", need, i));
+  state.recommendationEvents.forEach((event, i) => insert(db, "recommendation_events", "id,actorId,runId,productId,action,requestId,createdAt", event, i));
 }
 
 export function readDomainState(db: Database): DomainState {
@@ -162,8 +240,8 @@ export function readDomainState(db: Database): DomainState {
     key: receipt.key, fingerprint: receipt.fingerprint, result: { commandKey: receipt.commandKey, revision: receipt.revision,
       entityIds: rows(db, "SELECT receiptKey,entityId FROM receipt_entities ORDER BY position").filter(row => row.receiptKey === receipt.key).map(row => String(row.entityId)) },
   }));
-  const state = { ...session, ...arrays, policies, receipts,
-    products: rows(db, "SELECT id,name FROM products ORDER BY position"),
+  const state = { ...session, ...arrays, policies, receipts, ...readSearchState(db),
+    products: rows(db, "SELECT id,name,json_extract(details,'$.category') AS category FROM products ORDER BY position").map(p => p.category === null ? { id: p.id, name: p.name } : p),
     stores: rows(db, "SELECT id,name FROM stores ORDER BY position"),
     actors: rows(db, "SELECT id,role,displayName,storeId FROM actors ORDER BY position").map(row => row.storeId === null
       ? { id: row.id, role: row.role, displayName: row.displayName } : row),
@@ -177,6 +255,7 @@ export function writeDomainState(db: Database, state: DomainState) {
   db.run("BEGIN");
   try {
     db.run("PRAGMA defer_foreign_keys=ON");
+    for (const table of recordTables) db.run(`DELETE FROM ${table}`);
     db.run("DELETE FROM policy_products; DELETE FROM receipt_entities;");
     for (const table of Object.keys(COLUMNS).reverse()) db.run(`DELETE FROM ${table}`);
     db.run("DELETE FROM session");
@@ -190,6 +269,7 @@ export function writeDomainState(db: Database, state: DomainState) {
       db.run("INSERT INTO policy_products VALUES (?,?,?)", [policy.storeId, productId, position]));
     for (const receipt of state.receipts) receipt.result.entityIds.forEach((entityId, position) =>
       db.run("INSERT INTO receipt_entities VALUES (?,?,?)", [receipt.key, entityId, position]));
+    writeSearchState(db, state);
     if (db.exec("PRAGMA foreign_key_check").length) throw Error("DOMAIN_FOREIGN_KEY_CHECK");
     db.run("COMMIT");
   } catch (error) { db.run("ROLLBACK"); throw error; }
@@ -252,6 +332,7 @@ export function createDomainSeed(SQL: SqlJsStatic, seed: Seed, sourceHash: strin
   const db = new SQL.Database();
   try {
     db.run(SCHEMA);
+    db.run(RECORD_SCHEMA);
     db.run("INSERT INTO metadata VALUES ('source_hash',?),('data_provenance',?)", [sourceHash, JSON.stringify(masters.provenance)]);
     seed.products.forEach((product, position) => insert(db, "products", "id,name,details", { ...product, details: JSON.stringify(masters.products[position]) }, position));
     seed.stores.forEach((store, position) => insert(db, "stores", "id,name,address,latitude,longitude,details",
@@ -280,11 +361,26 @@ export async function createDomainStore(options: {
     sourceHash = String(scalar(template, "SELECT value FROM metadata WHERE key='source_hash'"));
     seedState = readDomainState(template);
   } finally { template.close(); }
-  let db = openDatabase(SQL, options.initial ?? seed, sourceHash);
+  let db = openDatabase(SQL, options.initial ?? seed, sourceHash, true);
   let committed: Uint8Array = (options.initial ?? seed).slice();
   let published: DomainState;
   let archive: PreviewArchive;
   try {
+    if (scalar(db, "PRAGMA user_version") === 1) {
+      // Validate the old state before DDL. Never bootstrap or rewrite old business rows.
+      readDomainState(db); readArchive(db);
+      db.run("BEGIN");
+      try {
+        db.run(RECORD_SCHEMA);
+        db.run("UPDATE metadata SET value=? WHERE key='source_hash'", [sourceHash]);
+        db.run("PRAGMA user_version=2");
+        readDomainState(db);
+        if (db.exec("PRAGMA foreign_key_check").length) throw Error("DOMAIN_FOREIGN_KEY_CHECK");
+        db.run("COMMIT");
+      } catch (error) { db.run("ROLLBACK"); throw error; }
+      try { committed = db.export(); } finally { foreignKeys(db); }
+      try { await persist(committed); } catch { throw new DomainMigrationSaveError(); }
+    }
     if (options.initial === undefined) {
       const initNow = now();
       archive = options.archive ?? emptyArchive(initNow);
@@ -366,6 +462,13 @@ export class DomainSnapshotError extends Error {
     super("거래 사본의 버전이 다르거나 손상되었습니다. 기존 사본은 보존했습니다. 명시적으로 새 거래 데모를 초기화할 수 있습니다.");
     this.name = "DomainSnapshotError";
     this.reset = reset;
+  }
+}
+export class DomainMigrationSaveError extends Error {
+  readonly retryable = true;
+  constructor() {
+    super("기존 거래는 보존했지만 기록 기능 업그레이드를 저장하지 못했습니다. 초기화하지 말고 저장소를 다시 열어 재시도해주세요.");
+    this.name = "DomainMigrationSaveError";
   }
 }
 
@@ -452,7 +555,8 @@ async function loadDomainStore(confirmNewDomain: boolean): Promise<DomainStore> 
     try {
       if (!(initial instanceof Uint8Array)) throw Error("DOMAIN_INVALID_SNAPSHOT");
       return await createDomainStore({ SQL, seed, initial, persist });
-    } catch {
+    } catch (error) {
+      if (error instanceof DomainMigrationSaveError) throw error;
       let recovery: Promise<DomainStore> | undefined;
       throw new DomainSnapshotError(() => {
         // Double-clicking explicit recovery must not race two new sessions into IDB.

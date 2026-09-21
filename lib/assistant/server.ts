@@ -37,9 +37,9 @@ export function requireSameOrigin(request: Request) {
   }
 }
 
-export async function readJson(request: Request): Promise<unknown> {
+export async function readJson(request: Request, limitBytes = 4096): Promise<unknown> {
   if (request.headers.get("content-type")?.split(";")[0].trim().toLowerCase() !== "application/json") throw new AssistantError("JSON_REQUIRED", 415);
-  if (Number(request.headers.get("content-length")) > 4096) throw new AssistantError("BODY_TOO_LARGE", 413);
+  if (Number(request.headers.get("content-length")) > limitBytes) throw new AssistantError("BODY_TOO_LARGE", 413);
   const reader = request.body?.getReader();
   if (!reader) throw new AssistantError("INVALID_JSON");
   let timer: ReturnType<typeof setTimeout> | undefined;
@@ -52,7 +52,7 @@ export async function readJson(request: Request): Promise<unknown> {
           const chunk = await reader.read();
           if (chunk.done) break;
           bytes += chunk.value.byteLength;
-          if (bytes > 4096) throw new AssistantError("BODY_TOO_LARGE", 413);
+          if (bytes > limitBytes) throw new AssistantError("BODY_TOO_LARGE", 413);
           chunks.push(chunk.value);
         }
         try { return JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(Buffer.concat(chunks))); }

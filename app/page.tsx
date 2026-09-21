@@ -122,8 +122,7 @@ export default function Home() {
         {storageError && <section className="storage-warning" role="alert"><p>{storageError}</p>{!ready && <button type="button" onClick={() => setLoadAttempt((value) => value + 1)}>다시 불러오기</button>}</section>}
         {!ready && !storageError && <p className="storage-loading" role="status">저장된 요청을 불러오고 있어요…</p>}
         {ready && <div key={generation}>
-          <div hidden={role !== "customer"}><CustomerWorkspace requests={requests} onRequest={requestProduct} busy={busy} /></div>
-          <div hidden={role !== "merchant"}><MerchantWorkspace requests={requests} onApprove={approveRequests} busy={busy} /></div>
+          {role === "customer" ? <CustomerWorkspace requests={requests} onRequest={requestProduct} busy={busy} /> : <MerchantWorkspace requests={requests} onApprove={approveRequests} busy={busy} />}
         </div>}
       </main>
       <footer className="site-footer">

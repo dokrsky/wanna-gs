@@ -258,3 +258,17 @@ Meitner가 별도 `/api/assistant/policy`와 nullable 변경 계약을 구현했
 자체 offline API checker와 대상 TypeScript PASS; 조정자도 동일 offline checker를 실행했다. 60/242개 대상 유지·교체, used 예산 하한·낡은 정책·불완전 출력·4KiB UTF-8 경계를 확인했다. 현재 실제 AI 정책 해석/브라우저는 미실행이며 build/Preview 후 소량 호출로 확인한다. 전체 독립 정책 품질·G5/G6는 후속이다.
 
 UI07의 미식별 니즈/추가 질문은 ADR-005를 Newton/Locke 독립 문서 검토 후 채택했다. 최초 제외조건 유지·경영주에게 원문 개인정보 비공개·행동별 재시도 키·모델 성공과 저장 실패 분리를 보완했다. Meitner 검색 API, Locke 공통 domain/SQL 단일 작성으로 DTO를 합의 중이며 UI06 배포 후보와 섞지 않는다.
+
+`5502200cb7c404b8cc54793d280b862ed2067b63` 분리 checkout의 Node24 offline 정책 checker·Next build/타입 PASS, 클라이언트21파일 실제 서버 키 비포함 확인 후 push. `dpl_93Y2dm6xhr1C4hPD85YbTC1NS1yo` / https://wanna-1mb2mfcxx-d-01.vercel.app/demo Ready·정확한 source SHA 확인. 실제 Preview 호출1회: ‘앞으로 콜드브루 커피 300ml만 자동발주 대상으로 켜고 누적 매입 예산을 1만원으로 설정해줘’→gpt-5-mini, OFF→ON·대상없음→coffee1종·0→10,000원 제안. 입력23,731/출력342 tokens. 최종 확인 전 revision1·예산0·발주0 유지, 명시 저장 후 revision2·누적예산10,000/사용1,600/잔여8,400원·콜드브루1개 정책 자동발주. 공급 확정/예약은 아직0이며 성공을 과장하지 않는다. 새로고침 후 같은 정책/발주/금액 복원 확인. 브라우저 역할 클릭1회가 도구 응답 지연으로 실패해 실제 화면을 다시 읽고 정상 재시도했으며 앱 명령 중복이나 정책 재호출은 없었다.
+
+현재 UI07은 Meitner 검색 대화 API, Locke 부가명령·SQL migration, Newton 고객 대화/기록 UI, 조정자 경영주 안전 니즈 조회/페이지 어댑터로 소유 파일을 나눠 구현 중이다. 고정 DTO/Props ACK를 교환했다. 모드 live/local/fixture를 구분하고 unsupported 성공을 미식별 또는 오류로 바꾸지 않는다. 기존 저장 원본을 보존하며 부가기록은 정산/자동발주를 수행하지 않는다. 아직 통합·검증·게시 전이다. 이번 turn은 작은 두 commit/push/Ready와 실제 정책 저장 증거를 추가한 진행이다. 지도 정상 렌더·후속 화면·전체 goal 검증 및 Production 제출은 남아 있다.
+
+## UI-07 추가 질문·니즈/추천 기록 — 2026-09-21
+
+최초 문장·최대2개 질문/답변을 전달하는 v2 검색을 `/demo`에 연결했다. 질문은 상한이지 의무가 아니며 정확한 후보는 바로 확인한다. 후보별 일치/확인 필요/대체·카탈로그 근거·원문 단서·필수/제외/선호를 구분한다. 기존 `/` 검색과 경영주 현재묶음/정책 API는 유지했다. legacy 역할 전환도 숨겨진 컴포넌트를 계속 실행하지 않도록 unmount해 늦은 응답을 폐기한다.
+
+고객 검색/오류 이력과 후보 노출·선택·거절·실제 요청 연결을 별도 사건으로 저장한다. 명시적으로 고른 한 점포에만 ‘못 찾은 니즈’를 남기며 동일 대화의 니즈를 다른 점포로 자동 복제하지 않는다. 공급 조건 미확인·모의 요청 불가·후보 거절·설명 중단·미식별을 구분한다. 원문/대화/모델 상세는 고객 조회, 경영주는 공개 카탈로그와 정확히 일치한 안전 단서와 사유 코드만 본다. 단서가 안전하게 분리되지 않으면 원문 대신 ‘공유 가능한 단서 없음’으로 표시한다. 니즈는 구매 수량/동의가 아니며 승인·회신 의무나 거래 부수 실행을 만들지 않는다.
+
+Locke는 정규화 부가7테이블과 알려진 v1/hash만 허용하는 additive schema2 이행을 구현했다. sourceHash `3d15fce9caf74e0293ce5908bb532cbd3dc69e4639df573b5f76553f1fc72bc0`, seed SHA256 `b8058996893c45b4df9f8e5cd32ece2973ad7a7a3d5dc9399556d01d8a7d8864`. 기존 모든 행·관계·receipt fingerprint/result·시각·보관 이력을 유지하며 저장 실패는 reset 없는 재시도 오류다. 기록 명령은 정산/자동발주/결제/만료 분기보다 먼저 반환한다.
+
+자체 검사: 기존 domain92+needs26 명령/거절, SQL v1형태의 수령 완료/결제/발주 사본의 모든 이전 행·receipt·archive/clock 비교, 지연/실패 이행 저장·재시도·기록 저장 실패 보존 PASS. API dialogue/기존assistant/policy offline 검사·현재 전체 tsc PASS. 조정자는 domain·SQL·dialogue·policy 검사를 직접 실행했다. Node 저장 seam/자체 검사이며 독립 브라우저 장애/최종 자연어 품질 PASS는 아니다. 최초 실패 후 문장 수정으로 같은 대화의 최초 입력이 바뀌던 반례는 Newton이 명시 새 검색 경로로 수정하고 파서 예외도 UI 오류로 처리했다. 기존 `require` 별칭 빌드 실패 패턴은 새 needs helper에 다시 들어온 것을 게시 전 발견해 단순 이름을 `requireRule`로 바로잡았다. 정상 검색·기존 요청/픽업 기능은 삭제하지 않았다. 실제 로컬/Preview 이행·검색·니즈 확인과 새 배포는 이어서 실행한다.

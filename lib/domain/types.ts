@@ -1,7 +1,7 @@
 // UI04 / ADR-003 v1. DTOs for a committed relational SQL snapshot, NOT a storage format.
 export type Role = "customer" | "merchant";
 export type Actor = { id: string; role: Role; displayName: string; storeId?: string };
-export type Product = { id: string; name: string };
+export type Product = { id: string; name: string; category?: string };
 export type Store = { id: string; name: string };
 export type Condition = {
   storeId: string; productId: string; requestable: boolean; unitPrice: number; unitCost: number;
@@ -34,12 +34,45 @@ export type Policy = { storeId: string; enabled: boolean; productIds: string[]; 
 export type DomainEvent = { id: string; commandKey: string; type: string; entityId: string; storeId: string; at: number };
 export type CommandResult = { commandKey: string; revision: number; entityIds: string[] };
 export type Receipt = { key: string; fingerprint: string; result: CommandResult };
+// ADR-005: raw dialogue, clues and execution detail are customer-only.
+export type SearchCandidate = {
+  productId: string; kind: "exact" | "needs_confirmation" | "alternative"; reason: string;
+  catalogEvidence: { code: string; value: string }[];
+};
+export type SearchClue = {
+  field: "name" | "brand" | "category" | "flavor" | "size" | "feature";
+  value: string; polarity: "required" | "excluded" | "preferred"; certainty: "explicit" | "inferred";
+  rawSourceRange: { source: "initial" | "answer1" | "answer2"; start: number; end: number };
+};
+export type SearchDialogue = { initialText: string; currentText: string; turns: { question: string; answer: string }[] };
+export type SearchRunInput = {
+  id: string; conversationId: string; dialogue: SearchDialogue;
+  mode: "live" | "local" | "fixture"; model: string | null; status: "success" | "error";
+  action: "candidates" | "clarify" | "unidentified" | "unsupported" | null;
+  question: string | null; clues: SearchClue[]; candidates: SearchCandidate[];
+  usage: { inputTokens: number; outputTokens: number } | null; latencyMs: number; errorCode: string | null;
+};
+export type SearchRun = SearchRunInput & { actorId: string; createdAt: number };
+export type NeedReason = "unidentified" | "clarification_stopped" | "candidates_rejected" | "condition_unknown" | "not_requestable";
+export type NeedRecord = { id: string; actorId: string; storeId: string; conversationId: string; runId: string; reason: NeedReason; createdAt: number };
+export type RecommendationEvent = {
+  id: string; actorId: string; runId: string; productId: string;
+  action: "shown" | "selected" | "rejected" | "requested"; requestId: string | null; createdAt: number;
+};
+export type SafeClue = { productId: string | null; attribute: "name" | "category"; value: string;
+  polarity: SearchClue["polarity"]; certainty: SearchClue["certainty"] };
+export type NeedView = NeedRecord & { safeClues: SafeClue[]; candidates: { productId: string; kind: SearchCandidate["kind"] }[] };
+export type SearchRecordCommand = { type: "search.record"; run: SearchRunInput };
+export type NeedRecordCommand = { type: "needs.record"; needId: string; runId: string; reason: NeedReason; confirmed: true };
+export type RecommendationRecordCommand = { type: "recommendation.record"; eventId: string; runId: string;
+  productId: string; action: RecommendationEvent["action"]; requestId: string | null };
 export type DomainState = Seed & {
   sessionId: string; generation: number; revision: number; nextSequence: number;
   clockOffsetMs: number; lastNow: number; requests: PurchaseRequest[]; orders: Order[];
   lines: OrderLine[]; links: RequestOrderLink[]; allocations: Allocation[]; payments: Payment[];
   reservations: Reservation[]; notifications: Notification[]; events: DomainEvent[];
   policies: Policy[]; receipts: Receipt[];
+  searchRuns: SearchRun[]; needs: NeedRecord[]; recommendationEvents: RecommendationEvent[];
 };
 export type Viewer = { sessionId: string; generation: number; actorId: string; role: Role; storeId: string };
 export type CommandContext = Viewer & { expectedRevision: number; idempotencyKey: string };
@@ -62,6 +95,7 @@ export type Command = CommandContext & {
   | { type: "condition.update"; condition: Condition }
   | { type: "clock.advance"; milliseconds: number }
   | { type: "clock.tick" }
+  | SearchRecordCommand | NeedRecordCommand | RecommendationRecordCommand
 );
 export type CommandOutcome =
   | { ok: true; state: DomainState; events: DomainEvent[]; result: CommandResult; replayed: boolean }
@@ -78,4 +112,5 @@ export type View = {
   revision: number; generation: number; now: number; requests: RequestDetail[];
   orders: Order[]; lines: OrderLine[]; reservations: Reservation[]; notifications: Notification[];
   demand: Demand[]; policy: Policy | null;
+  searchRuns: SearchRun[]; needs: NeedView[]; recommendationEvents: RecommendationEvent[];
 };

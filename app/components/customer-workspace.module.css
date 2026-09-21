@@ -46,6 +46,8 @@
 .modelReply { padding: 18px; margin: 16px 0; border: 1px solid #bbd9e5; border-radius: 14px; background: #fff; overflow-wrap: anywhere; }
 .resultMode { display: inline-block; padding: 4px 10px; margin-bottom: 10px; border-radius: 20px; background: var(--soft, #e3f7fc); color: #075f78; font-size: 13px; font-weight: 700; }
 .modelReply > p { white-space: pre-wrap; }
+.dialogueQuestion { margin: 14px 0 !important; padding: 16px; border-radius: 12px; border-left: 4px solid var(--action, #007a9e); background: var(--soft, #e3f7fc); overflow-wrap: anywhere; }
+.historyText { white-space: pre-wrap; overflow-wrap: anywhere; }
 .usage { margin-top: 14px; padding-top: 6px; border-top: 1px solid var(--line, #d9e5ed); color: var(--muted, #526575); font-size: 13px; }
 .usage summary { cursor: pointer; min-height: 44px; padding: 10px 0; }
 .usage summary:focus-visible { outline: 3px solid var(--action, #007a9e); outline-offset: 2px; }

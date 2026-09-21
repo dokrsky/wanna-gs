@@ -28,7 +28,7 @@ export const errorMessages = {
   MERCHANT_SELECTION_UNAVAILABLE: "현재 점포의 신규 요청과 선택 상품을 다시 확인해주세요. 변경안은 적용하지 않았어요.",
   INVALID_JSON: "요청 형식을 읽지 못했어요. 다시 시도해주세요.",
   JSON_REQUIRED: "JSON 형식으로 요청해주세요.",
-  BODY_TOO_LARGE: "요청 본문은 4KB 이하여야 해요.",
+  BODY_TOO_LARGE: "요청 본문이 이 기능의 허용 크기를 넘었어요. 입력을 줄여주세요.",
   BODY_TIMEOUT: "요청을 받는 시간이 초과됐어요. 다시 시도해주세요.",
   ORIGIN_REJECTED: "현재 화면에서 다시 검색해주세요.",
   ASSISTANT_DISABLED: "이 환경에서는 실제 AI 검색이 활성화되지 않았어요.",

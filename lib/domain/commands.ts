@@ -1,4 +1,5 @@
 import { DOMAIN_POLICY as P, DomainError, amount, identifier, integer, requireRule, sum } from "./policy";
+import { assertSearchState, recordSearch, searchView } from "./needs";
 import type { Actor, Command, CommandOutcome, Condition, ConsentInput, Demand, DomainEvent, DomainState, OrderItem, OrderLine, PurchaseRequest, RequestDetail, Seed, Viewer, View } from "./types";
 
 const copy = <T>(value: T): T => structuredClone(value);
@@ -79,13 +80,14 @@ function demandFor(state: DomainState, storeId: string, productId: string, now: 
 export function createInitialState(seed: Seed, context: { sessionId: string; generation: number; now: number }): DomainState {
   requireRule(identifier(context.sessionId) && integer(context.generation) && integer(context.now), "INVALID_CONTEXT", "세션·세대·시각을 확인해주세요.");
   const state: DomainState = {
-    products: seed.products.map(({ id, name }) => ({ id, name })),
+    products: seed.products.map(({ id, name, category }) => ({ id, name, ...(category === undefined ? {} : { category }) })),
     stores: seed.stores.map(({ id, name }) => ({ id, name })),
     actors: seed.actors.map(({ id, role, displayName, storeId }) => ({ id, role, displayName, ...(storeId ? { storeId } : {}) })),
     conditions: seed.conditions.map(c => ({ storeId: c.storeId, productId: c.productId, requestable: c.requestable, unitPrice: c.unitPrice, unitCost: c.unitCost, moq: c.moq, packSize: c.packSize, supplyStatus: c.supplyStatus, supplyQuantity: c.supplyQuantity, version: c.version, orderClosesAt: c.orderClosesAt ?? null })),
     sessionId: context.sessionId, generation: context.generation, lastNow: context.now, revision: 0, nextSequence: 1, clockOffsetMs: 0,
     requests: [], orders: [], lines: [], links: [], allocations: [], payments: [], reservations: [], notifications: [], events: [], receipts: [],
     policies: seed.stores.map(s => ({ storeId: s.id, enabled: false, productIds: [], budgetWon: 0, spentWon: 0, version: 0 })),
+    searchRuns: [], needs: [], recommendationEvents: [],
   };
   assertState(state);
   return state;
@@ -94,6 +96,7 @@ export function createInitialState(seed: Seed, context: { sessionId: string; gen
 // Throws only for a corrupted adapter snapshot/seed. Pure command failures are
 // returned by applyCommand; callers must never persist a partially built result.
 export function assertState(s: DomainState) {
+  assertSearchState(s);
   requireRule(identifier(s.sessionId) && integer(s.generation) && integer(s.revision) && integer(s.nextSequence, 1) && integer(s.lastNow) && integer(s.clockOffsetMs), "INVALID_STATE", "데모 상태 버전을 확인해주세요.");
   for (const rows of [s.products, s.stores, s.actors, s.requests, s.orders, s.lines, s.links, s.allocations, s.payments, s.reservations, s.notifications, s.events]) {
     requireRule(Array.isArray(rows) && rows.every(r => identifier(r.id)) && unique(rows.map(r => r.id)), "INVALID_STATE", "중복되거나 잘못된 식별자가 있어요.");
@@ -163,6 +166,15 @@ export function applyCommand(committedState: DomainState, command: Command, wall
       const event = { id: id("event"), commandKey: command.idempotencyKey, type, entityId, storeId: command.storeId, at: now };
       events.push(event); state.events.push(event);
     };
+    if (["search.record", "needs.record", "recommendation.record"].includes(command.type)) {
+      const entityId = recordSearch(state, command, now);
+      emit(command.type, entityId);
+      state.revision++;
+      const result = { commandKey: command.idempotencyKey, revision: state.revision, entityIds: [entityId] };
+      state.receipts.push({ key: command.idempotencyKey, fingerprint, result: copy(result) });
+      assertState(state);
+      return { ok: true, state, events: copy(events), result, replayed: false };
+    }
     const failures = command.paymentFailureRequestIds ?? [];
     requireRule(Array.isArray(failures) && unique(failures) && failures.every(key => identifier(key) && (state.requests.some(r => r.id === key && r.storeId === command.storeId) || (command.type === "request.create" && key === command.requestId))), "INVALID_SIMULATION", "모의 결제 실패 대상 요청을 확인해주세요.");
     requireRule(command.role === "merchant" || failures.every(key => (command.type === "request.create" && key === command.requestId) || state.requests.some(r => r.id === key && r.actorId === command.actorId)), "FORBIDDEN", "다른 고객의 모의 결제 결과를 바꿀 수 없어요.");
@@ -393,5 +405,6 @@ export function getView(state: DomainState, context: Viewer, wallNow: number): V
     reservations, notifications: state.notifications.filter(n => reservationIds.has(n.reservationId)),
     demand: context.role === "merchant" ? [...new Set(state.requests.filter(r => r.storeId === context.storeId).map(r => r.productId))].map(id => demandFor(state, context.storeId, id, now)) : [],
     policy: context.role === "merchant" ? policyFor(state, context.storeId) : null,
+    ...searchView(state, context),
   });
 }
