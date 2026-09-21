@@ -5,14 +5,14 @@
 ## 현재 포인터
 
 ```text
-현재 task: EVAL-01 합성 평가 자료·검사기 준비, 점포 원자료 대조 보강
+현재 task: EVAL-01 자료 초안/도구·원자료 보강 게시, 26suite/build 원격CI 통과
 branch: codex/ui-preview-20260921
 PR: https://github.com/dokrsky/wanna-gs/pull/1 (draft, 최종 검증 전)
 마지막 유효 게이트: 제품 게이트 미실행
 마지막 Production deployment: dpl_GB3Cr8At3Com7eJcTnboJ9W4Sika (기존 최소 데모, 최종 제품 아님)
-현재 Ready Preview: https://wanna-buow00z89-d-01.vercel.app/demo (ffdca60, POLICY01 앱 동일·offline CI 연결)
+현재 Ready Preview: https://wanna-7q8b4sg85-d-01.vercel.app/demo (5cd1f45, POLICY01 앱 동일·EVAL01 준비 추가)
 공유 브랜치 주소: https://wanna-gs-git-codex-ui-preview-20260921-d-01.vercel.app/demo
-다음 한 가지: EVAL01 소규모 commit/push·CI/Preview 확인 후 평가 family·시나리오/독립 라벨 검토. 비용 상한 전 대규모 모델 호출 없음
+다음 한 가지: 평가 family·시나리오/독립 라벨 검토. 비용 상한 전 대규모 모델 호출 없음
 ```
 
 ## 현재 상태
@@ -23,7 +23,7 @@ PR: https://github.com/dokrsky/wanna-gs/pull/1 (draft, 최종 검증 전)
 | 위임 운영 결정 | ADR-001~006 채택, ADR002 revision2 평가 기준의 두 독립 검토 완료 | DECISION_INDEX, 실행기/전체 독립 품질검증은 후속 |
 | GitHub | dokrsky/wanna-gs, 기준 cf6f95a, 작업 branch/PR #1에서 개발 중 | 실제 offline CI 통과·main required gate 설정. 전체 제품 릴리스 게이트 후속 |
 | 로컬 설정/사전점검 검사기 | OpenAI 15개 + inventory 10개 테스트 통과 | scripts/ 및 .agents/skills/wanna-gs-preflight/scripts/ |
-| 앱·CI·게이트 실행기·DB seed | UI01~11/DATA02/POLICY01 Preview·실제 거래/검색/정책/복원 연결. 23suite/build 원격CI, EVAL01 포함26suite/build 로컬 PASS | D-46·WORKPLAN, Readyffdca60·Actions35628693688; EVAL01 원격 실행 후속 |
+| 앱·CI·게이트 실행기·DB seed | UI01~11/DATA02/POLICY01 Preview·실제 거래/검색/정책/복원 연결. EVAL01 포함26suite/build 로컬·원격 PASS | D-46·WORKPLAN, Ready5cd1f45·Actions35631676133; 전체 제품 게이트 후속 |
 | 자연어 평가 자료·도구 | 고객300/경영주120 합성 초안, 공개336/보호84. 도구 독립 재검토·공개 최소 coverage 통과 | EVAL01. family 비율·별도 장면 정의·독립 의미 검토/실제 baseline 미완료 |
 | SQLite | 262개 상품·8점포·524조건 거래 schema3, 고객 검색/니즈/추천·경영주 AI 기록·기존 사본 보존 | DATA02 실제 domain/이전 Preview 이행·거래/픽업/정책 복원 |
 | Vercel·OpenAI | Git 자동 Preview 및 UI branch 서버 env 연결. 두 역할·정책·검색v2 실제 호출 관측 | 아래 UI03/06/07 증거; 계정 총 잔액/쿼터 미확인, Production 미변경 |
@@ -472,3 +472,11 @@ Galileo의 [원출처 보강](research/goal-20260922/store-origin-followup.md)�
 Franklin의 [공공 원행 대조](research/goal-20260922/store-primary-rows.md)는 공식 20260630 배포 파일을120초/360MB 상한으로1회 읽었다. HTTP200이었으나120초에252,608,512B에서 중단됐으며 **전체 ZIP이 아니다**. 이미 받은 서울 member의 해제 가능한 prefix에서 ST01/02/03/04/05/08의 완전한39필드 행6개를 관측했다. main도 보존된 부분 파일을 네트워크 없이 별도로 읽어6개 row hash/ID/CRLF·현재6자리 좌표/선택 CSV hash `a99c88261cbb7c1dfcd4e3f37af5ae6bb4f6ff6b60fcab4e3a47bba955216830`를 재현했다. 전체 ZIP/서울 CSV CRC·전역 ID 유일성·현재 영업/출입구 정밀도는 미검증이다. 부분 원본은 `/private/tmp/wanna-gs-store-primary.5YyUzM/semas-20260630.zip`에 남아 있고 저장소에 올리지 않는다. 앱 data/source metadata는 이번에 변경하지 않았으며 최종 data QA 승인이 아니다.
 
 이번 단위는 준비/복구/실제 로컬검사로 progress다. 비용 상한 질문은 답변 대기이며 대규모 모델 호출 없이 할 수 있는 독립 자료 검토·runner 준비를 계속한다. 사용자 `.idea/`·비밀값·보호 원문·Production은 보존한다. 다음은 이 단위의 commit/push·실제 CI/Preview 확인 후 family/장면과 독립 라벨 검토다.
+
+### EVAL-01 게시·원격 실행
+
+staged17파일에서 실제 설정 비밀값2개와 알려진 credential 패턴 후보가 없고 `.env.local`/보호 원문/개인 `.idea/`/실행 부산물이 포함되지 않았음을 확인했다. `5cd1f45636d38a5bc0dac08c4a4c889950c59def` commit/push, PR#1의 EVAL01 준비·한계 구분을 갱신했다. [Actions35631676133](https://github.com/dokrsky/wanna-gs/actions/runs/35631676133)의 `gate`/106439107774가52초에 성공했고, 원격 로그에서 **26suite+build·aggregate·artifact 업로드**를 확인했다. 실제 checkout은 head5cd1f45와 basecf6f95a의 merge `0d4a9f24e27b1742d8c922c3ff06fd4f63c4bde5`; API로 부모·tree `000aef986b6770d8ffeeeee232eb4e3d162881c9`를 확인했고 로컬 head tree와 같았다.
+
+원격 evidence 경로 `test-results/quality/2026-09-21T17-23-32-583Z-2414/report.json`, artifact `offline-evidence-35631676133-1`/10655155112, API archive digest `12a4a14ed2e4c6f752a538fd50f95b5d08513fb428f65b6f027a7ae6e3dc2033`. 이번에는 CI의 실제 aggregate 실행·로그와 artifact 메타데이터를 읽었으며 archive를 별도로 다운로드/재검증하지 않았다. 이전 GATE01 다운로드 검증과 구분한다.
+
+Vercel `dpl_6oxDznSPsJDiJ1E2FEPvkLBNC7bx` / https://wanna-7q8b4sg85-d-01.vercel.app/demo **Ready·source5cd1f45 일치**, GitHub Vercel status success다. 앱 소스/seed는 POLICY01 그대로이며 이번에는 브라우저·모델 재실행0·Production 변경0이다. 해당 게시 성공은 평가 초안의 의미 승인이나 전체 제품 게이트 PASS가 아니다. 다음은 family/장면·독립 라벨 검토이며 비용 질문 답변 없이 대규모 실호출을 시작하지 않는다.
