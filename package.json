@@ -14,6 +14,7 @@
     "check:domain-store": "node scripts/prepare-domain-sqlite.mjs --check",
     "check:domain": "node lib/domain/check.mjs",
     "check:store-map": "node lib/store-map.check.mjs",
+    "check:policy-assistant": "node --conditions=react-server lib/assistant/policy.check.mjs",
     "start": "next start",
     "lint": "next lint"
   },

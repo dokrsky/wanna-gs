@@ -12,6 +12,7 @@
 | [ADR-002](decisions/ADR-002-execution-and-evaluation.md) | user-delegated 실행·평가 | proposed, 두 독립 검토 대기 | codex/goal-bootstrap-20260921 초안만 | CORE-14~23/25, ADR-001, AC-21~31 | 대체 없음, 기존 필수 범위 유지 | 평가 실행 전 기준·분할·예산·CI 계획; 구현 미완료 | 조정자·독립 검토자 |
 | [ADR-003](decisions/ADR-003-demo-transactions.md) | user-delegated 거래 | adopted, 실행 검증 전 | UI-04 후속 후보, 현재 Preview 선행조건 아님 | CORE-04~10/25/26, D-41~46, ADR-001 | 대체 없음, D-40 자료 병합 없음 | 두 독립 검토·반례 보완 완료; 보수적 발주/FIFO·동의·모의 결제·48시간 후속 구현 | 조정자·Meitner·Newton |
 | [ADR-004](decisions/ADR-004-store-map.md) | user-delegated 위치/지도 | adopted, 실행 미검증 | UI-05 지도 후보 | CORE-04/14/24/25, O-10, ADR-001/003 | 기존 동의·거래 불변 | 공식 OSM 근거·Meitner/Newton 검토 및 보완, 구현·실제 지도 미검증 | 조정자·Newton |
+| [ADR-005](decisions/ADR-005-search-needs.md) | user-delegated 식별/니즈 기록 | adopted, 구현 중 | UI-07 후속 Preview | CORE-02~04/11/21/23/25, O-11, ADR-001/003 | 기존 거래·동의·평가 문턱 불변 | Newton/Locke 독립 검토·최초 조건·개인정보·저장 재시도 보완, 실행 검증 전 | 조정자·Meitner·Locke |
 
 실행 중 위 표에 실제 항목을 추가한다. 빈 양식은 검토·채택 증거가 아니다. 사용자 결정 D-01~최신 항목은 [02번](02-decisions-and-open-questions.md)에서 읽고, 새 위임 ADR을 이 표에 연결한다.
 

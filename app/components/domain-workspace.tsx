@@ -6,6 +6,7 @@ import { DOMAIN_POLICY, integer } from "../../lib/domain/policy";
 import type { Command, CommandContext, CommandOutcome, Condition, DomainState, OrderLine, Policy, RequestDetail, Reservation, View } from "../../lib/domain/types";
 import { AssistantError, errorMessages, isObject, parseMerchantOutput, parseMerchantRequest, resolveMerchantProposal, type AssistantErrorCode, type AssistantStatus, type MerchantOutput, type MerchantResponse } from "../../lib/assistant/contracts";
 import styles from "./domain-workspace.module.css";
+import PolicyAssistant from "./policy-assistant";
 
 type Props = {
   state: DomainState;
@@ -125,7 +126,7 @@ function DomainPanel({ state, onCommand, role, actorId, storeId, busy, pickupOnl
       {customerRequests.length ? <div className={styles.grid}>{customerRequests.map(detail => <CustomerRequest key={detail.request.id} detail={detail} condition={state.conditions.find(condition => condition.storeId === storeId && condition.productId === detail.request.productId)} name={productName(detail.request.productId)} now={view.now} revision={view.revision} disabled={disabled} send={send} />)}</div> : <p className={styles.empty}>{pickupOnly ? "아직 예약이 없어요. 모의 결제 성공 후 예약이 생기고, 입고 후 픽업 가능 알림부터 48시간이에요." : "이 점포에 남긴 요청이 없어요. 기존 상품 검색에서 상품·점포·가격을 확인하고 요청해주세요."}</p>}
     </section> : <>
       <MerchantDemand state={state} view={view} storeId={storeId} disabled={disabled} send={send} />
-      {view.policy && <PolicyEditor key={view.policy.version} policy={view.policy} state={state} revision={view.revision} disabled={disabled} send={send} />}
+      {view.policy && <PolicyEditor key={view.policy.version} policy={view.policy} state={state} actorId={actorId} revision={view.revision} disabled={disabled} send={send} />}
       <section className={styles.section}><div className={styles.sectionTitle}><h3>발주 · 공급 확정 · 입고</h3><span>{view.lines.length}개 라인</span></div>
         <p className={styles.note}>발주 승인은 공급 확보가 아니에요. 공급 최종 확정 후 FIFO 배정·모의 결제가 처리되고, 모든 출처가 입고돼야 픽업 알림이 생겨요.</p>
         <div className={styles.grid}>{view.lines.map(line => <SupplyLine key={line.id} line={line} name={productName(line.productId)} source={view.orders.find(order => order.id === line.orderId)?.source ?? "manual"} disabled={disabled} send={send} />)}</div>
@@ -233,7 +234,7 @@ function MerchantAssistant({ state, storeId, revision, budgetWon, selectedProduc
     <p className={styles.note}>예시는 입력만 채워요. 공급·수량·금액의 진실은 도메인 상태이며 AI 설명은 실제 가격·재고 확인이나 실행 결과가 아니에요.</p>
     {error && <p className={styles.error} role="alert">{error} 입력은 유지했어요.</p>}
     {proposal && <div className={styles.batch}><span className={styles.badge}>실제 AI · {proposal.model}</span><p>{proposal.output.message}</p>
-      {applicable ? <><p>조회: {proposal.output.view === "requested" ? "대기·재확인 요청" : proposal.output.view === "approved" ? "발주 이력·예약 요청" : "전체 요청"}<br />선택: {proposal.ids.map(id => state.products.find(product => product.id === id)?.name ?? id).join(" · ") || "없음"}<br />이번 묶음 매입 한도: {won(budgetWon)} → {won(proposal.output.budgetWon ?? budgetWon)}</p><p>적용은 화면 선택·조회·이번 묶음 한도만 변경해요. 누적 정책 예산 저장이나 발주 승인은 하지 않아요.</p>{stale && <p className={styles.warning}>점포·요청·예산·선택이 바뀌어 만료됐어요. 다시 제안받아주세요.</p>}<button type="button" className={styles.primary} disabled={disabled || thinking || stale} onClick={() => { if (proposal.snapshot !== latestSnapshot.current || proposal.sequence !== sequence.current) return; onApply(proposal.output, proposal.ids); setProposal(null); }}>확인하고 화면 변경안 적용</button></> : <p>{proposal.output.scope === "future_policy" ? "미래 정책 AI는 아직 미연결이에요. 자동 저장하지 않아요. 아래 정책 폼에서 대상·누적 예산을 직접 확인해 저장할 수 있어요." : proposal.output.action === "clarify" ? "추가 확인이 필요해요. 입력을 보완하고 다시 요청해주세요. 현재 선택은 유지돼요." : "지원하지 않는 지시예요. 이번 묶음 지시로 다시 입력하거나 수동 설정을 사용해주세요."}</p>}
+      {applicable ? <><p>조회: {proposal.output.view === "requested" ? "대기·재확인 요청" : proposal.output.view === "approved" ? "발주 이력·예약 요청" : "전체 요청"}<br />선택: {proposal.ids.map(id => state.products.find(product => product.id === id)?.name ?? id).join(" · ") || "없음"}<br />이번 묶음 매입 한도: {won(budgetWon)} → {won(proposal.output.budgetWon ?? budgetWon)}</p><p>적용은 화면 선택·조회·이번 묶음 한도만 변경해요. 누적 정책 예산 저장이나 발주 승인은 하지 않아요.</p>{stale && <p className={styles.warning}>점포·요청·예산·선택이 바뀌어 만료됐어요. 다시 제안받아주세요.</p>}<button type="button" className={styles.primary} disabled={disabled || thinking || stale} onClick={() => { if (proposal.snapshot !== latestSnapshot.current || proposal.sequence !== sequence.current) return; onApply(proposal.output, proposal.ids); setProposal(null); }}>확인하고 화면 변경안 적용</button></> : <p>{proposal.output.scope === "future_policy" ? "앞으로의 지속 정책은 아래 ‘앞으로의 자동발주, 말로 제안받기’에서 구체적인 대상·예산·ON/OFF를 확인해주세요. 이번 묶음의 선택이나 예산을 자동으로 정책에 옮기지 않아요." : proposal.output.action === "clarify" ? "추가 확인이 필요해요. 입력을 보완하고 다시 요청해주세요. 현재 선택은 유지돼요." : "지원하지 않는 지시예요. 이번 묶음 지시로 다시 입력하거나 수동 설정을 사용해주세요."}</p>}
       <button type="button" disabled={disabled} onClick={() => setProposal(null)}>제안 닫기</button><details><summary>AI 사용량</summary><p>입력 {proposal.usage.inputTokens} · 출력 {proposal.usage.outputTokens} 토큰</p></details>
     </div>}
   </section>;
@@ -338,21 +339,26 @@ function MerchantDemand({ state, view, storeId, disabled, send }: { state: Domai
   </section>;
 }
 
-function PolicyEditor({ policy, state, revision, disabled, send }: { policy: Policy; state: DomainState; revision: number; disabled: boolean; send: Send }) {
+function PolicyEditor({ policy, state, actorId, revision, disabled, send }: { policy: Policy; state: DomainState; actorId: string; revision: number; disabled: boolean; send: Send }) {
   const [enabled, setEnabled] = useState(policy.enabled);
   const [budget, setBudget] = useState(String(policy.budgetWon));
   const [productIds, setProductIds] = useState(policy.productIds);
   const [proposal, setProposal] = useState<{ enabled: boolean; budgetWon: number; productIds: string[]; revision: number } | null>(null);
+  const [draftRevision, setDraftRevision] = useState(0);
+  const hasManualDraft = enabled !== policy.enabled || budget !== String(policy.budgetWon) || productIds.length !== policy.productIds.length || productIds.some(id => !policy.productIds.includes(id));
+  const edited = () => { setProposal(null); setDraftRevision(value => value + 1); };
   const budgetWon = Number(budget);
   const valid = budget.trim() !== "" && integer(budgetWon, policy.spentWon, DOMAIN_POLICY.maxBudgetWon) && (!enabled || productIds.length > 0);
   const products = state.products.filter(product => state.conditions.some(condition => condition.storeId === policy.storeId && condition.productId === product.id));
   return <section className={styles.policy}>
     <div className={styles.sectionTitle}><h3>점포 예산 · 자동발주 정책</h3><span className={styles.badge}>{policy.enabled ? "저장된 정책 켜짐" : "저장된 정책 꺼짐"}</span></div>
     <p className={styles.note}>기본 꺼짐. 초기화까지 누적 매입 예산이며 일별로 복구되지 않아요. 이미 사용·점유한 {won(policy.spentWon)} 아래로 낮출 수 없어요. 활성화하면 현재 수요에도 즉시 발주할 수 있어요.</p>
-    <form onSubmit={event => { event.preventDefault(); if (valid && !disabled) setProposal({ enabled, budgetWon, productIds: [...productIds], revision }); }}>
-      <label className={styles.check}><input type="checkbox" checked={enabled} disabled={disabled} onChange={event => { setEnabled(event.target.checked); setProposal(null); }} />앞으로 이 점포의 선택 상품에 보수적 자동발주 사용</label>
-      <label className={styles.field}>누적 매입 예산 (원)<input type="number" min={policy.spentWon} max={DOMAIN_POLICY.maxBudgetWon} step="1" value={budget} disabled={disabled} onChange={event => { setBudget(event.target.value); setProposal(null); }} /></label>
-      <details><summary>정책 대상 상품 선택 · {productIds.length}개</summary><div className={styles.productChoices}>{products.map(product => <label key={product.id} className={styles.check}><input type="checkbox" checked={productIds.includes(product.id)} disabled={disabled} onChange={event => { setProductIds(current => event.target.checked ? [...new Set([...current, product.id])] : current.filter(id => id !== product.id)); setProposal(null); }} />{product.name}</label>)}</div></details>
+    <PolicyAssistant policy={policy} state={state} actorId={actorId} revision={revision} disabled={disabled} draftRevision={draftRevision} hasManualDraft={hasManualDraft} onSave={(setting, expectedRevision) => send({ type: "policy.set", ...setting }, expectedRevision)} />
+    <h4>직접 정책 설정</h4>
+    <form onSubmit={event => { event.preventDefault(); if (valid && !disabled) { setDraftRevision(value => value + 1); setProposal({ enabled, budgetWon, productIds: [...productIds], revision }); } }}>
+      <label className={styles.check}><input type="checkbox" checked={enabled} disabled={disabled} onChange={event => { setEnabled(event.target.checked); edited(); }} />앞으로 이 점포의 선택 상품에 보수적 자동발주 사용</label>
+      <label className={styles.field}>누적 매입 예산 (원)<input type="number" min={policy.spentWon} max={DOMAIN_POLICY.maxBudgetWon} step="1" value={budget} disabled={disabled} onChange={event => { setBudget(event.target.value); edited(); }} /></label>
+      <details><summary>정책 대상 상품 선택 · {productIds.length}개</summary><div className={styles.productChoices}>{products.map(product => <label key={product.id} className={styles.check}><input type="checkbox" checked={productIds.includes(product.id)} disabled={disabled} onChange={event => { setProductIds(current => event.target.checked ? [...new Set([...current, product.id])] : current.filter(id => id !== product.id)); edited(); }} />{product.name}</label>)}</div></details>
       {!valid && <p className={styles.warning}>예산 범위와 자동발주 대상 상품을 확인해주세요.</p>}
       <button type="submit" disabled={disabled || !valid}>설정 변경안 확인</button>
     </form>
