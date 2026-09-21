@@ -159,3 +159,11 @@ PR: 없음
 통합 검증은 설정 검사기 15개·환경 inventory 10개 unit test, Markdown 73개·로컬 링크 337개·코드 블록·결정/요구/AC 순서 검사, 충돌 표시 및 diff 공백 검사다. 실제 앱·API·배포 검증은 미실행이다. 독립 검토자 review_remote_integration이 원격 요구 보존과 SQLite 경계를 확인했으며 병합을 막을 문제가 없다고 판정했다. 스킬 8개 형식 검사·FR 13개 순서 검사·팀원 원본 10개 hash 보존도 확인했다. 기본 Python의 PyYAML 누락으로 형식 검사 실행이 한 번 실패해, PyYAML이 설치된 기존 Anaconda Python으로 재실행했다. 게시 절차는 16번에 fetch→작업 커밋→merge→영향 검증→main fast-forward→일반 push로 보강했다.
 
 통합 커밋 이후 사용자가 push한다. 최종 merge SHA와 원격 대비 상태는 `git log` 및 `git status -sb`로 확인한다. push 전 원격이 다시 바뀌면 새 변경을 통합·검증하며 force push하지 않는다.
+
+## Vercel 실행 환경 및 최소 데모 배포 — 2026-09-21
+
+사용자 요청에 따라 원격 `main`의 `2afd4364` (`feat: add Vercel-ready demo app`)를 fetch 후 로컬 `main`에 fast-forward했다. `d-01/wanna-gs` Vercel 프로젝트를 CLI로 연결했고, `.vercel/project.json`은 로컬 전용으로 유지한다. Vercel 프로젝트의 Git 연결은 `dokrsky/wanna-gs`, Production branch는 `main`, framework는 Next.js, Node.js는 24.x로 확인했다.
+
+로컬 `npm ci`와 `npm run build`가 통과했다. `vercel --prod --yes --scope d-01`로 `dpl_GB3Cr8At3Com7eJcTnboJ9W4Sika`를 배포했고, Production 상태 `Ready`, alias `https://wanna-gs.vercel.app` 및 `https://wanna-gs-d-01.vercel.app`를 확인했다. `GET /api/health`는 `{"ok":true,"service":"wanna-gs","mode":"live"}`를 반환했고, 첫 화면의 원하GS·원하지쓰·데모 안내 텍스트를 HTTP 응답에서 확인했다.
+
+사전점검은 `PARTIAL`이다. GitHub CLI 계정 `dokrsky`와 Vercel CLI 계정 `simoon-3113` 인증·프로젝트 연결은 확인했지만, Vercel 환경변수는 현재 0개이고 `OPENAI_API_KEY`가 없어 실제 모델 호출은 `not_run`이다. sql.js/WASM·IndexedDB·제품 SQLite·브라우저 수직 흐름·독립 제품 QA·G1~G6는 아직 미검증이며, 이번 배포는 최소 데모의 환경 연결을 증명할 뿐이다. 기존 미추적 `.idea/`는 사용자 파일로 보존하고 커밋하지 않는다.
