@@ -1,0 +1,34 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;600;700;800&family=Noto+Sans+KR:wght@400;600;700;900&display=swap');
+
+:root { --ink: #17211c; --muted: #748078; --green: #0c7b4b; --lime: #d9ff5c; --line: #dfe7df; --paper: #f5f8f2; }
+* { box-sizing: border-box; }
+body { margin: 0; color: var(--ink); background: var(--paper); font-family: 'Noto Sans KR', sans-serif; }
+button, textarea { font: inherit; }
+button { cursor: pointer; }
+.shell { max-width: 980px; margin: auto; padding: 0 40px 34px; }
+.nav { height: 88px; display: flex; align-items: center; gap: 22px; border-bottom: 1px solid var(--line); }
+.brand { color: var(--ink); font-size: 25px; font-weight: 900; letter-spacing: -1.5px; text-decoration: none; }
+.brand span { color: var(--green); }
+.nav-note { color: var(--muted); font-size: 12px; }
+.ghost { margin-left: auto; padding: 9px 15px; border: 1px solid var(--line); border-radius: 99px; color: var(--green); background: transparent; font-size: 12px; font-weight: 700; }
+.hero { padding: 74px 0 48px; }
+.eyebrow, .step, .section-heading span { color: var(--green); font: 500 11px 'DM Mono', monospace; letter-spacing: 1.3px; }
+h1 { margin: 18px 0 20px; font-size: clamp(42px, 7vw, 70px); line-height: 1.12; letter-spacing: -4px; }
+h1 em { color: var(--green); font-style: normal; }
+.intro { color: var(--muted); font-size: 15px; line-height: 1.8; }
+.request-card { padding: 31px; border-radius: 22px; background: white; box-shadow: 0 18px 50px #173d2412; }
+.card-top { display: flex; justify-content: space-between; align-items: flex-start; }
+h2 { margin: 10px 0 22px; font-size: 22px; letter-spacing: -1px; }
+.mascot { display: grid; place-items: center; width: 40px; height: 40px; color: #425c18; border-radius: 50%; background: var(--lime); font-size: 24px; }
+textarea { width: 100%; min-height: 108px; resize: vertical; padding: 17px; border: 1px solid var(--line); border-radius: 12px; outline-color: var(--green); color: var(--ink); line-height: 1.6; }
+textarea::placeholder { color: #a1aaa3; }
+.form-foot, .confirm-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: 15px; }
+.hint, .section-copy, .product-detail, footer { color: var(--muted); font-size: 12px; }
+.primary, .confirm { border: 0; border-radius: 99px; color: white; background: var(--green); font-weight: 700; }
+.primary { padding: 13px 18px; } .primary span { margin-left: 10px; font-size: 18px; }
+.results { padding: 70px 0 30px; }.section-heading { display: flex; align-items: center; gap: 16px; }.section-heading h2 { margin: 0; }.section-copy { margin: 0 0 20px 79px; }
+.product-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.product { padding: 17px; text-align: left; border: 1px solid var(--line); border-radius: 14px; background: white; }.product.selected { border: 2px solid var(--green); padding: 16px; }.product-emoji { display: block; margin-bottom: 14px; font-size: 28px; }.product-name { display: block; font-weight: 700; font-size: 14px; }.product-detail { display: block; margin-top: 5px; }.confirm-row { padding: 18px 0; border-bottom: 1px solid var(--line); font-size: 13px; }.confirm { padding: 10px 16px; font-size: 12px; }.success { margin: 17px 0 0; color: var(--green); font-size: 13px; font-weight: 700; }
+footer { display: flex; justify-content: space-between; padding-top: 28px; border-top: 1px solid var(--line); }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); }
+@media (max-width: 640px) { .shell { padding: 0 20px 25px; }.nav-note { display: none; }.hero { padding: 52px 0 35px; } h1 { letter-spacing: -2.5px; }.request-card { padding: 22px; }.form-foot, .confirm-row, footer { align-items: flex-start; flex-direction: column; }.product-grid { grid-template-columns: 1fr; }.section-copy { margin-left: 0; } footer { gap: 8px; } }
