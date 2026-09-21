@@ -5,14 +5,14 @@
 ## 현재 포인터
 
 ```text
-현재 task: GATE-01 offline 실행기·23suite/build 로컬 통과, 독립 검토/원격CI 준비
+현재 task: GATE-01 offline 실행기·독립 검토·실제 GitHub CI 통과, main required gate 연결
 branch: codex/ui-preview-20260921
 PR: https://github.com/dokrsky/wanna-gs/pull/1 (draft, 최종 검증 전)
 마지막 유효 게이트: 제품 게이트 미실행
 마지막 Production deployment: dpl_GB3Cr8At3Com7eJcTnboJ9W4Sika (기존 최소 데모, 최종 제품 아님)
-현재 Ready Preview: https://wanna-8zmty0cuh-d-01.vercel.app/demo (6db1d9b, POLICY01 앱 동일·평가 기준 문서)
+현재 Ready Preview: https://wanna-127cqwuzf-d-01.vercel.app/demo (1f2081c, POLICY01 앱 동일·offline CI 연결)
 공유 브랜치 주소: https://wanna-gs-git-codex-ui-preview-20260921-d-01.vercel.app/demo
-다음 한 가지: GATE-01 독립 반례 검토→commit/push·실제 Actions→지원되는 required gate 설정
+다음 한 가지: 전체 seed 사실·평가셋/runner 준비, 비용 상한 답변 전에는 대규모 모델 호출 없이 진행
 ```
 
 ## 현재 상태
@@ -21,9 +21,9 @@ PR: https://github.com/dokrsky/wanna-gs/pull/1 (draft, 최종 검증 전)
 |---|---|---|
 | 요구사항·실행 계약·스킬·템플릿 | 최신 지시 반영·문서 검증 완료 | README·card·02·WORKPLAN·GOAL |
 | 위임 운영 결정 | ADR-001~006 채택, ADR002 revision2 평가 기준의 두 독립 검토 완료 | DECISION_INDEX, 실행기/전체 독립 품질검증은 후속 |
-| GitHub | dokrsky/wanna-gs, 기준 cf6f95a, 작업 branch에서 UI 개발 중 | 원격 쓰기/Actions 권한 확인, 제품 CI 미구현 |
+| GitHub | dokrsky/wanna-gs, 기준 cf6f95a, 작업 branch/PR #1에서 개발 중 | 실제 offline CI 통과·main required gate 설정. 전체 제품 릴리스 게이트 후속 |
 | 로컬 설정/사전점검 검사기 | OpenAI 15개 + inventory 10개 테스트 통과 | scripts/ 및 .agents/skills/wanna-gs-preflight/scripts/ |
-| 앱·CI·게이트 실행기·DB seed | UI01~11/DATA02/POLICY01 Preview·실제 거래/검색/정책/복원 연결. 제품 CI/전체 게이트 후속 | D-46·WORKPLAN, 최신 Ready3f6420b |
+| 앱·CI·게이트 실행기·DB seed | UI01~11/DATA02/POLICY01 Preview·실제 거래/검색/정책/복원 연결. 기존23suite/build CI 구현·실행, 전체 게이트 후속 | D-46·WORKPLAN, Ready1f2081c·Actions35628215424 |
 | SQLite | 262개 상품·8점포·524조건 거래 schema3, 고객 검색/니즈/추천·경영주 AI 기록·기존 사본 보존 | DATA02 실제 domain/이전 Preview 이행·거래/픽업/정책 복원 |
 | Vercel·OpenAI | Git 자동 Preview 및 UI branch 서버 env 연결. 두 역할·정책·검색v2 실제 호출 관측 | 아래 UI03/06/07 증거; 계정 총 잔액/쿼터 미확인, Production 미변경 |
 | 앱 단위·통합·E2E·실제 모델 평가 | 좁은 자체/조정자 검사·일부 독립 반례 확인 및 실제 정상 흐름 관측. 전체 독립 평가·G1~G6 미실행 | 아래 단위별 실행/미실행 구분; Ready를 제품 게이트로 세지 않음 |
@@ -56,9 +56,9 @@ PR: https://github.com/dokrsky/wanna-gs/pull/1 (draft, 최종 검증 전)
 
 ## 다음 작업
 
-1. D-46에 따라 UI-05 점포 지도를 작은 커밋·Preview로 공유한다.
-2. 미식별 니즈·미래 정책 AI·지도와 데이터 사실 보강을 연결하고 각각 Preview를 공유한다.
-3. 기능이 갖춰진 뒤 독립 검증·전체 E2E·평가·최종 게이트를 실행한다. 이미 실행 중인 goal을 다시 만들지 않는다.
+1. 게시한 화면·거래·모델 연결을 유지하며 전체 seed의 남은 사실/재이용조건과 평가 자료를 준비한다.
+2. 비용 상한을 확인한 뒤 실제 모델 평가·제한된 개선을 진행하고, 독립 두 역할 브라우저 QA와 전체 게이트를 연결한다.
+3. 발견된 수정은 작은 commit/push·Preview로 계속 공유한다. G5 전 main/Production으로 전환하지 않으며 이미 실행 중인 goal을 다시 만들지 않는다.
 
 ## 기록 원칙
 
@@ -435,3 +435,15 @@ main 실제실행: `check:quality` 반례34 PASS, `check:offline` 등록23suite 
 원격 read-only 확인: 지정repo public·admin/push/Actions 허용, main branch protection404(없음)·rulesets빈배열. 아직 보호 설정을 변경하지 않았다. 공식 Actions release/ref를API로조회해 checkoutv7.0.1/setup-nodev7.0.0/upload-artifactv7.0.1의commit SHA로pin했다. workflow는contents:read·credential미보존·PR/main·always aggregate/artifact이며실제원격실행은후속이다. 기존 Production·키·사용자.idea는그대로다. 전체모델평가비용상한을비동기질문했고답변전대규모실호출은하지않는다.
 
 Hooke의 [GATE01 독립 검토](reviews/gate-01.md)는 현재hash에서 P1/P2없음·좁은PASS다. Node24 자체검사34를독립실행하고 별도반례37개로실패/누락/zero/skip/stale/로그변조·phase오인/실행종료를확인했다. main의23suite+build원본도현재fingerprint/argv/loghash로검증했고 전체runner/build를중복실행하지않았다. 이것은원격Actions·제품G1~G6/모델/브라우저PASS가아니다. 비밀검사는staged10/client23개 실제키없음·개인/생성파일제외였다. reviewer보고서포함최종staging을한뒤commit/push해실제CI증거를만든다.
+
+### GATE-01 원격 실행·보호 설정 확인
+
+`1f2081c338cbb31ef49f98699d995a638e42f053` commit/push 완료. [Quality run 35628215424](https://github.com/dokrsky/wanna-gs/actions/runs/35628215424)의 실제 Ubuntu24.04/Node24.12.0 실행에서 npm ci, 23개 offline suite와 production build, 원본 로그 aggregate, artifact 업로드가 모두 성공했다. 검사 job `gate`/106427719548이며 API 키를 제공하지 않았다. 새 모델 호출0회다.
+
+PR head는 위1f2081c, base는 `cf6f95a8d40f2f624cbf4035dff1b7523be4782e`, 실제 검사한 merge checkout은 `c281db767b9843ad8067250a2853d998d1f08bd0`이다. GitHub Git API에서 부모 두 SHA와 tree `8eb2c996e63ab098ca06069c4ef470de66108451`를 확인했고 로컬1f2081c tree와 같았다. head 자체와 PR merge SHA를 혼동하지 않는다.
+
+Artifact `offline-evidence-35628215424-1`/10653460145(14일 보관), archive SHA256 `8f25056b7fb9b36c221a34f7883392d52a2bbdcf7195980cb03798e7f026693a`. 내려받은 report SHA256 `b1740a0bc57b6f92bd9bdf7d3dddc0169a1a71f9fb4ab7b35259e34d938b0c52`, source100파일 digest `084089c67176ca1d6f98e26553d5214cfc511960b186f7edb547dfe338dda4d1`. 조정자는 현재 source와 파일별 hash가 같음을 대조한 뒤 원본24개 loghash/argv/결과를 기존 validator로 재확인했다. 총23완료suite+build1/실패0/실행중source변경0이다. 원격원본은 임시 다운로드 경로와 Actions artifact에 있으며 저장소에 대량로그를 복제하지 않았다. 후속 커밋에는 새 CI 실행이 필요하다.
+
+main의 protection없음/rulesets빈배열을 다시 확인한 뒤 `gate`를 GitHub Actions app15368의 required check로 설정했다. strict최신base·관리자에게도적용·PR필수, 별도GitHub사람승인수0, force push/삭제 금지다. API read-back으로 확인했으며 기존 보호 완화·가짜approval·merge·Production변경은 없다. 이 required check는 **offline 집합만 강제**한다. 전체 G1~G6 증거/독립QA/live/CORE·ADR 추적의 기계적 릴리스 판정은 아직 후속이다.
+
+Vercel `dpl_8gdWFjf6N448BC3TuVoVB8rWx86B` / https://wanna-127cqwuzf-d-01.vercel.app/demo Ready, source1f2081c 일치 확인. 앱 소스는 POLICY01과 같고 이번에는 브라우저/모델을 다시 실행하지 않았다. 현재 작업은 progress이며 전체 goal 완료 또는 외부 차단으로 표시하지 않는다. 비용 질문은 답변 대기이고, 독립 데이터/평가셋·결정적 검증 준비는 계속할 수 있다.
