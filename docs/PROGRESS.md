@@ -5,14 +5,14 @@
 ## 현재 포인터
 
 ```text
-현재 task: UI-11 Preview Ready·실제 화면 확인, POLICY-01 입력 크기 복구 중
+현재 task: UI-11/POLICY-01 Preview Ready, ADR002 채택 후 최소 검증 실행기 준비
 branch: codex/ui-preview-20260921
 PR: https://github.com/dokrsky/wanna-gs/pull/1 (draft, 최종 검증 전)
 마지막 유효 게이트: 제품 게이트 미실행
 마지막 Production deployment: dpl_GB3Cr8At3Com7eJcTnboJ9W4Sika (기존 최소 데모, 최종 제품 아님)
-현재 Ready Preview: https://wanna-ecy1jsxg8-d-01.vercel.app/demo (e2450fd, UI11)
+현재 Ready Preview: https://wanna-l8wbnq8l6-d-01.vercel.app/demo (3f6420b, POLICY01)
 공유 브랜치 주소: https://wanna-gs-git-codex-ui-preview-20260921-d-01.vercel.app/demo
-다음 한 가지: POLICY-01 좁은 독립 검사·작은 Preview 공개, ADR002 보완 ACK
+다음 한 가지: GATE-BOOTSTRAP 최소 실행기/CI와 평가 manifest·독립 QA 준비
 ```
 
 ## 현재 상태
@@ -20,10 +20,10 @@ PR: https://github.com/dokrsky/wanna-gs/pull/1 (draft, 최종 검증 전)
 | 항목 | 상태 | 증거 |
 |---|---|---|
 | 요구사항·실행 계약·스킬·템플릿 | 최신 지시 반영·문서 검증 완료 | README·card·02·WORKPLAN·GOAL |
-| 위임 운영 결정 | ADR-001/003~006 채택, ADR-002 평가 기준 초안·후속 검토 | DECISION_INDEX, 전체 독립 품질검증 후속 |
+| 위임 운영 결정 | ADR-001~006 채택, ADR002 revision2 평가 기준의 두 독립 검토 완료 | DECISION_INDEX, 실행기/전체 독립 품질검증은 후속 |
 | GitHub | dokrsky/wanna-gs, 기준 cf6f95a, 작업 branch에서 UI 개발 중 | 원격 쓰기/Actions 권한 확인, 제품 CI 미구현 |
 | 로컬 설정/사전점검 검사기 | OpenAI 15개 + inventory 10개 테스트 통과 | scripts/ 및 .agents/skills/wanna-gs-preflight/scripts/ |
-| 앱·CI·게이트 실행기·DB seed | UI01~11/DATA02 Preview·실제 거래/검색/정책/복원 연결. 제품 CI/전체 게이트 후속 | D-46·WORKPLAN, 최신 Readye2450fd |
+| 앱·CI·게이트 실행기·DB seed | UI01~11/DATA02/POLICY01 Preview·실제 거래/검색/정책/복원 연결. 제품 CI/전체 게이트 후속 | D-46·WORKPLAN, 최신 Ready3f6420b |
 | SQLite | 262개 상품·8점포·524조건 거래 schema3, 고객 검색/니즈/추천·경영주 AI 기록·기존 사본 보존 | DATA02 실제 domain/이전 Preview 이행·거래/픽업/정책 복원 |
 | Vercel·OpenAI | Git 자동 Preview 및 UI branch 서버 env 연결. 두 역할·정책·검색v2 실제 호출 관측 | 아래 UI03/06/07 증거; 계정 총 잔액/쿼터 미확인, Production 미변경 |
 | 앱 단위·통합·E2E·실제 모델 평가 | 좁은 자체/조정자 검사·일부 독립 반례 확인 및 실제 정상 흐름 관측. 전체 독립 평가·G1~G6 미실행 | 아래 단위별 실행/미실행 구분; Ready를 제품 게이트로 세지 않음 |
@@ -409,3 +409,15 @@ UI11 Node24 production build/타입 PASS. `.env.local` 재확인 CONFIGURED(live
 Schrodinger는 새 `policy-request-ui.check.mjs`만 작성했고 자체 Node24 실행 후 인계했다. 실제 TSX propose를 AST 추출해 같은 parse/응답 계약으로 실행하며 transport/trace만 stub한다. 메모리상 옛4096은 실제262대상+한글300자5,159B를 거절(RED), 현재코드는 전체대상 보존/예산 변경 제안 GREEN. 한글301자/빈입력/외부SKU는 fetch·trace0, 별도 합성catalog로 정확8192B 전송/8193B 선행거절, 모든경우onSave0·confirmedfalse. 실제 live/browser 실행 증거가 아니다. main도 같은 checker/API policy/trace61·diff check PASS, build 진행. checker hash `e904c6457d7c1eecf39b8d66c4004ced022e15648a020b28d8554eb768c62163`, component `7352796d674f9686be128a40e56202ab4b974c24fdacf9dda4bca4818fd8bdb6`. Planck의 독립 좁은 재검토 후 별도 commit/push하며 UI11 공개는 기다리지 않았다.
 
 Planck 독립 코드 판정: 같은 component hash에 대해 실제 callback RED→GREEN/8192·8193B/전송 전 거절·명시 승인 경로 보존 좁은 PASS, 게시 차단 의견 없음. main Node24 Next production build/타입 PASS, client23/staged5파일에서 실제 키 미포함·개인파일 제외 확인. 소비자 API `d38a7c994e6ee18dd21fd44c2e1d04eb7f93dd352992329cb30ed40b482add86`, trace `f264ba92312717a0d966774b25aa77bdb628c2f7e81accd1ee0e7c36da247819`, UI 위hash가 공통계약 `a47374ec8fa771ff32191157767aa7536850961a74a64f7b3ffab5594d516e18`의8192B를 사용한다. API/trace 기존검사와 UI실제callback 검사를 구분하고 전체브라우저/live/모델품질PASS로 확대하지 않는다. METHOD-VERIFY01-01은 별도 사전 독립승인을 받지 않았으므로 이번 복구를 그 운영시험 PASS로 소급 표시하지 않는다.
+
+POLICY01 `3f6420b887ad97e344608b5521f8f00141e75204` commit/push. 별도 ADR 검토를 기다리지 않고 배포를 시작했다. Planck는 추가로 실제 save callback의9개 경계를 메모리에서 실행해 미확인/변경없음/disabled/thinking/lock/stale/정책version 변경은 onSave0, 명시확인 정상만 mock onSave1과 OFF/262대상/8만원/revision/명령키 보존을 확인했다. React mount/실DB/실브라우저 성공으로 확대하지 않는다.
+
+Vercel `dpl_5LkJtU6xrJhoTd4qvupF4qBY1Yqq` / https://wanna-l8wbnq8l6-d-01.vercel.app/demo Ready·정확한3f6420b SHA·GitHub Vercel status success 확인. 같은 브랜치주소 실제reload 후 입력우선 화면·실제AI 설정·내요청2·revision33/세대1 유지. 이번 수정의 최대262대상 전송/저장은 browser/live로 실행하지 않았으며 callback/API/trace의 좁은 증거만 있다. Production 미변경, 새live0회.
+
+## VERIFY-01 평가 기준 채택 — 2026-09-22 KST
+
+기능·Preview 우선 진행 중 별도 정책 검토를 수행했다. Ptolemy(제품/eval)와 Planck(방법/실행)의1차 보고를 독립 작성한 뒤 main이 ADR002 revision2로 보완했고, 같은 정책 본문 hash `1f57a93515ebc0893ab9c14eb473d884116093901e97fcd7b491398bac2b0c16`에 대해 두2차 ACK/채택 권고·새P1/P2없음을 받았다. 보고서 최종hash는 제품 `75f986cab874c42d6cb97ee4c7b8269f7645025a78a9f38cabeb2265378422e5`, 방법 `06e1d9b66974560c391771e3f1d7cf80362f20b0f609439d4f0492c92e654090`. 조정자가 채택 메타데이터/효력·index·21/23·작업상태를 동기화했다. 정책 본문 문턱을 실제 결과에 맞춰 바꾸지 않았으며 고정baseline은 아직 없다.
+
+핵심 보완: baseline dev+validation/선정후 보호holdout·case/turn/attempt 분리; 고정전체분모/미실행과transport실패·정상절반/각slice분리; SKU/속성/scope/상태oracle·전체UX부담; 선언요인 외 동일조건/경계재비교1회; 현SDKretry0·층별timeout·실행전 수치비용상한/unknownusage; 실제CI 미구현·Production 비활성 구분. 고객300/경영주120·95/90/85%·불변식0·후보6/6·연속비개선3회 유지. 판정은 최종 검증 **기준 채택**이며 전체 QA/비용 승인/CI 강제/PLAN-READY/G5/G6 PASS가 아니다.
+
+이번 turn은 UI11 실제 공개·POLICY01 소비자 회귀 수정/게시·ADR002 두 관점 보완 채택으로 진행했다. Production/키/사용자 `.idea/` 보존. 다음은 기존 체크를 잇는 최소 GATE-BOOTSTRAP/CI와 버전별 평가·독립 두 역할 QA를 준비한다. 대규모 API 평가는 수치상한·권한 경계 확인 전 실행하지 않는다. D-46의 작은 변경/Preview 공유와 최종 목표의 필수 완료 조건을 함께 유지한다.
