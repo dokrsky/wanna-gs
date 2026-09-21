@@ -5,13 +5,13 @@
 ## 현재 포인터
 
 ```text
-현재 task: UI-02 SQLite 연결·로컬 복원 확인 완료, 두 번째 Preview 게시
+현재 task: UI-02 Preview 게시 완료, UI-03 실제 AI 검색 연결
 branch: codex/ui-preview-20260921
 PR: https://github.com/dokrsky/wanna-gs/pull/1 (draft, 최종 검증 전)
 마지막 유효 게이트: 제품 게이트 미실행
 마지막 Production deployment: dpl_GB3Cr8At3Com7eJcTnboJ9W4Sika (기존 최소 데모, 최종 제품 아님)
-현재 Preview: https://wanna-j6xntmurw-d-01.vercel.app
-다음 한 가지: SQLite 저장/복원을 화면에 연결해 다음 기능 커밋·Preview 게시
+현재 Preview: https://wanna-226yzu152-d-01.vercel.app (9c4d41c, SQLite)
+다음 한 가지: 서버 OpenAI 검색·고객 UI 연결 후 소량 실호출과 Preview 게시
 ```
 
 ## 현재 상태
@@ -190,3 +190,9 @@ Locke는 초기 조사 확보분을 별도 research worktree에 보존하고 다
 실제 sql.js 1.14.2로 생성한 seed.sqlite/WASM을 빌드 자산으로 배포하고, 브라우저 SQLite 사본을 IndexedDB에 저장한다. 저장 완료 뒤 요청/승인 성공과 화면 상태를 반영하며 실패 시 이전 저장본을 유지한다. 손상/버전 불일치는 자동 초기화하지 않고 안내·명시적 초기화를 제공한다. UI는 저장 중 중복 명령을 막는다. 전체 domain/200개 상품 seed 완료가 아니라 UI-02의 중간 구조다.
 
 실행: `npm run check:preview-store`의 SQL 제약/FK/export-import/저장 및 reset 실패 보존 검사 PASS; Node 24.12에서 build·타입 PASS. 로컬 브라우저에서 매일우유 1개·2,800원·원하데모점 요청 저장→새로고침→내 요청 1건 복원→경영주 집계 5명/9개/25,500원 확인. 아직 Preview의 동일 동작·독립 전체 QA·전체 도메인/E2E 게이트는 미실행이다. 실제 AI 검색 API는 별도 변경으로 병렬 구현 중이며 이번 저장 커밋에는 포함하지 않는다.
+
+`9c4d41c7c9d17f315829ea6d35c9ef62f4d126e3` commit/push로 `dpl_FSVYAZgP4XVt3Ne4sCkS1RDQi2dB` / https://wanna-226yzu152-d-01.vercel.app 가 Ready가 됐다. source SHA 일치와 최신 브랜치 주소에서 실제 WASM/seed/IndexedDB 초기화 후 ‘이 브라우저에 저장됨’ 화면을 확인했다. Preview의 새로고침 수직 흐름은 아직 로컬 증거와 구분한다.
+
+UI-03은 공식 Responses/Structured Outputs 문서에 맞춰 공식 SDK 서버 경로를 사용한다. https://developers.openai.com/api/docs/guides/structured-outputs 및 https://developers.openai.com/api/docs/models/gpt-5-mini 확인. 보호된 Preview 설정을 재조회한 뒤 UI branch에 한정해 서버 모델 env와 ASSISTANT_PREVIEW_ENABLED를 등록했다. Production에는 등록하지 않았으며 실제 AI API도 Production에서는 기본 비활성이다. env 존재/health만으로 연결 성공을 주장하지 않고 실제 검색 결과를 별도로 확인한다. 계정 잔액/전체 한도는 unknown이며 이번 연결 확인은 소량 2회(로컬·Preview 각 1회)를 우선 계획한다.
+
+UI-03 로컬 실행: API offline checker PASS(실제 호출 0회), Next build·타입 PASS, 클라이언트 빌드 19개 파일에 실제 키가 포함되지 않음 확인. 실제 `/api/assistant/search` 1회에서 ‘우유 말고 차갑게 마실 커피를 찾아줘’→gpt-5-mini·candidateIds=[coffee]·matched, 입력 719/출력 127 tokens. 입력의 우유 제외 조건을 반영했다. 로컬 화면은 실제 AI 설정·명시적 로컬 모드 전환을 표시하고 기존 SQLite 요청 1건도 유지했다. 전체 카탈로그/자연어 품질 통과는 아니며, Preview live는 새 배포 후 확인한다.

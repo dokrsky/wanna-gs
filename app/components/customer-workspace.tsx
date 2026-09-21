@@ -1,13 +1,18 @@
 "use client";
 
-import { useRef, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { previewProducts, previewStores, won, type PreviewDraft, type PreviewRequest } from "../demo-preview";
+import { AssistantError, errorMessages, isObject, parseSearchOutput, type AssistantErrorCode, type AssistantStatus, type SearchOutput, type SearchResponse } from "../../lib/assistant/contracts";
 import styles from "./customer-workspace.module.css";
 
 type Props = { requests: PreviewRequest[]; onRequest: (draft: PreviewDraft) => Promise<boolean>; busy: boolean };
 type Tab = "want" | "requests" | "pickup";
+type SearchMode = "live" | "local";
+type SearchResult = SearchOutput & { mode: SearchMode; model?: string; usage?: SearchResponse["usage"] };
 const examples = ["딸기랑 크림이 들어간 샌드위치 찾아줘", "매일우유 900ml가 있었으면 좋겠어", "고소한 버터 소금빵을 찾고 있어"];
 const normalize = (value: string) => value.normalize("NFKC").toLowerCase().replace(/\s+/g, "");
+const allowedIds = previewProducts.map(product => product.id);
+const resultTitles = { matched: "찾으시는 상품이 맞나요?", clarify: "어떤 상품인지 조금 더 알려주세요", unknown: "아직 상품을 식별하지 못했어요", unsupported: "이 검색에서는 처리할 수 없어요" };
 
 function NavIcon({ tab }: { tab: Tab }) {
   return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -19,7 +24,14 @@ export default function CustomerWorkspace({ requests, onRequest, busy }: Props) 
   const [tab, setTab] = useState<Tab>("want");
   const [input, setInput] = useState("");
   const [undo, setUndo] = useState<string | null>(null);
-  const [query, setQuery] = useState<string | null>(null);
+  const [searchMode, setSearchMode] = useState<SearchMode>("live");
+  const [assistantStatus, setAssistantStatus] = useState<AssistantStatus | null>(null);
+  const [statusAttempt, setStatusAttempt] = useState(0);
+  const [statusLoading, setStatusLoading] = useState(true);
+  const [statusError, setStatusError] = useState("");
+  const [result, setResult] = useState<SearchResult | null>(null);
+  const [searching, setSearching] = useState(false);
+  const [searchError, setSearchError] = useState("");
   const [productId, setProductId] = useState<string | null>(null);
   const [quantity, setQuantity] = useState("1");
   const [storeId, setStoreId] = useState("");
@@ -31,16 +43,59 @@ export default function CustomerWorkspace({ requests, onRequest, busy }: Props) 
   const draftRef = useRef<PreviewDraft | null>(null);
   const submitting = useRef(false);
   const submitted = useRef(false);
+  const searchController = useRef<AbortController | null>(null);
+  const requestSequence = useRef(0);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    let active = true;
+    const timeout = setTimeout(() => controller.abort(), 10_000);
+    setStatusLoading(true);
+    setStatusError("");
+    setAssistantStatus(null);
+    async function loadStatus() {
+      try {
+        const response = await fetch("/api/assistant/status", { signal: controller.signal, cache: "no-store" });
+        const data: unknown = await response.json();
+        if (!response.ok || !isObject(data) || typeof data.configured !== "boolean"
+          || !["live", "fixture", "unconfigured"].includes(String(data.mode))
+          || (data.model !== undefined && (typeof data.model !== "string" || data.model.length > 120))) {
+          throw new Error("Invalid assistant status");
+        }
+        if (active && !controller.signal.aborted) setAssistantStatus(data as AssistantStatus);
+      } catch {
+        if (active) setStatusError("AI 설정을 확인하지 못했어요. 입력은 유지되니 설정 확인을 다시 시도해 주세요.");
+      } finally {
+        clearTimeout(timeout);
+        if (active) setStatusLoading(false);
+      }
+    }
+    void loadStatus();
+    return () => { active = false; controller.abort(); clearTimeout(timeout); };
+  }, [statusAttempt]);
+
+  useEffect(() => () => {
+    requestSequence.current += 1;
+    searchController.current?.abort();
+  }, []);
+
   const mine = requests.filter(request => request.actor === "나");
   const selected = previewProducts.find(product => product.id === productId);
   const store = previewStores.find(item => item.id === storeId);
   const count = Number(quantity);
   const validQuantity = Number.isInteger(count) && count >= 1 && count <= 20;
-  const candidates = query === null ? [] : previewProducts
-    .map(product => ({ product, score: [product.name, ...product.aliases].filter(term => normalize(query).includes(normalize(term))).length }))
-    .filter(item => item.score > 0)
-    .sort((a, b) => b.score - a.score)
-    .map(item => item.product);
+  const aiReady = assistantStatus?.configured === true && assistantStatus.mode === "live";
+  const candidates = result?.candidateIds.flatMap(id => {
+    const product = previewProducts.find(item => item.id === id);
+    return product ? [product] : [];
+  }) ?? [];
+
+  function cancelSearch() {
+    requestSequence.current += 1;
+    searchController.current?.abort();
+    searchController.current = null;
+    setSearching(false);
+  }
 
   function clearConfirmation() {
     setConsent(false);
@@ -50,25 +105,87 @@ export default function CustomerWorkspace({ requests, onRequest, busy }: Props) 
   }
 
   function editInput(value: string) {
+    cancelSearch();
     setInput(value);
-    setQuery(null);
+    setResult(null);
+    setSearchError("");
     setProductId(null);
     setNotice("");
     clearConfirmation();
   }
 
-  function search(event: FormEvent<HTMLFormElement>) {
+  function switchSearchMode() {
+    editInput(input);
+    setSearchMode(current => current === "live" ? "local" : "live");
+  }
+
+  async function search(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (busy || submitting.current) return;
+    if (busy || submitting.current || searchController.current) return;
+    setSearchError("");
     if (!input.trim()) {
-      setError("찾고 싶은 상품 이름이나 특징을 적어주세요.");
+      setSearchError("찾고 싶은 상품 이름이나 특징을 적어주세요.");
       inputRef.current?.focus();
       return;
     }
+    cancelSearch();
     clearConfirmation();
     setProductId(null);
-    setQuery(input.trim());
+    setResult(null);
     setNotice("");
+    const text = input.trim();
+    if (searchMode === "local") {
+      // ponytail: 명시적으로 선택한 예시 모드에서만 키워드 검색. AI 실패의 fallback이 아니다.
+      const ids = previewProducts
+        .map(product => ({ product, score: [product.name, ...product.aliases].filter(term => normalize(text).includes(normalize(term))).length }))
+        .filter(item => item.score > 0).sort((a, b) => b.score - a.score).slice(0, 3).map(item => item.product.id);
+      setResult({ mode: "local", candidateIds: ids, status: ids.length ? "matched" : "unknown",
+        message: ids.length ? `모의 상품의 이름·별칭이 겹치는 후보 ${ids.length}개예요. 맛과 용량을 직접 확인해주세요.` : "로컬 예시 목록에서 일치하는 이름·별칭이 없어요. 실제 상품의 판매 여부를 뜻하지 않아요." });
+      return;
+    }
+    if (!aiReady || statusLoading) {
+      setSearchError("실제 AI 검색 설정을 먼저 확인해 주세요. 로컬 검색으로 자동 전환하지 않아요.");
+      return;
+    }
+    const controller = new AbortController();
+    searchController.current = controller;
+    const generation = ++requestSequence.current;
+    let timedOut = false;
+    const timeout = setTimeout(() => { timedOut = true; controller.abort(); }, 45_000);
+    setSearching(true);
+    try {
+      const id = crypto.randomUUID();
+      const response = await fetch("/api/assistant/search", {
+        method: "POST", headers: { "Content-Type": "application/json" }, signal: controller.signal,
+        body: JSON.stringify({ text, id, generation }),
+      });
+      const data: unknown = await response.json().catch(() => { throw new AssistantError("MODEL_MALFORMED"); });
+      if (requestSequence.current !== generation) return;
+      if (timedOut) throw new AssistantError("MODEL_TIMEOUT");
+      if (controller.signal.aborted) return;
+      if (!response.ok || !isObject(data) || data.ok !== true) {
+        const code = isObject(data) && isObject(data.error) ? data.error.code : undefined;
+        throw new AssistantError(typeof code === "string" && Object.hasOwn(errorMessages, code)
+          ? code as AssistantErrorCode : response.status === 429 ? "RATE_LIMITED" : "MODEL_UPSTREAM");
+      }
+      if (data.id !== id || data.generation !== generation || data.mode !== "live"
+        || typeof data.model !== "string" || !data.model.trim() || data.model.length > 120
+        || !isObject(data.usage) || ![data.usage.inputTokens, data.usage.outputTokens].every(value => Number.isSafeInteger(value) && Number(value) >= 0)) {
+        throw new AssistantError("MODEL_MALFORMED");
+      }
+      const output = parseSearchOutput({ candidateIds: data.candidateIds, message: data.message, status: data.status }, allowedIds);
+      setResult({ ...output, mode: "live", model: data.model,
+        usage: { inputTokens: data.usage.inputTokens as number, outputTokens: data.usage.outputTokens as number } });
+    } catch (caught) {
+      if (requestSequence.current !== generation) return;
+      setSearchError(timedOut ? errorMessages.MODEL_TIMEOUT : caught instanceof AssistantError ? caught.message : errorMessages.MODEL_NETWORK);
+    } finally {
+      clearTimeout(timeout);
+      if (requestSequence.current === generation) {
+        searchController.current = null;
+        setSearching(false);
+      }
+    }
   }
 
   async function request(event: FormEvent<HTMLFormElement>) {
@@ -105,7 +222,7 @@ export default function CustomerWorkspace({ requests, onRequest, busy }: Props) 
     setError("");
   }
 
-  return <div className={styles.workspace} aria-busy={busy}>
+  return <div className={styles.workspace} aria-busy={busy || searching}>
     <header className={styles.hero}>
       <div className={styles.heroTop}><span className={styles.brand}>원하GS <span>· 고객</span></span><span className={styles.previewBadge}>화면 미리보기</span></div>
       <p className={styles.pronunciation}>‘원하지쓰’라고 읽어요.</p>
@@ -117,30 +234,48 @@ export default function CustomerWorkspace({ requests, onRequest, busy }: Props) 
       </div>
     </header>
 
-    <p className={styles.previewNote}>모의 상품·가상 점포로 보는 화면 시연이에요. AI는 아직 연결되지 않았어요. 이 브라우저의 SQLite에 저장해요. 같은 주소에서 새로고침해도 이어져요. 다른 기기와 공유되지 않아요.</p>
+    <p className={styles.previewNote}>모의 상품·가상 점포로 보는 화면 시연이에요. 이 브라우저의 SQLite에 저장해요. 같은 주소에서 새로고침해도 이어져요. 다른 기기와 공유되지 않아요.</p>
     {notice && <p className={styles.success} role="status">{notice}</p>}
 
     {tab === "want" && <>
       <section className={styles.card} aria-labelledby="customer-input-title">
         <span className={styles.step}>01 · 원하는 상품 말하기</span>
         <h2 id="customer-input-title">어떤 상품을 찾고 있나요?</h2>
+        <div className={styles.searchModePanel}>
+          <div className={styles.sectionLine}>
+            <strong>{searchMode === "local" ? "로컬 예시 검색 · AI 아님" : "실제 AI 검색"}</strong>
+            <button type="button" className={styles.textButton} disabled={busy} onClick={switchSearchMode}>{searchMode === "live" ? "로컬 예시 검색으로 전환" : "실제 AI 검색으로 전환"}</button>
+          </div>
+          {searchMode === "live" ? <>
+            <p className={styles.small} role="status">{statusLoading ? "서버의 AI 설정을 확인하고 있어요…" : statusError || (aiReady ? `설정 확인됨${assistantStatus?.model ? ` · ${assistantStatus.model}` : ""}. 검색하면 실제 AI를 호출해요.` : "실제 AI 검색이 설정되지 않았어요. 서버의 모델·키 설정을 확인한 뒤 다시 확인해 주세요.")}</p>
+            <button type="button" className={styles.textButton} disabled={busy || statusLoading || searching} onClick={() => { setStatusLoading(true); setStatusAttempt(current => current + 1); }}>AI 설정 다시 확인</button>
+          </> : <p className={styles.small}>직접 선택한 로컬 예시 모드예요. AI를 호출하지 않고 모의 상품명·별칭만 비교해요.</p>}
+        </div>
         <form onSubmit={search}>
           <label className={styles.fieldLabel} htmlFor="customer-query">상품 이름이나 특징</label>
           <textarea ref={inputRef} id="customer-query" data-testid="customer-query" value={input} disabled={busy} maxLength={300} rows={3} onChange={event => { setUndo(null); editInput(event.target.value); }} onKeyDown={event => { if (event.key === "Enter" && event.nativeEvent.isComposing) event.stopPropagation(); }} placeholder="예: 딸기랑 크림이 들어간 샌드위치 찾아줘" aria-describedby="customer-search-note" />
-          <p id="customer-search-note" className={styles.small}>현재는 모의 상품명·별칭을 찾는 로컬 검색이에요. 문장 전체를 이해하는 AI 검색은 아직 연결 전이에요.</p>
+          <p id="customer-search-note" className={styles.small}>{searchMode === "live" ? "입력한 설명을 AI가 모의 카탈로그와 비교해요. 후보를 확인하기 전에는 요청이나 구매가 실행되지 않아요." : "모의 상품명·별칭을 찾는 로컬 검색이에요. 문장 전체를 이해하는 AI 검색이 아니에요."}</p>
           <div className={styles.examples}>
             <div className={styles.sectionLine}><strong>이렇게 말해보세요</strong>{undo !== null && <button className={styles.textButton} type="button" disabled={busy} onClick={() => { editInput(undo); setUndo(null); inputRef.current?.focus(); }}>입력 되돌리기</button>}</div>
             {examples.map(example => <button key={example} type="button" className={styles.example} disabled={busy} onClick={() => { setUndo(previous => previous ?? input); editInput(example); inputRef.current?.focus(); }}><span aria-hidden="true">↗</span>{example}</button>)}
             <p className={styles.small}>예시를 누르면 입력만 채워져요.</p>
           </div>
-          <button type="submit" className={styles.primary} data-testid="customer-search" disabled={busy}>상품 찾기 <span aria-hidden="true">→</span></button>
+          <button type="submit" className={styles.primary} data-testid="customer-search" disabled={busy || searching || (searchMode === "live" && (!aiReady || statusLoading))}>{searching ? "AI가 상품을 찾고 있어요…" : searchMode === "live" ? "AI로 상품 찾기" : "로컬 예시 상품 찾기"} <span aria-hidden="true">→</span></button>
+          {searching && <div className={styles.sectionLine}><p className={styles.small} role="status">검색 중이에요. 입력을 바꾸면 이전 검색은 취소돼요.</p><button type="button" className={styles.textButton} onClick={cancelSearch}>검색 취소</button></div>}
+          {searchError && <p className={styles.error} role="alert">{searchError} 입력은 그대로 남아 있어요.</p>}
         </form>
       </section>
 
-      {query !== null && <section className={styles.results} aria-labelledby="customer-results-title">
+      {result !== null && <section className={styles.results} aria-labelledby="customer-results-title">
         <span className={styles.step}>02 · 상품 확인</span>
-        <h2 id="customer-results-title">{candidates.length ? "찾으시는 상품이 맞나요?" : "아직 찾지 못했어요"}</h2>
-        <p className={styles.small} role="status">{candidates.length ? `모의 상품에서 이름·별칭이 겹치는 후보 ${candidates.length}개를 찾았어요. 맛과 용량을 직접 확인해주세요.` : "모의 목록에서 일치하는 상품명·별칭이 없어요. 입력은 그대로 남아 있어요."}</p>
+        <h2 id="customer-results-title">{resultTitles[result.status]}</h2>
+        <div className={styles.modelReply}>
+          <span className={styles.resultMode}>{result.mode === "live" ? `실제 AI · ${result.model}` : "로컬 예시 검색 · AI 아님"}</span>
+          <p role="status">{result.message}</p>
+          {result.status === "clarify" && <button type="button" className={styles.textButton} onClick={() => inputRef.current?.focus()}>질문에 맞게 설명 보완하기</button>}
+          <p className={styles.small}>답변은 상품 설명과 후보 제안이며 실제 공급·가격·재고 상태를 확인한 결과가 아니에요. 아래 가격도 모의 카탈로그의 시연 가격이에요.</p>
+          {result.mode === "live" && result.usage && <details className={styles.usage}><summary>이번 AI 검색 사용량</summary><p>입력 {result.usage.inputTokens.toLocaleString("ko-KR")} · 출력 {result.usage.outputTokens.toLocaleString("ko-KR")} 토큰</p></details>}
+        </div>
         {candidates.length ? <div className={styles.productGrid}>
           {candidates.map(product => <article key={product.id} className={`${styles.productCard} ${productId === product.id ? styles.selectedCard : ""}`}>
             <div className={styles.productArt} style={{ backgroundColor: product.color }} aria-hidden="true">{product.emoji}<span>모의 상품</span></div>
@@ -148,7 +283,7 @@ export default function CustomerWorkspace({ requests, onRequest, busy }: Props) 
               <button type="button" className={productId === product.id ? styles.primary : styles.secondary} disabled={busy} aria-pressed={productId === product.id} aria-label={`${product.name} ${productId === product.id ? "선택됨" : "이 상품 선택"}`} onClick={() => { clearConfirmation(); setProductId(product.id); setQuantity("1"); setStoreId(""); setTimeout(() => confirmationRef.current?.focus(), 0); }}>{productId === product.id ? "선택했어요 ✓" : "이 상품 선택"}</button>
             </div>
           </article>)}
-        </div> : <div className={styles.empty}><span className={styles.emptyIcon} aria-hidden="true">⌕</span><h3>조금 다른 말로 찾아볼까요?</h3><p>“매일우유”, “초코송이”, “커피”처럼 이름을 적어보세요.<br />미식별 요청 저장 기능은 아직 준비 중이에요.</p><button type="button" className={styles.secondary} onClick={() => inputRef.current?.focus()}>입력 수정하기</button></div>}
+        </div> : <div className={styles.empty}><span className={styles.emptyIcon} aria-hidden="true">⌕</span><h3>{result.status === "clarify" ? "맛·브랜드·용량을 더 알려주세요" : result.status === "unsupported" ? "찾을 상품 하나를 글로 설명해주세요" : "다른 이름이나 특징으로 찾아볼까요?"}</h3><p>{result.status === "unknown" ? "후보가 없다는 결과는 실제 품절이나 판매 종료를 뜻하지 않아요." : result.status === "unsupported" ? "이 요청은 상품 검색으로 처리되지 않았어요. 입력을 수정해 다시 검색할 수 있어요." : "위 질문을 참고해 입력을 보완한 뒤 다시 검색해주세요."}<br />미식별 기록 저장은 아직 연결되지 않아, 별도의 요청 기록은 저장되지 않았어요.</p><button type="button" className={styles.secondary} onClick={() => inputRef.current?.focus()}>입력 수정하기</button></div>}
       </section>}
 
       {selected && <section className={styles.card} aria-labelledby="customer-confirm-title">

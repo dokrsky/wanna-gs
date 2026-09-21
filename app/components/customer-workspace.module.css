@@ -40,6 +40,15 @@
 .secondary { background: #f0f9fc; border: 1px solid #bbd9e5; color: var(--action, #007a9e); }
 .secondary:hover:not(:disabled) { background: var(--soft, #e3f7fc); }
 .textButton { min-height: 44px; padding: 8px 0; border: 0; background: transparent; color: var(--action, #007a9e); font-size: 14px !important; text-decoration: underline; text-underline-offset: 4px; }
+.searchModePanel { padding: 14px 16px; margin: 16px 0; border: 1px solid #bbd9e5; border-radius: 14px; background: #f0f9fc; }
+.searchModePanel strong { font-size: 14px; }
+.searchModePanel .sectionLine { gap: 4px 12px; }
+.modelReply { padding: 18px; margin: 16px 0; border: 1px solid #bbd9e5; border-radius: 14px; background: #fff; overflow-wrap: anywhere; }
+.resultMode { display: inline-block; padding: 4px 10px; margin-bottom: 10px; border-radius: 20px; background: var(--soft, #e3f7fc); color: #075f78; font-size: 13px; font-weight: 700; }
+.modelReply > p { white-space: pre-wrap; }
+.usage { margin-top: 14px; padding-top: 6px; border-top: 1px solid var(--line, #d9e5ed); color: var(--muted, #526575); font-size: 13px; }
+.usage summary { cursor: pointer; min-height: 44px; padding: 10px 0; }
+.usage summary:focus-visible { outline: 3px solid var(--action, #007a9e); outline-offset: 2px; }
 .results { padding-top: 30px; }
 .productGrid { display: grid; gap: 16px; margin-top: 18px; }
 .productCard { border: 1px solid var(--line, #d9e5ed); border-radius: 18px; overflow: hidden; background: #fff; min-width: 0; }
