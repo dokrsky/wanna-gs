@@ -1,0 +1,214 @@
+[
+  {
+    "id": "DEMO-CUSTOMER-01",
+    "role": "customer",
+    "displayName": "합성 고객 01",
+    "origin": "synthetic",
+    "realPerson": false
+  },
+  {
+    "id": "DEMO-CUSTOMER-02",
+    "role": "customer",
+    "displayName": "합성 고객 02",
+    "origin": "synthetic",
+    "realPerson": false
+  },
+  {
+    "id": "DEMO-CUSTOMER-03",
+    "role": "customer",
+    "displayName": "합성 고객 03",
+    "origin": "synthetic",
+    "realPerson": false
+  },
+  {
+    "id": "DEMO-CUSTOMER-04",
+    "role": "customer",
+    "displayName": "합성 고객 04",
+    "origin": "synthetic",
+    "realPerson": false
+  },
+  {
+    "id": "DEMO-CUSTOMER-05",
+    "role": "customer",
+    "displayName": "합성 고객 05",
+    "origin": "synthetic",
+    "realPerson": false
+  },
+  {
+    "id": "DEMO-CUSTOMER-06",
+    "role": "customer",
+    "displayName": "합성 고객 06",
+    "origin": "synthetic",
+    "realPerson": false
+  },
+  {
+    "id": "DEMO-CUSTOMER-07",
+    "role": "customer",
+    "displayName": "합성 고객 07",
+    "origin": "synthetic",
+    "realPerson": false
+  },
+  {
+    "id": "DEMO-CUSTOMER-08",
+    "role": "customer",
+    "displayName": "합성 고객 08",
+    "origin": "synthetic",
+    "realPerson": false
+  },
+  {
+    "id": "DEMO-CUSTOMER-09",
+    "role": "customer",
+    "displayName": "합성 고객 09",
+    "origin": "synthetic",
+    "realPerson": false
+  },
+  {
+    "id": "DEMO-CUSTOMER-10",
+    "role": "customer",
+    "displayName": "합성 고객 10",
+    "origin": "synthetic",
+    "realPerson": false
+  },
+  {
+    "id": "DEMO-CUSTOMER-11",
+    "role": "customer",
+    "displayName": "합성 고객 11",
+    "origin": "synthetic",
+    "realPerson": false
+  },
+  {
+    "id": "DEMO-CUSTOMER-12",
+    "role": "customer",
+    "displayName": "합성 고객 12",
+    "origin": "synthetic",
+    "realPerson": false
+  },
+  {
+    "id": "DEMO-CUSTOMER-13",
+    "role": "customer",
+    "displayName": "합성 고객 13",
+    "origin": "synthetic",
+    "realPerson": false
+  },
+  {
+    "id": "DEMO-CUSTOMER-14",
+    "role": "customer",
+    "displayName": "합성 고객 14",
+    "origin": "synthetic",
+    "realPerson": false
+  },
+  {
+    "id": "DEMO-CUSTOMER-15",
+    "role": "customer",
+    "displayName": "합성 고객 15",
+    "origin": "synthetic",
+    "realPerson": false
+  },
+  {
+    "id": "DEMO-CUSTOMER-16",
+    "role": "customer",
+    "displayName": "합성 고객 16",
+    "origin": "synthetic",
+    "realPerson": false
+  },
+  {
+    "id": "DEMO-CUSTOMER-17",
+    "role": "customer",
+    "displayName": "합성 고객 17",
+    "origin": "synthetic",
+    "realPerson": false
+  },
+  {
+    "id": "DEMO-CUSTOMER-18",
+    "role": "customer",
+    "displayName": "합성 고객 18",
+    "origin": "synthetic",
+    "realPerson": false
+  },
+  {
+    "id": "DEMO-CUSTOMER-19",
+    "role": "customer",
+    "displayName": "합성 고객 19",
+    "origin": "synthetic",
+    "realPerson": false
+  },
+  {
+    "id": "DEMO-CUSTOMER-20",
+    "role": "customer",
+    "displayName": "합성 고객 20",
+    "origin": "synthetic",
+    "realPerson": false
+  },
+  {
+    "id": "DEMO-MERCHANT-DEMO-ST-01",
+    "role": "merchant",
+    "displayName": "합성 경영주 01",
+    "storeId": "DEMO-ST-01",
+    "origin": "synthetic",
+    "realPerson": false,
+    "actualStoreAffiliation": false
+  },
+  {
+    "id": "DEMO-MERCHANT-DEMO-ST-02",
+    "role": "merchant",
+    "displayName": "합성 경영주 02",
+    "storeId": "DEMO-ST-02",
+    "origin": "synthetic",
+    "realPerson": false,
+    "actualStoreAffiliation": false
+  },
+  {
+    "id": "DEMO-MERCHANT-DEMO-ST-03",
+    "role": "merchant",
+    "displayName": "합성 경영주 03",
+    "storeId": "DEMO-ST-03",
+    "origin": "synthetic",
+    "realPerson": false,
+    "actualStoreAffiliation": false
+  },
+  {
+    "id": "DEMO-MERCHANT-DEMO-ST-04",
+    "role": "merchant",
+    "displayName": "합성 경영주 04",
+    "storeId": "DEMO-ST-04",
+    "origin": "synthetic",
+    "realPerson": false,
+    "actualStoreAffiliation": false
+  },
+  {
+    "id": "DEMO-MERCHANT-DEMO-ST-05",
+    "role": "merchant",
+    "displayName": "합성 경영주 05",
+    "storeId": "DEMO-ST-05",
+    "origin": "synthetic",
+    "realPerson": false,
+    "actualStoreAffiliation": false
+  },
+  {
+    "id": "DEMO-MERCHANT-DEMO-ST-06",
+    "role": "merchant",
+    "displayName": "합성 경영주 06",
+    "storeId": "DEMO-ST-06",
+    "origin": "synthetic",
+    "realPerson": false,
+    "actualStoreAffiliation": false
+  },
+  {
+    "id": "DEMO-MERCHANT-DEMO-ST-07",
+    "role": "merchant",
+    "displayName": "합성 경영주 07",
+    "storeId": "DEMO-ST-07",
+    "origin": "synthetic",
+    "realPerson": false,
+    "actualStoreAffiliation": false
+  },
+  {
+    "id": "DEMO-MERCHANT-DEMO-ST-08",
+    "role": "merchant",
+    "displayName": "합성 경영주 08",
+    "storeId": "DEMO-ST-08",
+    "origin": "synthetic",
+    "realPerson": false,
+    "actualStoreAffiliation": false
+  }
+]

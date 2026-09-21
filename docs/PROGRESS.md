@@ -5,13 +5,13 @@
 ## 현재 포인터
 
 ```text
-현재 task: UI-03 고객 실제 AI Preview 완료, 경영주 AI·전체 seed 구현
+현재 task: UI-03B 두 역할 실제 AI Preview 완료, 전체 seed 연결·거래 구현
 branch: codex/ui-preview-20260921
 PR: https://github.com/dokrsky/wanna-gs/pull/1 (draft, 최종 검증 전)
 마지막 유효 게이트: 제품 게이트 미실행
 마지막 Production deployment: dpl_GB3Cr8At3Com7eJcTnboJ9W4Sika (기존 최소 데모, 최종 제품 아님)
-현재 Preview: https://wanna-o4yc9bsi9-d-01.vercel.app (18b0b31, 고객 실제 AI)
-다음 한 가지: 경영주 실제 AI 제안 연결·소량 확인 후 다음 Preview 게시
+현재 Preview: https://wanna-ivr84so9x-d-01.vercel.app (bd13e3f, 두 역할 실제 AI)
+다음 한 가지: 242개 상품·실제 점포 데이터를 화면/SQLite에 연결한 작은 Preview
 ```
 
 ## 현재 상태
@@ -22,9 +22,9 @@ PR: https://github.com/dokrsky/wanna-gs/pull/1 (draft, 최종 검증 전)
 | 위임 운영 결정 | ADR-001 채택, 실행 검증 전 | DECISION_INDEX·ADR-001 |
 | GitHub | dokrsky/wanna-gs, 기준 cf6f95a, 작업 branch에서 UI 개발 중 | 원격 쓰기/Actions 권한 확인, 제품 CI 미구현 |
 | 로컬 설정/사전점검 검사기 | OpenAI 15개 + inventory 10개 테스트 통과 | scripts/ 및 .agents/skills/wanna-gs-preflight/scripts/ |
-| 앱·CI·게이트 실행기·DB seed | 두 역할 UI·SQLite·고객 실제 AI Preview Ready. 제품 CI/게이트/전체 seed는 후속 | D-46·WORKPLAN, 18b0b31 |
+| 앱·CI·게이트 실행기·DB seed | 두 역할 UI·SQLite·두 역할 실제 AI Preview Ready. 제품 CI/게이트/전체 seed는 후속 | D-46·WORKPLAN, bd13e3f |
 | SQLite | 실제 sql.js·seed/WASM·IndexedDB 저장 및 로컬 새로고침 복원 연결 | UI-02, 6개 상품/2개 가상 점포의 중간 seed. 전체 상품/도메인은 후속 |
-| Vercel·OpenAI | Git 자동 Preview 및 UI branch 서버 env 연결. 고객 검색 로컬·Preview 실제 호출 성공 | 18b0b31, gpt-5-mini, 로컬 719/127·Preview 719/136 tokens |
+| Vercel·OpenAI | Git 자동 Preview 및 UI branch 서버 env 연결. 두 역할 실제 호출 성공 | 고객 18b0b31·경영주 bd13e3f. gpt-5-mini, 고객 로컬 719/127·Preview 719/136 tokens |
 | 앱 단위·통합·E2E·실제 모델 평가 | 미실행 | 문서 검사와 구분 |
 | 최종 제출 URL | 미완료 | 기존 wanna-gs.vercel.app은 최소 데모이며 최종 G6 전 |
 
@@ -55,7 +55,7 @@ PR: https://github.com/dokrsky/wanna-gs/pull/1 (draft, 최종 검증 전)
 
 ## 다음 작업
 
-1. D-46에 따라 경영주 실제 AI 제안을 연결하고 작은 커밋·Preview로 공유한다.
+1. D-46에 따라 242개 상품·실제 점포를 SQLite와 화면에 연결하고 작은 커밋·Preview로 공유한다.
 2. 전체 seed와 발주·공급·모의 결제·입고/픽업을 차례로 연결하고 각각 Preview를 공유한다.
 3. 기능이 갖춰진 뒤 독립 검증·전체 E2E·평가·최종 게이트를 실행한다. 이미 실행 중인 goal을 다시 만들지 않는다.
 
@@ -206,3 +206,17 @@ UI-03 로컬 실행: API offline checker PASS(실제 호출 0회), Next build·�
 최소 확인: 두 역할 assistant offline checker PASS(실제 호출 0회), Node24 Next build·타입 PASS. Preview 배포 후 경영주 실제 호출 1회로 변경안→사용자 확인을 확인할 계획이다. 전체 품질/도메인/독립 QA는 미실행이며 현재 승인은 공급·결제 완료가 아니다.
 
 DATA-01은 242개 상품 초안(공식 이름 확인 12·미검증 참고 27·합성 203), 실제 점포 8곳, 합성 고객 20/경영주 8, 모의 availability 484행(25%)을 별도로 생성했다. 생성기 일치 자체 검사는 PASS지만 최근 인기/출시와 실제 GS SKU 전체 확인은 미완료다. 현재 앱의 6개 중간 seed와는 아직 별도다. Locke가 전체 SQLite 연결과 기존 snapshot을 지우지 않는 업그레이드를 이어간다. 공급/결제/픽업용 ADR-003 초안은 두 독립 검토에 배정했으며 현재 UI 배포를 막지 않는다.
+
+`bd13e3fd443c3c1a79a81d478712f2b50c631000` commit/push → `dpl_3gABKwyNjAXvGFDi4weRFM1Mx4L1` / https://wanna-ivr84so9x-d-01.vercel.app Ready 및 source SHA 일치 확인. 실제 Preview 브라우저에서 경영주 호출 1회: ‘샌드위치는 빼고 예산 2만원 안에서 이번 요청을 선택해줘’→gpt-5-mini 변경안, 우유/소금빵 2건·5개·12,200원. 적용 전 선택 0/예산50,000원 유지, 명시 적용 후 선택2/예산20,000원, 승인0 유지 확인. 발주 승인 버튼은 별도로 남겼다. 이번 merchant 호출의 사용량 패널을 펼쳤지만 적용으로 닫기 전 수치는 기록하지 못했으므로 토큰 수는 미기록이다. 모델 응답 품질 전수/독립 E2E와 구분한다.
+
+ADR-003은 Meitner 제품/범위와 Newton 상태/실패의 독립 검토 및 보완 재확인 뒤 후속 UI-04 후보 범위에 adopted로 전환했다. 수량 감소 순번 예외, 취소로 연결이 사라진 미확정 물량 차감, 이미 입고된 잔량 예약의 최초 픽업 알림을 명확히 했다. 현재 UI03B에 거래 기능이 구현됐다는 뜻은 아니며 최종 검증은 이후다.
+
+후속 소유권: Locke는 `app/demo-preview.ts`·`app/preview-store.ts`·seed builder의 DATA-02 연결/업그레이드, Newton은 두 역할 component의 상품 출처/실제 점포/모의 요청 가능 조건, Meitner는 새 `lib/domain/**`의 ADR-003 명령/공유 타입·자체 검사다. 공통 SQLite 스키마/seed는 Locke 한 명, domain 타입/명령은 Meitner 한 명이 작성한다. 조정자는 page/API 경계 통합·배포를 맡는다. 현재 uncommitted 작업이며 각각 handback 후 통합한다. Vercel 프로젝트 production target을 다시 읽어 기존 `dpl_GB3Cr8At3Com7eJcTnboJ9W4Sika`·source `2afd436439dc5f23fe287c519d9e41a777a809a0` 유지도 확인했다.
+
+## DATA-02 화면·SQLite 통합 — 2026-09-21
+
+이전 goal turn은 진행으로 분류한다: `bd13e3f` push·새 Ready Preview·실제 경영주 AI 제안/명시 적용 증거를 확보했다. 현재 DATA-02는 242개 공통 상품 마스터·실제 위치 참고 점포 8곳·기존 가상 점포 2곳·20명 신규 합성 요청과 기존 4요청·availability 484행을 SQLite에 넣는다. 이름/규격 일부만 출처 확인됐으며 대부분 합성인 데이터 초안이다. 가격·공급·고객은 모의, 지도와 상품 사실 최종 검증은 후속이다.
+
+화면은 상품 출처 구분과 실제 점포 주소/좌표·모의 가격/요청 가능 조건을 표시한다. 조건이 없는 점포는 품절로 단정하지 않고 미확인으로 표시하며 요청 생성하지 않는다. 신규 고객 요청은 실제 점포 참고 8곳의 모의 조건에만 연결하고 기존 가상 점포 요청·승인은 재매핑 없이 보존한다.
+
+알려진 v1 snapshot만 v2로 업그레이드하고 추가 요청·가격·승인·점포·순서를 보존한다. 영구 저장 완료 전 새 상태를 내보내지 않으며 실패/알 수 없는 버전은 기존 사본을 지우지 않는다. 실제 Node24 `check:preview-store`의 전체 SQL/FK·upgrade 보존/실패/재시도·잘못된 버전 거절 PASS, 242개 마스터로 assistant offline checker PASS(실제 호출 0회). 브라우저 업그레이드·빌드·배포 확인은 이어서 실행한다. 이 검사는 전체 domain/독립 제품 게이트가 아니다.

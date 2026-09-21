@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type FormEvent } from "react";
-import { previewProducts, previewStores, won, type PreviewDraft, type PreviewRequest } from "../demo-preview";
+import { previewAvailability, previewProducts, previewStores, won, type PreviewDraft, type PreviewRequest } from "../demo-preview";
 import { AssistantError, errorMessages, isObject, parseSearchOutput, type AssistantErrorCode, type AssistantStatus, type SearchOutput, type SearchResponse } from "../../lib/assistant/contracts";
 import styles from "./customer-workspace.module.css";
 
@@ -12,6 +12,14 @@ type SearchResult = SearchOutput & { mode: SearchMode; model?: string; usage?: S
 const examples = ["딸기랑 크림이 들어간 샌드위치 찾아줘", "매일우유 900ml가 있었으면 좋겠어", "고소한 버터 소금빵을 찾고 있어"];
 const normalize = (value: string) => value.normalize("NFKC").toLowerCase().replace(/\s+/g, "");
 const allowedIds = previewProducts.map(product => product.id);
+const requestStores = previewStores.filter(store => store.identityOrigin === "reference_verified");
+const provenanceLabels: Record<string, string> = {
+  reference_verified: "출처 확인 · reference_verified",
+  reference_unverified: "출처 미검증 · reference_unverified",
+  synthetic_product: "합성 상품 · synthetic_product",
+};
+const canRequestAt = (row: (typeof previewAvailability)[number] | undefined) => row?.requestable === true
+  && Number.isSafeInteger(row.unitPrice) && row.unitPrice >= 0;
 const resultTitles = { matched: "찾으시는 상품이 맞나요?", clarify: "어떤 상품인지 조금 더 알려주세요", unknown: "아직 상품을 식별하지 못했어요", unsupported: "이 검색에서는 처리할 수 없어요" };
 
 function NavIcon({ tab }: { tab: Tab }) {
@@ -81,7 +89,9 @@ export default function CustomerWorkspace({ requests, onRequest, busy }: Props) 
 
   const mine = requests.filter(request => request.actor === "나");
   const selected = previewProducts.find(product => product.id === productId);
-  const store = previewStores.find(item => item.id === storeId);
+  const store = requestStores.find(item => item.id === storeId);
+  const availability = previewAvailability.find(row => row.productId === productId && row.storeId === storeId);
+  const unitPrice = store && canRequestAt(availability) ? availability!.unitPrice : null;
   const count = Number(quantity);
   const validQuantity = Number.isInteger(count) && count >= 1 && count <= 20;
   const aiReady = assistantStatus?.configured === true && assistantStatus.mode === "live";
@@ -140,7 +150,7 @@ export default function CustomerWorkspace({ requests, onRequest, busy }: Props) 
         .map(product => ({ product, score: [product.name, ...product.aliases].filter(term => normalize(text).includes(normalize(term))).length }))
         .filter(item => item.score > 0).sort((a, b) => b.score - a.score).slice(0, 3).map(item => item.product.id);
       setResult({ mode: "local", candidateIds: ids, status: ids.length ? "matched" : "unknown",
-        message: ids.length ? `모의 상품의 이름·별칭이 겹치는 후보 ${ids.length}개예요. 맛과 용량을 직접 확인해주세요.` : "로컬 예시 목록에서 일치하는 이름·별칭이 없어요. 실제 상품의 판매 여부를 뜻하지 않아요." });
+        message: ids.length ? `데모 카탈로그의 이름·별칭이 겹치는 후보 ${ids.length}개예요. 맛과 용량을 직접 확인해주세요.` : "로컬 예시 목록에서 일치하는 이름·별칭이 없어요. 실제 상품의 판매 여부를 뜻하지 않아요." });
       return;
     }
     if (!aiReady || statusLoading) {
@@ -196,11 +206,15 @@ export default function CustomerWorkspace({ requests, onRequest, busy }: Props) 
       setError("상품·1~20개 수량·점포와 자동 구매 동의를 확인해주세요.");
       return;
     }
+    if (unitPrice === null) {
+      setError("이 점포의 요청 가능 조건과 모의 가격을 확인할 수 없어요. 입력은 유지했으니 요청 가능한 다른 점포를 선택해주세요.");
+      return;
+    }
     submitting.current = true;
     setError("");
     try {
       // Keep the same command ID when a failed callback is retried.
-      const draft = draftRef.current ?? { id: crypto.randomUUID(), productId: selected.id, storeId, quantity: count, unitPrice: selected.price, consent };
+      const draft = draftRef.current ?? { id: crypto.randomUUID(), productId: selected.id, storeId, quantity: count, unitPrice, consent };
       draftRef.current = draft;
       if (!await onRequest(draft)) {
         setError("요청을 저장하지 못했어요. 입력과 선택은 유지했으니 내 요청과 입력 조건을 확인한 뒤 다시 시도해주세요.");
@@ -234,7 +248,7 @@ export default function CustomerWorkspace({ requests, onRequest, busy }: Props) 
       </div>
     </header>
 
-    <p className={styles.previewNote}>모의 상품·가상 점포로 보는 화면 시연이에요. 이 브라우저의 SQLite에 저장해요. 같은 주소에서 새로고침해도 이어져요. 다른 기기와 공유되지 않아요.</p>
+    <p className={styles.previewNote}>상품 {previewProducts.length}개의 출처 확인·미검증·합성 여부를 구분한 데모예요. 실제 점포 {requestStores.length}곳의 위치를 참고하지만 가격·취급·재고·거래는 모의이며 현재 영업을 보장하지 않아요. 이 브라우저의 SQLite에 저장해요. 같은 주소에서 새로고침해도 이어져요. 다른 기기와 공유되지 않아요.</p>
     {notice && <p className={styles.success} role="status">{notice}</p>}
 
     {tab === "want" && <>
@@ -249,12 +263,12 @@ export default function CustomerWorkspace({ requests, onRequest, busy }: Props) 
           {searchMode === "live" ? <>
             <p className={styles.small} role="status">{statusLoading ? "서버의 AI 설정을 확인하고 있어요…" : statusError || (aiReady ? `설정 확인됨${assistantStatus?.model ? ` · ${assistantStatus.model}` : ""}. 검색하면 실제 AI를 호출해요.` : "실제 AI 검색이 설정되지 않았어요. 서버의 모델·키 설정을 확인한 뒤 다시 확인해 주세요.")}</p>
             <button type="button" className={styles.textButton} disabled={busy || statusLoading || searching} onClick={() => { setStatusLoading(true); setStatusAttempt(current => current + 1); }}>AI 설정 다시 확인</button>
-          </> : <p className={styles.small}>직접 선택한 로컬 예시 모드예요. AI를 호출하지 않고 모의 상품명·별칭만 비교해요.</p>}
+          </> : <p className={styles.small}>직접 선택한 로컬 예시 모드예요. AI를 호출하지 않고 카탈로그 상품명·별칭만 비교해요.</p>}
         </div>
         <form onSubmit={search}>
           <label className={styles.fieldLabel} htmlFor="customer-query">상품 이름이나 특징</label>
           <textarea ref={inputRef} id="customer-query" data-testid="customer-query" value={input} disabled={busy} maxLength={300} rows={3} onChange={event => { setUndo(null); editInput(event.target.value); }} onKeyDown={event => { if (event.key === "Enter" && event.nativeEvent.isComposing) event.stopPropagation(); }} placeholder="예: 딸기랑 크림이 들어간 샌드위치 찾아줘" aria-describedby="customer-search-note" />
-          <p id="customer-search-note" className={styles.small}>{searchMode === "live" ? "입력한 설명을 AI가 모의 카탈로그와 비교해요. 후보를 확인하기 전에는 요청이나 구매가 실행되지 않아요." : "모의 상품명·별칭을 찾는 로컬 검색이에요. 문장 전체를 이해하는 AI 검색이 아니에요."}</p>
+          <p id="customer-search-note" className={styles.small}>{searchMode === "live" ? "입력한 설명을 AI가 데모 카탈로그와 비교해요. 후보를 확인하기 전에는 요청이나 구매가 실행되지 않아요." : "카탈로그 상품명·별칭을 찾는 로컬 검색이에요. 문장 전체를 이해하는 AI 검색이 아니에요."}</p>
           <div className={styles.examples}>
             <div className={styles.sectionLine}><strong>이렇게 말해보세요</strong>{undo !== null && <button className={styles.textButton} type="button" disabled={busy} onClick={() => { editInput(undo); setUndo(null); inputRef.current?.focus(); }}>입력 되돌리기</button>}</div>
             {examples.map(example => <button key={example} type="button" className={styles.example} disabled={busy} onClick={() => { setUndo(previous => previous ?? input); editInput(example); inputRef.current?.focus(); }}><span aria-hidden="true">↗</span>{example}</button>)}
@@ -273,16 +287,24 @@ export default function CustomerWorkspace({ requests, onRequest, busy }: Props) 
           <span className={styles.resultMode}>{result.mode === "live" ? `실제 AI · ${result.model}` : "로컬 예시 검색 · AI 아님"}</span>
           <p role="status">{result.message}</p>
           {result.status === "clarify" && <button type="button" className={styles.textButton} onClick={() => inputRef.current?.focus()}>질문에 맞게 설명 보완하기</button>}
-          <p className={styles.small}>답변은 상품 설명과 후보 제안이며 실제 공급·가격·재고 상태를 확인한 결과가 아니에요. 아래 가격도 모의 카탈로그의 시연 가격이에요.</p>
+          <p className={styles.small}>답변은 후보 제안이며 실제 공급·가격·재고 확인 결과가 아니에요. 출처 확인은 자료의 일부 상품 정보에만 해당해요. 아래 금액은 요청 가능한 점포의 모의 가격이며, 점포 선택 후 정확한 조건을 확인해요.</p>
           {result.mode === "live" && result.usage && <details className={styles.usage}><summary>이번 AI 검색 사용량</summary><p>입력 {result.usage.inputTokens.toLocaleString("ko-KR")} · 출력 {result.usage.outputTokens.toLocaleString("ko-KR")} 토큰</p></details>}
         </div>
         {candidates.length ? <div className={styles.productGrid}>
-          {candidates.map(product => <article key={product.id} className={`${styles.productCard} ${productId === product.id ? styles.selectedCard : ""}`}>
-            <div className={styles.productArt} style={{ backgroundColor: product.color }} aria-hidden="true">{product.emoji}<span>모의 상품</span></div>
-            <div className={styles.productBody}><span className={styles.small}>{product.category}</span><h3>{product.name}</h3><p>{product.description}</p><strong>{won(product.price)} <span className={styles.small}>/ 개 · 시연 가격</span></strong>
+          {candidates.map(product => {
+            const prices = previewAvailability.filter(row => row.productId === product.id && canRequestAt(row)
+              && requestStores.some(store => store.id === row.storeId)).map(row => row.unitPrice);
+            const lowestPrice = Math.min(...prices);
+            const highestPrice = Math.max(...prices);
+            return <article key={product.id} className={`${styles.productCard} ${productId === product.id ? styles.selectedCard : ""}`}>
+            <div className={styles.productArt} style={{ backgroundColor: product.color }} aria-hidden="true">{product.emoji}<span>데모 카탈로그</span></div>
+            <div className={styles.productBody}><span className={styles.small}>{product.category}</span><h3>{product.name}</h3>
+              <span className={styles.provenance}>{provenanceLabels[product.identityOrigin ?? ""] ?? "출처 정보 없음"}</span>
+              <p className={styles.small}>출처 ID: {product.sourceIds?.join(", ") || "미등록"} · 확인 항목: {product.verifiedFields?.join(", ") || "없음"}</p>
+              <p>{product.description}</p><strong>{prices.length ? <>{won(lowestPrice)}{highestPrice !== lowestPrice && ` ~ ${won(highestPrice)}`} <span className={styles.small}>/ 개 · 점포별 모의 가격</span></> : "요청 가능한 점포 조건 없음"}</strong>
               <button type="button" className={productId === product.id ? styles.primary : styles.secondary} disabled={busy} aria-pressed={productId === product.id} aria-label={`${product.name} ${productId === product.id ? "선택됨" : "이 상품 선택"}`} onClick={() => { clearConfirmation(); setProductId(product.id); setQuantity("1"); setStoreId(""); setTimeout(() => confirmationRef.current?.focus(), 0); }}>{productId === product.id ? "선택했어요 ✓" : "이 상품 선택"}</button>
             </div>
-          </article>)}
+          </article>; })}
         </div> : <div className={styles.empty}><span className={styles.emptyIcon} aria-hidden="true">⌕</span><h3>{result.status === "clarify" ? "맛·브랜드·용량을 더 알려주세요" : result.status === "unsupported" ? "찾을 상품 하나를 글로 설명해주세요" : "다른 이름이나 특징으로 찾아볼까요?"}</h3><p>{result.status === "unknown" ? "후보가 없다는 결과는 실제 품절이나 판매 종료를 뜻하지 않아요." : result.status === "unsupported" ? "이 요청은 상품 검색으로 처리되지 않았어요. 입력을 수정해 다시 검색할 수 있어요." : "위 질문을 참고해 입력을 보완한 뒤 다시 검색해주세요."}<br />미식별 기록 저장은 아직 연결되지 않아, 별도의 요청 기록은 저장되지 않았어요.</p><button type="button" className={styles.secondary} onClick={() => inputRef.current?.focus()}>입력 수정하기</button></div>}
       </section>}
 
@@ -290,7 +312,7 @@ export default function CustomerWorkspace({ requests, onRequest, busy }: Props) 
         <span className={styles.step}>03 · 조건 확인 후 요청</span>
         <h2 id="customer-confirm-title" ref={confirmationRef} tabIndex={-1}>이 조건으로 요청할까요?</h2>
         <form onSubmit={request}>
-          <div className={styles.selectedProduct}><span style={{ backgroundColor: selected.color }} aria-hidden="true">{selected.emoji}</span><div><strong>{selected.name}</strong><p className={styles.small}>{won(selected.price)} / 개 · 모의 가격</p></div></div>
+          <div className={styles.selectedProduct}><span style={{ backgroundColor: selected.color }} aria-hidden="true">{selected.emoji}</span><div><strong>{selected.name}</strong><p className={styles.small}>{unitPrice !== null ? `${won(unitPrice)} / 개 · 선택 점포의 모의 가격` : "요청 가능한 점포를 선택하면 모의 가격이 표시돼요."}</p></div></div>
           <label className={styles.fieldLabel} htmlFor="customer-quantity">수량 <span className={styles.small}>1~20개</span></label>
           <div className={styles.quantityControl}>
             <button type="button" aria-label="수량 1개 줄이기" disabled={busy || !validQuantity || count <= 1} onClick={() => { setQuantity(String(count - 1)); clearConfirmation(); }}>−</button>
@@ -298,15 +320,30 @@ export default function CustomerWorkspace({ requests, onRequest, busy }: Props) 
             <button type="button" aria-label="수량 1개 늘리기" disabled={busy || !validQuantity || count >= 20} onClick={() => { setQuantity(String(count + 1)); clearConfirmation(); }}>+</button>
           </div>
           <label className={styles.fieldLabel} htmlFor="customer-store">요청할 점포</label>
-          <select id="customer-store" required value={storeId} disabled={busy} onChange={event => { setStoreId(event.target.value); clearConfirmation(); }}><option value="" disabled>가상 점포를 선택해주세요</option>{previewStores.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</select>
-          <p className={styles.small}>{store?.address ?? "실제 위치·거리·재고를 안내하는 점포가 아니에요."}</p>
-          <div className={styles.total}><span>확인할 총액</span><strong>{validQuantity ? won(selected.price * count) : "수량 확인 필요"}</strong></div>
+          <select id="customer-store" required value={storeId} disabled={busy} onChange={event => { setStoreId(event.target.value); clearConfirmation(); }}>
+            <option value="" disabled>요청 가능한 점포를 선택해주세요</option>
+            {requestStores.map(item => {
+              const row = previewAvailability.find(row => row.productId === selected.id && row.storeId === item.id);
+              return <option key={item.id} value={item.id} disabled={!canRequestAt(row)}>{item.name} · {canRequestAt(row) ? `${won(row!.unitPrice)} (모의)` : !row ? "조건 미확인" : "요청 불가 (모의 설정)"}</option>;
+            })}
+          </select>
+          <p className={styles.small}>{store?.address ?? "실제 점포의 위치 참고 자료예요. 요청 가능 표시는 데모 조건이며 실제 취급·재고·영업 여부가 아니에요."}</p>
+          {store && <p className={styles.small}>참고 좌표: {store.latitude !== undefined && store.longitude !== undefined ? `${store.latitude}, ${store.longitude}` : "미확인"} · 지도는 후속 연결 예정</p>}
+          <details className={styles.storeDirectory}>
+            <summary>실제 점포 {requestStores.length}곳의 주소·참고 좌표 보기</summary>
+            <ul>{requestStores.map(item => {
+              const row = previewAvailability.find(row => row.productId === selected.id && row.storeId === item.id);
+              return <li key={item.id}><strong>{item.name}</strong><p>{item.address}</p><p>참고 좌표: {item.latitude !== undefined && item.longitude !== undefined ? `${item.latitude}, ${item.longitude}` : "미확인"}</p><p>출처 ID: {item.sourceIds?.join(", ") || "미등록"} · 자료 신뢰도: {item.confidence ?? "미확인"}</p><p>{canRequestAt(row) ? `이 상품 요청 가능 · ${won(row!.unitPrice)} / 개 (모의)` : !row ? "이 상품의 조건 미확인 · 요청 불가, 품절을 뜻하지 않아요." : "이 상품 요청 불가 · 모의 설정이며 실제 품절을 뜻하지 않아요."}</p></li>;
+            })}</ul>
+            <p className={styles.small}>좌표는 주소·POI 참고값이며 출입구 실측값이 아니에요. 기존 가상 점포 2곳은 저장된 요청 보존용으로만 남겨 새 요청 대상에서 제외했어요.</p>
+          </details>
+          <div className={styles.total}><span>확인할 총액</span><strong>{unitPrice === null ? "점포 조건 확인 필요" : validQuantity ? won(unitPrice * count) : "수량 확인 필요"}</strong></div>
           <div className={styles.consentBox}>
-            <label><input data-testid="customer-consent" type="checkbox" checked={consent} required disabled={busy} onChange={event => { setConsent(event.target.checked); setError(""); draftRef.current = null; }} /><span><strong>물량 확보 후 자동 구매에 동의해요</strong><span className={styles.small}>위 상품·점포·수량·가격을 확인했어요. 조건이 바뀌면 다시 확인과 동의가 필요해요.</span></span></label>
+            <label><input data-testid="customer-consent" type="checkbox" checked={consent} required disabled={busy || unitPrice === null || !validQuantity} onChange={event => { setConsent(event.target.checked); setError(""); draftRef.current = null; }} /><span><strong>물량 확보 후 자동 구매에 동의해요</strong><span className={styles.small}>위 상품·점포·수량·가격을 확인했어요. 조건이 바뀌면 다시 확인과 동의가 필요해요.</span></span></label>
             <p>입고 후 <strong>픽업 가능 알림이 생성된 시각부터 정확히 48시간</strong> 안에 수령해요. 요청일이나 발주일 기준이 아니에요.</p>
             <p className={styles.small}>이번 미리보기에서는 동의 표시와 요청 화면만 시연해요. 공급 확보·모의 결제·알림은 아직 작동하지 않으며 실제 청구는 없어요.</p>
           </div>
-          <button type="submit" className={styles.primary} data-testid="customer-request" disabled={busy || !validQuantity || !store || !consent}>{busy ? "요청 저장 중…" : "이 조건으로 요청 저장"}</button>
+          <button type="submit" className={styles.primary} data-testid="customer-request" disabled={busy || !validQuantity || !store || unitPrice === null || !consent}>{busy ? "요청 저장 중…" : "이 조건으로 요청 저장"}</button>
           <button type="button" className={styles.textButton} disabled={busy} onClick={() => { setProductId(null); clearConfirmation(); }}>다른 상품을 고를게요</button>
         </form>
       </section>}
@@ -321,7 +358,8 @@ export default function CustomerWorkspace({ requests, onRequest, busy }: Props) 
         return <article className={styles.requestCard} key={item.id}>
           <div className={styles.sectionLine}><span className={item.stage === "approved" ? styles.approved : styles.requested}>{item.stage === "approved" ? "발주 승인" : "요청 접수"}</span><span className={styles.small}>화면 시연</span></div>
           <h3>{product?.name ?? "상품 정보 확인 필요"} · {item.quantity}개</h3>
-          <p>{requestStore?.name ?? "점포 정보 확인 필요"}</p>
+          <span className={styles.provenance}>{provenanceLabels[product?.identityOrigin ?? ""] ?? "출처 정보 없음"}</span>
+          <p>{requestStore?.name ?? "점포 정보 확인 필요"}{requestStore?.identityOrigin === "synthetic" && " · 기존 데이터 보존용 가상 점포"}</p>
           <p className={styles.requestPrice}>{won(item.unitPrice)} × {item.quantity}개 <strong>{won(item.unitPrice * item.quantity)}</strong></p>
           <p className={styles.small}>자동 구매 동의: {item.consent ? "동의함" : "동의하지 않음"}</p>
           <div className={styles.stageNote}>{item.stage === "approved" ? "경영주의 발주 승인을 이 브라우저에 저장했어요." : "이 브라우저에 요청을 저장했어요. 경영주 확인을 기다려요."}<br />아직 공급 확보·결제·예약·픽업 가능 상태가 아니에요.</div>

@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import CustomerWorkspace from "./components/customer-workspace";
 import MerchantWorkspace from "./components/merchant-workspace";
-import { previewProducts, previewStores, type PreviewDraft, type PreviewRequest } from "./demo-preview";
+import { previewAvailability, previewProducts, previewStores, type PreviewDraft, type PreviewRequest } from "./demo-preview";
 import { openPreviewStore, PreviewSnapshotError, type PreviewStore } from "./preview-store";
 
 export default function Home() {
@@ -54,12 +54,14 @@ export default function Home() {
   async function requestProduct(draft: PreviewDraft) {
     if (!store.current || saving.current) return false;
     const product = previewProducts.find((item) => item.id === draft.productId);
-    if (!product || !previewStores.some((store) => store.id === draft.storeId) ||
+    if (!product || !previewStores.some((entry) => entry.id === draft.storeId) ||
       !draft.id || !draft.consent || !Number.isInteger(draft.quantity) ||
-      draft.quantity < 1 || draft.quantity > 20 || draft.unitPrice !== product.price) return false;
+      draft.quantity < 1 || draft.quantity > 20) return false;
     const existing = store.current.requests.find((request) => request.id === draft.id);
     if (existing) return existing.actor === "나" && existing.productId === draft.productId &&
       existing.storeId === draft.storeId && existing.quantity === draft.quantity && existing.unitPrice === draft.unitPrice && existing.consent === draft.consent;
+    const condition = previewAvailability.find((entry) => entry.storeId === draft.storeId && entry.productId === draft.productId);
+    if (!condition?.requestable || draft.unitPrice !== condition.unitPrice) return false;
     const next: PreviewRequest[] = [...store.current.requests, {
       ...draft, actor: "나", stage: "requested", createdAt: new Date().toISOString(),
     }];
@@ -95,7 +97,7 @@ export default function Home() {
 
   return (
     <div className="site-wrap">
-      <div className="preview-ribbon"><span className="preview-dot" />함께 만드는 원하GS <span className="ribbon-divider">/</span> 미리보기 03B · 두 역할 AI 연결</div>
+      <div className="preview-ribbon"><span className="preview-dot" />함께 만드는 원하GS <span className="ribbon-divider">/</span> 미리보기 04 · 상품·점포 확장</div>
       <header className="site-header">
         <a className="brand-lockup" href="/" aria-label="원하GS, 원하지쓰 홈">
           <span className="brand-symbol" aria-hidden="true">w.</span>
@@ -109,8 +111,8 @@ export default function Home() {
 
       <div className="preview-notice">
         <span className="notice-label">화면 시연</span>
-        <p>상품·가격·점포·수요는 예시입니다. 요청은 이 브라우저에 저장되어 같은 주소에서 새로고침해도 이어집니다.</p>
-        <details><summary>연결 상태</summary><p>SQLite 저장·복원과 서버 OpenAI 고객 검색·경영주 지시 해석을 연결했어요. 상품 후보와 변경안을 확인한 뒤 직접 요청·승인해 주세요. 지속 정책·공급·결제·픽업은 다음 단계입니다. 실제 GS 거래나 청구는 없어요.</p></details>
+        <p>카탈로그 242개·실제 위치 참고 점포 8곳을 연결했습니다. 상품은 합성·참고 자료가 섞인 초안이며 가격·취급·재고·수요는 모두 모의입니다.</p>
+        <details><summary>연결 상태</summary><p>SQLite 저장·복원과 서버 OpenAI 고객 검색·경영주 지시 해석을 연결했어요. 요청은 이 브라우저에만 저장됩니다. 이전 가상 점포 요청도 유지해요. 상품 후보와 변경안을 확인한 뒤 직접 요청·승인해 주세요. 지속 정책·공급·결제·픽업은 다음 단계입니다. 실제 GS 거래나 청구는 없어요.</p></details>
       </div>
 
       <main className={`workspace ${role}`}>

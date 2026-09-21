@@ -1,8 +1,9 @@
 import type { Database, SqlJsStatic } from "sql.js";
 import type { PreviewRequest } from "./demo-preview";
 
-// UI-02: intermediate screen persistence, not the final domain/200-product seed.
-export const PREVIEW_SCHEMA_VERSION = 1;
+// DATA-02: intermediate screen persistence; catalog facts/final domain remain unverified.
+export const PREVIEW_SCHEMA_VERSION = 2;
+export const PREVIEW_LEGACY_SOURCE_HASH = "855f6925dfd4aee1d4670731629f6c2530b971a5c991748ee6a9d4066c7a2a21";
 export type PreviewStore = {
   requests: PreviewRequest[];
   save(next: PreviewRequest[]): Promise<void>;
@@ -15,11 +16,11 @@ function foreignKeys(db: Database) {
   if (scalar(db, "PRAGMA foreign_keys") !== 1) throw Error("PREVIEW_FK_DISABLED");
 }
 
-function openDatabase(SQL: SqlJsStatic, bytes: Uint8Array, sourceHash?: string) {
+function openDatabase(SQL: SqlJsStatic, bytes: Uint8Array, sourceHash?: string, schemaVersion = PREVIEW_SCHEMA_VERSION) {
   const db = new SQL.Database(bytes);
   try {
     foreignKeys(db);
-    if (scalar(db, "PRAGMA user_version") !== PREVIEW_SCHEMA_VERSION ||
+    if (scalar(db, "PRAGMA user_version") !== schemaVersion ||
       scalar(db, "PRAGMA integrity_check") !== "ok" || db.exec("PRAGMA foreign_key_check").length ||
       (sourceHash !== undefined && scalar(db, "SELECT value FROM metadata WHERE key='source_hash'") !== sourceHash)) {
       throw Error("PREVIEW_SNAPSHOT_INCOMPATIBLE");
@@ -132,6 +133,39 @@ export function createPreviewStore(
   };
 }
 
+// Only this known v1 is eligible. Build from v2 seed; saved rows win ID collisions and
+// keep their order, approvals, prices, actors and legacy store IDs. No old bytes are mutated.
+export async function restorePreviewStore(
+  SQL: SqlJsStatic, seed: Uint8Array, initial: Uint8Array,
+  persist: (bytes: Uint8Array) => Promise<void>,
+): Promise<PreviewStore> {
+  try { return createPreviewStore(SQL, seed, initial, persist); }
+  catch {
+    const legacy = openDatabase(SQL, initial, PREVIEW_LEGACY_SOURCE_HASH, 1);
+    let previous: PreviewRequest[];
+    try { previous = readRequests(legacy); }
+    finally { legacy.close(); }
+    const candidate = openDatabase(SQL, seed);
+    let saved: Uint8Array;
+    try {
+      const ids = new Set(previous.map(request => request.id));
+      replacePreviewRequests(candidate, [...previous, ...readRequests(candidate).filter(request => !ids.has(request.id))]);
+      try { saved = candidate.export(); }
+      finally { foreignKeys(candidate); }
+      try { await persist(saved); }
+      catch (cause) { throw new PreviewMigrationSaveError(cause); }
+    } finally { candidate.close(); }
+    return createPreviewStore(SQL, seed, saved, persist); // Not exposed until persistence completes.
+  }
+}
+
+class PreviewMigrationSaveError extends Error {
+  constructor(cause: unknown) {
+    super("Preview 데이터 업그레이드를 저장하지 못했습니다. 기존 사본은 보존했습니다. 다시 시도해 주세요.", { cause });
+    this.name = "PreviewMigrationSaveError";
+  }
+}
+
 // If opening a saved snapshot fails, UI may offer this ONLY after explicit reset confirmation.
 export class PreviewSnapshotError extends Error {
   readonly reset: () => Promise<PreviewRequest[]>;
@@ -216,8 +250,9 @@ async function loadStore(): Promise<PreviewStore> {
     }
     try {
       if (!(initial instanceof Uint8Array)) throw Error("PREVIEW_INVALID_SNAPSHOT");
-      return createPreviewStore(SQL, seed, initial, storage.write);
-    } catch {
+      return await restorePreviewStore(SQL, seed, initial, storage.write);
+    } catch (error) {
+      if (error instanceof PreviewMigrationSaveError) throw error;
       // A valid seed is required even for explicit recovery. Never overwrite on open failure.
       const recovery = createPreviewStore(SQL, seed, seed, storage.write);
       throw new PreviewSnapshotError(async () => {

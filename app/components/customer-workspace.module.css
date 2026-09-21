@@ -59,6 +59,13 @@
 .productBody h3 { margin: 4px 0 6px; }
 .productBody > p { font-size: 14px; color: var(--muted, #526575); margin-bottom: 14px; }
 .productBody > strong { display: block; font-size: 18px; margin-bottom: 16px; }
+.provenance { display: inline-block; align-self: flex-start; max-width: 100%; padding: 4px 8px; border-radius: 7px; background: var(--soft, #e3f7fc); color: #245769; font-size: 12px; line-height: 1.5; overflow-wrap: anywhere; }
+.storeDirectory { margin-top: 14px; padding: 12px 14px; border: 1px solid var(--line, #d9e5ed); border-radius: 12px; background: #f5f9fc; }
+.storeDirectory summary { cursor: pointer; min-height: 44px; display: list-item; padding: 10px 0; font-weight: 650; }
+.storeDirectory summary:focus-visible { outline: 3px solid var(--action, #007a9e); outline-offset: 3px; }
+.storeDirectory ul { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr)); gap: 12px; padding: 0; margin: 12px 0; list-style: none; }
+.storeDirectory li { min-width: 0; padding: 14px; border: 1px solid var(--line, #d9e5ed); border-radius: 10px; background: white; overflow-wrap: anywhere; font-size: 13px; }
+.storeDirectory li p { margin-top: 6px; color: var(--muted, #526575); }
 .selectedProduct { display: flex; gap: 14px; align-items: center; padding: 12px 0; }
 .selectedProduct > span { display: grid; place-items: center; flex: 0 0 64px; height: 64px; border-radius: 14px; font-size: 32px; }
 .selectedProduct strong { font-size: 18px; }

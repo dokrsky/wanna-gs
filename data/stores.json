@@ -1,0 +1,154 @@
+[
+  {
+    "id": "DEMO-ST-01",
+    "name": "GS25역삼띵동점",
+    "address": "서울 강남구 언주로98길 7, 1층",
+    "latitude": 37.505154,
+    "longitude": 127.042457,
+    "sourceIds": [
+      "S02",
+      "P01"
+    ],
+    "confidence": "medium",
+    "identityOrigin": "reference_verified",
+    "checkedAt": "2026-09-21",
+    "coordinateSystem": "WGS84",
+    "coordinateSourceId": "P01",
+    "coordinateAccuracy": "address_or_poi_not_surveyed_entrance",
+    "operatingNowVerified": false,
+    "limitations": "실제 점포 위치 참고. 상품·가격·취급·재고·경영주 관계는 모두 모의이며 실시간 영업을 보장하지 않음."
+  },
+  {
+    "id": "DEMO-ST-02",
+    "name": "GS25역삼상록점",
+    "address": "서울 강남구 테헤란로43길 12, 101호",
+    "latitude": 37.504081,
+    "longitude": 127.043994,
+    "sourceIds": [
+      "S02",
+      "P02"
+    ],
+    "confidence": "medium",
+    "identityOrigin": "reference_verified",
+    "checkedAt": "2026-09-21",
+    "coordinateSystem": "WGS84",
+    "coordinateSourceId": "P02",
+    "coordinateAccuracy": "address_or_poi_not_surveyed_entrance",
+    "operatingNowVerified": false,
+    "limitations": "실제 점포 위치 참고. 상품·가격·취급·재고·경영주 관계는 모두 모의이며 실시간 영업을 보장하지 않음."
+  },
+  {
+    "id": "DEMO-ST-03",
+    "name": "GS25역삼미래점",
+    "address": "서울 강남구 테헤란로39길 51, 1층",
+    "latitude": 37.505686,
+    "longitude": 127.040274,
+    "sourceIds": [
+      "S02",
+      "P03"
+    ],
+    "confidence": "medium",
+    "identityOrigin": "reference_verified",
+    "checkedAt": "2026-09-21",
+    "coordinateSystem": "WGS84",
+    "coordinateSourceId": "P03",
+    "coordinateAccuracy": "address_or_poi_not_surveyed_entrance",
+    "operatingNowVerified": false,
+    "limitations": "실제 점포 위치 참고. 상품·가격·취급·재고·경영주 관계는 모두 모의이며 실시간 영업을 보장하지 않음."
+  },
+  {
+    "id": "DEMO-ST-04",
+    "name": "GS25역삼넥스빌점",
+    "address": "서울 강남구 언주로86길 11, 1층",
+    "latitude": 37.501946,
+    "longitude": 127.044264,
+    "sourceIds": [
+      "S02",
+      "P04"
+    ],
+    "confidence": "medium",
+    "identityOrigin": "reference_verified",
+    "checkedAt": "2026-09-21",
+    "coordinateSystem": "WGS84",
+    "coordinateSourceId": "P04",
+    "coordinateAccuracy": "address_or_poi_not_surveyed_entrance",
+    "operatingNowVerified": false,
+    "limitations": "실제 점포 위치 참고. 상품·가격·취급·재고·경영주 관계는 모두 모의이며 실시간 영업을 보장하지 않음."
+  },
+  {
+    "id": "DEMO-ST-05",
+    "name": "GS25강남상록회관점",
+    "address": "서울 강남구 언주로98길 25",
+    "latitude": 37.504901,
+    "longitude": 127.043938,
+    "sourceIds": [
+      "S02",
+      "P05"
+    ],
+    "confidence": "medium",
+    "identityOrigin": "reference_verified",
+    "checkedAt": "2026-09-21",
+    "coordinateSystem": "WGS84",
+    "coordinateSourceId": "P05",
+    "coordinateAccuracy": "address_or_poi_not_surveyed_entrance",
+    "operatingNowVerified": false,
+    "limitations": "실제 점포 위치 참고. 상품·가격·취급·재고·경영주 관계는 모두 모의이며 실시간 영업을 보장하지 않음."
+  },
+  {
+    "id": "DEMO-ST-06",
+    "name": "GS25강남동원점",
+    "address": "서울 강남구 테헤란로77길 7, 동원빌딩",
+    "latitude": 37.506979,
+    "longitude": 127.05451,
+    "sourceIds": [
+      "S02",
+      "P07"
+    ],
+    "confidence": "medium",
+    "identityOrigin": "reference_verified",
+    "checkedAt": "2026-09-21",
+    "coordinateSystem": "WGS84",
+    "coordinateSourceId": "P07",
+    "coordinateAccuracy": "address_or_poi_not_surveyed_entrance",
+    "operatingNowVerified": false,
+    "limitations": "실제 점포 위치 참고. 상품·가격·취급·재고·경영주 관계는 모두 모의이며 실시간 영업을 보장하지 않음."
+  },
+  {
+    "id": "DEMO-ST-07",
+    "name": "GS25S9언주역점",
+    "address": "서울 강남구 봉은사로지하 201, 지하1층 926-1호",
+    "latitude": 37.50753,
+    "longitude": 127.03404,
+    "sourceIds": [
+      "S02",
+      "P08"
+    ],
+    "confidence": "low",
+    "identityOrigin": "reference_verified",
+    "checkedAt": "2026-09-21",
+    "coordinateSystem": "WGS84",
+    "coordinateSourceId": "P08",
+    "coordinateAccuracy": "address_or_poi_not_surveyed_entrance",
+    "operatingNowVerified": false,
+    "limitations": "실제 점포 위치 참고. 상품·가격·취급·재고·경영주 관계는 모두 모의이며 실시간 영업을 보장하지 않음."
+  },
+  {
+    "id": "DEMO-ST-08",
+    "name": "GS25역삼대홍점",
+    "address": "서울 강남구 논현로63길 19",
+    "latitude": 37.492469,
+    "longitude": 127.039295,
+    "sourceIds": [
+      "S02",
+      "P09"
+    ],
+    "confidence": "medium",
+    "identityOrigin": "reference_verified",
+    "checkedAt": "2026-09-21",
+    "coordinateSystem": "WGS84",
+    "coordinateSourceId": "P09",
+    "coordinateAccuracy": "address_or_poi_not_surveyed_entrance",
+    "operatingNowVerified": false,
+    "limitations": "실제 점포 위치 참고. 상품·가격·취급·재고·경영주 관계는 모두 모의이며 실시간 영업을 보장하지 않음."
+  }
+]

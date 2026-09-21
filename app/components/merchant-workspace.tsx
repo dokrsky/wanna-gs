@@ -15,6 +15,13 @@ type Proposal = MerchantOutput & {
 };
 const allowedIds = previewProducts.map(product => product.id);
 const allowedStores = previewStores.map(store => store.id);
+const realStores = previewStores.filter(store => store.identityOrigin === "reference_verified");
+const legacyStores = previewStores.filter(store => store.identityOrigin !== "reference_verified");
+const provenanceLabels: Record<string, string> = {
+  reference_verified: "출처 확인 · reference_verified",
+  reference_unverified: "출처 미검증 · reference_unverified",
+  synthetic_product: "합성 상품 · synthetic_product",
+};
 const viewLabels: Record<View, string> = { requested: "검토할 수요", approved: "승인 완료", all: "전체 미확보" };
 
 const examples = [
@@ -37,7 +44,7 @@ export default function MerchantWorkspace({ requests, onApprove, busy }: {
   onApprove: (ids: string[]) => Promise<boolean>;
   busy: boolean;
 }) {
-  const [storeId, setStoreId] = useState(previewStores[0].id);
+  const [storeId, setStoreId] = useState(realStores[0]?.id ?? previewStores[0].id);
   const [view, setView] = useState<View>("requested");
   const [search, setSearch] = useState("");
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -264,12 +271,22 @@ export default function MerchantWorkspace({ requests, onApprove, busy }: {
             cancelCommand();
             setStoreId(event.target.value); setSelectedIds([]); setProposal(null); setMessage(""); setSearch("");
           }}>
-            {previewStores.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
+            <optgroup label="실제 점포 위치 참고 · 거래는 모의">{realStores.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</optgroup>
+            <optgroup label="기존 데이터 보존용 가상 점포">{legacyStores.map((item) => <option key={item.id} value={item.id}>{item.name} · 기존 데이터</option>)}</optgroup>
           </select>
         </label>
       </header>
 
-      <div className={styles.demoNote}><span className={styles.badge}>화면 시연</span> 합성 고객 요청 · {store.address} · 실제 GS 발주·결제 없음</div>
+      <section className={styles.storeInfo} aria-label="선택한 점포와 자료 안내">
+        <span className={styles.badge}>{store.identityOrigin === "reference_verified" ? "실제 점포 위치 참고" : "기존 데이터 보존용 가상 점포"}</span>
+        <strong>{store.name}</strong><p>{store.address}</p>
+        {store.identityOrigin === "reference_verified" ? <>
+          <p>참고 좌표: {store.latitude !== undefined && store.longitude !== undefined ? `${store.latitude}, ${store.longitude}` : "미확인"} · 지도 후속 연결 예정</p>
+          <p>출처 ID: {store.sourceIds?.join(", ") || "미등록"} · 자료 신뢰도: {store.confidence ?? "미확인"}</p>
+          <p>주소·POI 참고 좌표이며 출입구 실측값이 아니에요. 현재 영업·취급·재고·경영주 관계는 확인하지 않았어요.</p>
+        </> : <p>기존 요청의 점포·가격·승인 상태를 보존해 보여요. 실제 점포로 자동 이전하지 않으며 새 고객 요청 대상에서는 제외돼요.</p>}
+        <p>합성 고객·모의 요청과 가격으로 시연해요. 상품의 출처 확인 표시는 자료의 일부 항목에만 해당하며 실제 GS 발주·결제는 없어요.</p>
+      </section>
 
       <div className={styles.metrics}>
         <article><span>검토할 고객</span><strong>{new Set(pending.map((item) => item.actor)).size}<small>명</small></strong><p>현재 점포의 미승인 요청 기준</p></article>
@@ -360,7 +377,7 @@ export default function MerchantWorkspace({ requests, onApprove, busy }: {
                   <div className={styles.productSummary}>
                     <input type="checkbox" aria-label={`${product?.name ?? productId} 승인 가능 요청 선택`} checked={eligible.length > 0 && selectedCount === eligible.length} disabled={busy || !eligible.length} onChange={() => toggle(items)} />
                     <span className={styles.productEmoji} style={{ background: product?.color ?? "#eef3f6" }} aria-hidden="true">{product?.emoji ?? "□"}</span>
-                    <div className={styles.productName}><h3>{product?.name ?? `확인 필요 상품 · ${productId}`}</h3><p>{new Set(items.map((item) => item.actor)).size}명 · 요청 {items.length}건</p></div>
+                    <div className={styles.productName}><h3>{product?.name ?? `확인 필요 상품 · ${productId}`}</h3><span className={styles.provenance}>{provenanceLabels[product?.identityOrigin ?? ""] ?? "출처 정보 없음"}</span><p>출처 ID: {product?.sourceIds?.join(", ") || "미등록"} · 확인 항목: {product?.verifiedFields?.join(", ") || "없음"}</p><p>{new Set(items.map((item) => item.actor)).size}명 · 요청 {items.length}건</p></div>
                     <div className={styles.productAmount}><strong>{quantity(items)}개</strong><span>{won(sum(items))}</span></div>
                     <span className={approvedCount === items.length ? styles.approvedBadge : styles.reviewBadge}>{approvedCount === items.length ? "승인 완료" : approvedCount > 0 ? "일부 승인" : "검토 대기"}</span>
                   </div>
