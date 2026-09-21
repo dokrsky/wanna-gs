@@ -97,7 +97,7 @@ export default function Home() {
 
   return (
     <div className="site-wrap">
-      <div className="preview-ribbon"><span className="preview-dot" />함께 만드는 원하GS <span className="ribbon-divider">/</span> 미리보기 04 · 상품·점포 확장</div>
+      <div className="preview-ribbon"><span className="preview-dot" />함께 만드는 원하GS <span className="ribbon-divider">/</span> 미리보기 05 · 거래 데모 공개</div>
       <header className="site-header">
         <a className="brand-lockup" href="/" aria-label="원하GS, 원하지쓰 홈">
           <span className="brand-symbol" aria-hidden="true">w.</span>
@@ -112,7 +112,8 @@ export default function Home() {
       <div className="preview-notice">
         <span className="notice-label">화면 시연</span>
         <p>카탈로그 242개·실제 위치 참고 점포 8곳을 연결했습니다. 상품은 합성·참고 자료가 섞인 초안이며 가격·취급·재고·수요는 모두 모의입니다.</p>
-        <details><summary>연결 상태</summary><p>SQLite 저장·복원과 서버 OpenAI 고객 검색·경영주 지시 해석을 연결했어요. 요청은 이 브라우저에만 저장됩니다. 이전 가상 점포 요청도 유지해요. 상품 후보와 변경안을 확인한 뒤 직접 요청·승인해 주세요. 지속 정책·공급·결제·픽업은 다음 단계입니다. 실제 GS 거래나 청구는 없어요.</p></details>
+        <a href="/demo">새 거래 데모 열기 →</a>
+        <details><summary>연결 상태</summary><p>이 화면의 이전 요청·승인은 보존했어요. 새 거래 데모에서 고객 검색·요청, 경영주 발주·공급·모의 결제·입고·픽업을 이어볼 수 있습니다. 두 데모의 거래는 별도로 저장돼요. 실제 GS 거래나 청구는 없어요.</p></details>
       </div>
 
       <main className={`workspace ${role}`}>

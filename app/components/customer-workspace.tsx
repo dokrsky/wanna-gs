@@ -1,11 +1,15 @@
 "use client";
 
-import { useEffect, useRef, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
 import { previewAvailability, previewProducts, previewStores, won, type PreviewDraft, type PreviewRequest } from "../demo-preview";
 import { AssistantError, errorMessages, isObject, parseSearchOutput, type AssistantErrorCode, type AssistantStatus, type SearchOutput, type SearchResponse } from "../../lib/assistant/contracts";
 import styles from "./customer-workspace.module.css";
 
-type Props = { requests: PreviewRequest[]; onRequest: (draft: PreviewDraft) => Promise<boolean>; busy: boolean };
+type RequestCondition = { storeId: string; productId: string; requestable: boolean; unitPrice: number; version?: string };
+type Props = {
+  requests: PreviewRequest[]; onRequest: (draft: PreviewDraft) => Promise<boolean>; busy: boolean;
+  conditions?: RequestCondition[]; requestContent?: ReactNode; pickupContent?: ReactNode; consentDurationDays?: number;
+};
 type Tab = "want" | "requests" | "pickup";
 type SearchMode = "live" | "local";
 type SearchResult = SearchOutput & { mode: SearchMode; model?: string; usage?: SearchResponse["usage"] };
@@ -18,7 +22,7 @@ const provenanceLabels: Record<string, string> = {
   reference_unverified: "출처 미검증 · reference_unverified",
   synthetic_product: "합성 상품 · synthetic_product",
 };
-const canRequestAt = (row: (typeof previewAvailability)[number] | undefined) => row?.requestable === true
+const canRequestAt = (row: RequestCondition | undefined) => row?.requestable === true
   && Number.isSafeInteger(row.unitPrice) && row.unitPrice >= 0;
 const resultTitles = { matched: "찾으시는 상품이 맞나요?", clarify: "어떤 상품인지 조금 더 알려주세요", unknown: "아직 상품을 식별하지 못했어요", unsupported: "이 검색에서는 처리할 수 없어요" };
 
@@ -28,7 +32,7 @@ function NavIcon({ tab }: { tab: Tab }) {
   </svg>;
 }
 
-export default function CustomerWorkspace({ requests, onRequest, busy }: Props) {
+export default function CustomerWorkspace({ requests, onRequest, busy, conditions = previewAvailability, requestContent, pickupContent, consentDurationDays }: Props) {
   const [tab, setTab] = useState<Tab>("want");
   const [input, setInput] = useState("");
   const [undo, setUndo] = useState<string | null>(null);
@@ -90,8 +94,14 @@ export default function CustomerWorkspace({ requests, onRequest, busy }: Props) 
   const mine = requests.filter(request => request.actor === "나");
   const selected = previewProducts.find(product => product.id === productId);
   const store = requestStores.find(item => item.id === storeId);
-  const availability = previewAvailability.find(row => row.productId === productId && row.storeId === storeId);
+  const availability = conditions.find(row => row.productId === productId && row.storeId === storeId);
   const unitPrice = store && canRequestAt(availability) ? availability!.unitPrice : null;
+  const consentCondition = `${productId}/${storeId}/${availability?.version}/${unitPrice}/${availability?.requestable}`;
+  useEffect(() => {
+    setConsent(false);
+    draftRef.current = null;
+    submitted.current = false;
+  }, [consentCondition]);
   const count = Number(quantity);
   const validQuantity = Number.isInteger(count) && count >= 1 && count <= 20;
   const aiReady = assistantStatus?.configured === true && assistantStatus.mode === "live";
@@ -222,7 +232,7 @@ export default function CustomerWorkspace({ requests, onRequest, busy }: Props) 
       }
       submitted.current = true;
       setError("");
-      setNotice(`${selected.name} ${count}개 요청을 이 브라우저에 저장했어요. 아직 물량 확보 전이에요.`);
+      setNotice(`${selected.name} ${count}개 요청 결과를 이 브라우저에 저장했어요. ${consentDurationDays ? "아래에서 현재 처리 상태를 확인해주세요." : "아직 물량 확보 전이에요."}`);
       setTab("requests");
       setProductId(null);
       setConsent(false);
@@ -292,7 +302,7 @@ export default function CustomerWorkspace({ requests, onRequest, busy }: Props) 
         </div>
         {candidates.length ? <div className={styles.productGrid}>
           {candidates.map(product => {
-            const prices = previewAvailability.filter(row => row.productId === product.id && canRequestAt(row)
+            const prices = conditions.filter(row => row.productId === product.id && canRequestAt(row)
               && requestStores.some(store => store.id === row.storeId)).map(row => row.unitPrice);
             const lowestPrice = Math.min(...prices);
             const highestPrice = Math.max(...prices);
@@ -323,7 +333,7 @@ export default function CustomerWorkspace({ requests, onRequest, busy }: Props) 
           <select id="customer-store" required value={storeId} disabled={busy} onChange={event => { setStoreId(event.target.value); clearConfirmation(); }}>
             <option value="" disabled>요청 가능한 점포를 선택해주세요</option>
             {requestStores.map(item => {
-              const row = previewAvailability.find(row => row.productId === selected.id && row.storeId === item.id);
+              const row = conditions.find(row => row.productId === selected.id && row.storeId === item.id);
               return <option key={item.id} value={item.id} disabled={!canRequestAt(row)}>{item.name} · {canRequestAt(row) ? `${won(row!.unitPrice)} (모의)` : !row ? "조건 미확인" : "요청 불가 (모의 설정)"}</option>;
             })}
           </select>
@@ -332,7 +342,7 @@ export default function CustomerWorkspace({ requests, onRequest, busy }: Props) 
           <details className={styles.storeDirectory}>
             <summary>실제 점포 {requestStores.length}곳의 주소·참고 좌표 보기</summary>
             <ul>{requestStores.map(item => {
-              const row = previewAvailability.find(row => row.productId === selected.id && row.storeId === item.id);
+              const row = conditions.find(row => row.productId === selected.id && row.storeId === item.id);
               return <li key={item.id}><strong>{item.name}</strong><p>{item.address}</p><p>참고 좌표: {item.latitude !== undefined && item.longitude !== undefined ? `${item.latitude}, ${item.longitude}` : "미확인"}</p><p>출처 ID: {item.sourceIds?.join(", ") || "미등록"} · 자료 신뢰도: {item.confidence ?? "미확인"}</p><p>{canRequestAt(row) ? `이 상품 요청 가능 · ${won(row!.unitPrice)} / 개 (모의)` : !row ? "이 상품의 조건 미확인 · 요청 불가, 품절을 뜻하지 않아요." : "이 상품 요청 불가 · 모의 설정이며 실제 품절을 뜻하지 않아요."}</p></li>;
             })}</ul>
             <p className={styles.small}>좌표는 주소·POI 참고값이며 출입구 실측값이 아니에요. 기존 가상 점포 2곳은 저장된 요청 보존용으로만 남겨 새 요청 대상에서 제외했어요.</p>
@@ -341,7 +351,7 @@ export default function CustomerWorkspace({ requests, onRequest, busy }: Props) 
           <div className={styles.consentBox}>
             <label><input data-testid="customer-consent" type="checkbox" checked={consent} required disabled={busy || unitPrice === null || !validQuantity} onChange={event => { setConsent(event.target.checked); setError(""); draftRef.current = null; }} /><span><strong>물량 확보 후 자동 구매에 동의해요</strong><span className={styles.small}>위 상품·점포·수량·가격을 확인했어요. 조건이 바뀌면 다시 확인과 동의가 필요해요.</span></span></label>
             <p>입고 후 <strong>픽업 가능 알림이 생성된 시각부터 정확히 48시간</strong> 안에 수령해요. 요청일이나 발주일 기준이 아니에요.</p>
-            <p className={styles.small}>이번 미리보기에서는 동의 표시와 요청 화면만 시연해요. 공급 확보·모의 결제·알림은 아직 작동하지 않으며 실제 청구는 없어요.</p>
+            <p className={styles.small}>{consentDurationDays ? `구매 동의는 확인한 조건으로 ${consentDurationDays}일 동안 유효해요. 확보 후 조건이 일치하면 모의 자동 결제가 실행돼요. 만료·조건 변경 시 새 동의가 필요하며 실제 청구는 없어요. 결제 후 입고 대기에는 픽업 시간이 흐르지 않아요.` : "이번 미리보기에서는 동의 표시와 요청 화면만 시연해요. 공급 확보·모의 결제·알림은 아직 작동하지 않으며 실제 청구는 없어요."}</p>
           </div>
           <button type="submit" className={styles.primary} data-testid="customer-request" disabled={busy || !validQuantity || !store || unitPrice === null || !consent}>{busy ? "요청 저장 중…" : "이 조건으로 요청 저장"}</button>
           <button type="button" className={styles.textButton} disabled={busy} onClick={() => { setProductId(null); clearConfirmation(); }}>다른 상품을 고를게요</button>
@@ -349,7 +359,7 @@ export default function CustomerWorkspace({ requests, onRequest, busy }: Props) 
       </section>}
     </>}
 
-    {tab === "requests" && <section className={styles.results} aria-labelledby="customer-requests-title">
+    {tab === "requests" && (requestContent ?? <section className={styles.results} aria-labelledby="customer-requests-title">
       <div className={styles.sectionLine}><h2 id="customer-requests-title">내 요청</h2><span className={styles.count}>{mine.length}건</span></div>
       <p className={styles.small}>현재 화면의 ‘나’가 요청한 항목만 보여요. 이 브라우저의 SQLite에 저장해요. 같은 주소에서 새로고침해도 이어져요. 다른 기기와 공유되지 않아요.</p>
       {mine.length ? <div className={styles.requestList}>{mine.map(item => {
@@ -365,14 +375,14 @@ export default function CustomerWorkspace({ requests, onRequest, busy }: Props) 
           <div className={styles.stageNote}>{item.stage === "approved" ? "경영주의 발주 승인을 이 브라우저에 저장했어요." : "이 브라우저에 요청을 저장했어요. 경영주 확인을 기다려요."}<br />아직 공급 확보·결제·예약·픽업 가능 상태가 아니에요.</div>
         </article>;
       })}</div> : <div className={styles.empty}><NavIcon tab="requests" /><h3>아직 남긴 요청이 없어요</h3><p>원하는 상품을 찾아 조건을 확인하면<br />이곳에서 요청 상태를 볼 수 있어요.</p><button type="button" className={styles.primary} onClick={() => navigate("want")}>첫 상품 찾아보기</button></div>}
-    </section>}
+    </section>)}
 
-    {tab === "pickup" && <section className={styles.card} aria-labelledby="customer-pickup-title">
+    {tab === "pickup" && (pickupContent ?? <section className={styles.card} aria-labelledby="customer-pickup-title">
       <span className={styles.step}>픽업 안내</span><h2 id="customer-pickup-title">아직 픽업 가능한 상품이 없어요</h2>
       <div className={styles.empty}><NavIcon tab="pickup" /><h3>요청 접수와 픽업은 달라요</h3><p>공급 확보·모의 결제·입고 후<br />픽업 가능 알림을 받아야 수령할 수 있어요.</p></div>
       <div className={styles.pickupNotice}><strong>알림 생성 시각부터 정확히 48시간</strong><p>요청하거나 발주를 승인한 때부터 세지 않아요. 이번 화면 미리보기에는 입고·알림·수령 기능이 없어 픽업 마감도 아직 없어요.</p></div>
       <button type="button" className={styles.secondary} onClick={() => navigate(mine.length ? "requests" : "want")}>{mine.length ? "내 요청 확인하기" : "원하는 상품 찾아보기"}</button>
-    </section>}
+    </section>)}
 
     {error && <p className={styles.error} role="alert">{error}</p>}
     <nav className={styles.bottomNav} aria-label="고객 하단 탐색">

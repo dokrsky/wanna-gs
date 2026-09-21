@@ -6,11 +6,13 @@
     "node": "24.x"
   },
   "scripts": {
-    "predev": "node scripts/prepare-preview-sqlite.mjs",
+    "predev": "node scripts/prepare-preview-sqlite.mjs && node scripts/prepare-domain-sqlite.mjs",
     "dev": "next dev",
-    "prebuild": "node scripts/prepare-preview-sqlite.mjs",
+    "prebuild": "node scripts/prepare-preview-sqlite.mjs && node scripts/prepare-domain-sqlite.mjs",
     "build": "next build",
     "check:preview-store": "node scripts/prepare-preview-sqlite.mjs --check",
+    "check:domain-store": "node scripts/prepare-domain-sqlite.mjs --check",
+    "check:domain": "node lib/domain/check.mjs",
     "start": "next start",
     "lint": "next lint"
   },

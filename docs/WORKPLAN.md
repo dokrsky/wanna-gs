@@ -9,8 +9,8 @@
 | UI-01 | 조정자: 공통 화면/역할 전환·메모리 상태. Meitner: 고객 입력/후보/요청. Newton: 경영주 묶음/고객 상세/시연 승인 | `0e43f0d` commit/push·PR #1·Vercel Preview Ready. 실제 화면 로딩 확인, 제품 전체 검증 전 |
 | UI-02 | Locke: SQLite 저장/복원·seed 자산·단일 lockfile 작성. 조정자: 화면 연결 | `9c4d41c`·두 번째 Preview Ready, 로컬 저장/복원 및 배포 초기 SQL 확인 |
 | UI-03 | Meitner: 서버 OpenAI API. Newton: 두 역할 AI UI. 조정자: 비밀 설정·실호출·배포 | `18b0b31` 고객 및 `bd13e3f` 경영주 실제 AI Preview 성공. 선택/예산 적용과 거래 승인 구분 |
-| UI-04 | 발주/공급/모의 결제/입고/48시간 픽업 연결 | 단계별 동작 Preview 공유 |
-| DATA-01 | Locke: 다양한 200개 상품·실제 점포·합성 역할/availability | UI 배포와 병렬 수집·생성 중, 최종 독립 데이터 검증 전 |
+| UI-04 | Meitner: 순수 거래 도메인. Locke: 정규화 SQL·저장 어댑터. Newton: 거래 화면. 조정자: `/demo` 연결·배포 | 정상 로컬 요청→발주→공급/모의 결제→입고/48시간→수령·새로고침 복원 확인. 여섯 번째 Preview 게시 중, 독립 전체 QA 후속 |
+| DATA-01/02 | Locke: 242개 상품 초안·실제 점포8/legacy2·합성 역할/availability·SQLite 업그레이드. Newton: 출처/실제 점포 UI | `aa54838` 다섯 번째 Preview Ready. 로컬 기존 요청 보존 확인. 최종 상품 사실/독립 데이터 검증 전 |
 | VERIFY | 전체 seed/독립 검증·정책 검토·E2E·평가·G5/G6 | 구현 후 수행, 최종 완료 조건 유지 |
 
 연구 Locke는 이미 확보한 초기 근거를 바탕으로 전체 seed를 확장한다. 별도 preflight 시험 앱과 선행 감사는 중단·보존하고 화면 구현으로 인력을 재배정했다. 임시 UI는 합성 데이터·실제 SQLite 저장·실제 AI 연결 범위와 아직 미연결인 거래 단계를 구분하며 제품 완료 증거로 사용하지 않는다.

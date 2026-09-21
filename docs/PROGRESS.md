@@ -5,13 +5,13 @@
 ## 현재 포인터
 
 ```text
-현재 task: UI-03B 두 역할 실제 AI Preview 완료, 전체 seed 연결·거래 구현
+현재 task: UI-04 거래 도메인·화면 연결 완료, 여섯 번째 Preview 게시
 branch: codex/ui-preview-20260921
 PR: https://github.com/dokrsky/wanna-gs/pull/1 (draft, 최종 검증 전)
 마지막 유효 게이트: 제품 게이트 미실행
 마지막 Production deployment: dpl_GB3Cr8At3Com7eJcTnboJ9W4Sika (기존 최소 데모, 최종 제품 아님)
-현재 Preview: https://wanna-ivr84so9x-d-01.vercel.app (bd13e3f, 두 역할 실제 AI)
-다음 한 가지: 242개 상품·실제 점포 데이터를 화면/SQLite에 연결한 작은 Preview
+현재 Preview: https://wanna-2y1lgry17-d-01.vercel.app (aa54838, 상품·실제 점포 확장)
+다음 한 가지: UI-04 Preview 게시·실제 화면 확인 후 미식별/정책 AI·지도 연결
 ```
 
 ## 현재 상태
@@ -22,8 +22,8 @@ PR: https://github.com/dokrsky/wanna-gs/pull/1 (draft, 최종 검증 전)
 | 위임 운영 결정 | ADR-001 채택, 실행 검증 전 | DECISION_INDEX·ADR-001 |
 | GitHub | dokrsky/wanna-gs, 기준 cf6f95a, 작업 branch에서 UI 개발 중 | 원격 쓰기/Actions 권한 확인, 제품 CI 미구현 |
 | 로컬 설정/사전점검 검사기 | OpenAI 15개 + inventory 10개 테스트 통과 | scripts/ 및 .agents/skills/wanna-gs-preflight/scripts/ |
-| 앱·CI·게이트 실행기·DB seed | 두 역할 UI·SQLite·두 역할 실제 AI Preview Ready. 제품 CI/게이트/전체 seed는 후속 | D-46·WORKPLAN, bd13e3f |
-| SQLite | 실제 sql.js·seed/WASM·IndexedDB 저장 및 로컬 새로고침 복원 연결 | UI-02, 6개 상품/2개 가상 점포의 중간 seed. 전체 상품/도메인은 후속 |
+| 앱·CI·게이트 실행기·DB seed | 두 역할 UI·SQLite·두 역할 실제 AI Preview Ready. UI-04 거래 화면 로컬 정상 흐름 확인, 게시 중. 제품 CI/게이트 후속 | D-46·WORKPLAN, aa54838 이후 변경 |
+| SQLite | 242개 상품·실제 점포8/legacy2 Preview 배포. 새 거래 DB 별도 namespace·실제 정규화 SQL·기존 이력 보존 | UI-04 로컬 요청→수령, IndexedDB 사본 새로고침 복원 |
 | Vercel·OpenAI | Git 자동 Preview 및 UI branch 서버 env 연결. 두 역할 실제 호출 성공 | 고객 18b0b31·경영주 bd13e3f. gpt-5-mini, 고객 로컬 719/127·Preview 719/136 tokens |
 | 앱 단위·통합·E2E·실제 모델 평가 | 미실행 | 문서 검사와 구분 |
 | 최종 제출 URL | 미완료 | 기존 wanna-gs.vercel.app은 최소 데모이며 최종 G6 전 |
@@ -55,8 +55,8 @@ PR: https://github.com/dokrsky/wanna-gs/pull/1 (draft, 최종 검증 전)
 
 ## 다음 작업
 
-1. D-46에 따라 242개 상품·실제 점포를 SQLite와 화면에 연결하고 작은 커밋·Preview로 공유한다.
-2. 전체 seed와 발주·공급·모의 결제·입고/픽업을 차례로 연결하고 각각 Preview를 공유한다.
+1. D-46에 따라 연결한 UI-04 거래 화면을 작은 커밋·Preview로 공유한다.
+2. 미식별 니즈·미래 정책 AI·지도와 데이터 사실 보강을 연결하고 각각 Preview를 공유한다.
 3. 기능이 갖춰진 뒤 독립 검증·전체 E2E·평가·최종 게이트를 실행한다. 이미 실행 중인 goal을 다시 만들지 않는다.
 
 ## 기록 원칙
@@ -220,3 +220,23 @@ ADR-003은 Meitner 제품/범위와 Newton 상태/실패의 독립 검토 및 �
 화면은 상품 출처 구분과 실제 점포 주소/좌표·모의 가격/요청 가능 조건을 표시한다. 조건이 없는 점포는 품절로 단정하지 않고 미확인으로 표시하며 요청 생성하지 않는다. 신규 고객 요청은 실제 점포 참고 8곳의 모의 조건에만 연결하고 기존 가상 점포 요청·승인은 재매핑 없이 보존한다.
 
 알려진 v1 snapshot만 v2로 업그레이드하고 추가 요청·가격·승인·점포·순서를 보존한다. 영구 저장 완료 전 새 상태를 내보내지 않으며 실패/알 수 없는 버전은 기존 사본을 지우지 않는다. 실제 Node24 `check:preview-store`의 전체 SQL/FK·upgrade 보존/실패/재시도·잘못된 버전 거절 PASS, 242개 마스터로 assistant offline checker PASS(실제 호출 0회). 브라우저 업그레이드·빌드·배포 확인은 이어서 실행한다. 이 검사는 전체 domain/독립 제품 게이트가 아니다.
+
+`aa548381d8d0ee3e2b5764142e1b060d4a6a9ca8`를 로컬 commit 후 동일 SHA의 분리 checkout에서 Node24 Next build·타입 PASS, 20개 클라이언트 빌드 파일의 실제 키 비포함 확인 후 push했다. `dpl_7Qd4AY5BLyzjDT6ARc7cdBom87XG` / https://wanna-2y1lgry17-d-01.vercel.app Ready·source SHA 일치를 확인했다. 분리 checkout은 병렬 작성 중인 미게시 domain 파일과 배포 후보를 섞지 않기 위해 사용했다.
+
+실제 로컬 브라우저에서 기존 v1의 내 요청(매일우유1개·2,800원·GS25원하데모점·동의함)이 v2에서도 그대로 보존됨을 확인했다. 실제 Preview도 242개/8곳 안내와 SQLite 저장 완료로 로드됐다. 앱 품질 전수·독립 브라우저 QA·상품 사실 검증 PASS가 아니다.
+
+DATA-02 실제 Preview 호출 1회: ‘들깨랑 버섯이 들어간 도시락을 찾아줘’→합성 상품 ‘데모 들깨버섯밥 도시락 320g’ 후보, gpt-5-mini 입력22,949/출력193 tokens를 확인했다. GS25역삼미래점의 모의 조건 1,200원·1개·직접 동의로 저장 후 새로고침해 내 요청 복원을 확인했다. 조건 없는 다른 점포는 ‘미확인’으로 비활성이고 품절로 단정하지 않았다. 현재 전체 카탈로그 입력 비용은 후속 자연어 실험에서 개선할 대상이며 이번 한 번으로 품질 기준선을 대신하지 않는다.
+
+## UI-04 거래 화면·정규화 SQLite — 2026-09-21
+
+사용자 목적: CORE-02~10·26/ADR-003의 고객 요청→점포 수요→보수적 발주→공급 확보·모의 결제→입고·48시간 픽업을 실제 화면에서 이어간다. `/demo`에 별도 거래 사본을 시작하고 기존 Preview 원본 및 보관 이력은 삭제하지 않는다. 예전 ‘화면 승인’을 발주로 재해석하지 않는다. 기존 고객 AI 검색과 경영주 현재 묶음 AI 제안/명시 적용을 재사용했다. 미래 정책 AI는 미연결이며 수동 정책 폼은 명시 확인 후 저장한다.
+
+Meitner 도메인, Locke SQL·저장, Newton 화면 handback 후 조정자가 연결했다. 242상품/8점포/484조건/29역할(기존28+현재고객)/20합성 요청을 사용하며 실제 거래 조건은 모두 모의다. 7일 동의·중복 명령·순번/FIFO·예산/공급/결제 실패·전량 입고·정확한48시간을 순수 명령과 SQL 제약으로 연결했다. 저장 완료 후 화면에 공개하며 이전 DB를 새로운 구매 동의로 바꾸지 않는다.
+
+UI04-BUILD-01: 최초 통합 Next build는 `commands.ts`의 `requireRule as require` 별칭을 webpack이 CommonJS 호출로 정적 분석해 실패했다. 거래 미실행 상태의 빌드/코드 분류이며 정책 공백·외부 차단은 아니다. 조정자가 소유권 반환 후 별칭/64곳 호출만 `requireRule`로 치환했다. Meitner 읽기 전용 재검토에서 역치환 파일 해시가 기존 handback과 일치해 로직·정책·기대값 변경 없음 확인. 한 번 수정 후 Node24 도메인 92명령/거절 checker 및 Next15.5.25 build/타입 PASS로 복구했다. 정상 요청/이행·인접 권한/예산 규칙을 삭제하거나 테스트를 skip하지 않았다. 이는 해당 이름 충돌 검토이며 전체 독립 도메인 QA는 아니다.
+
+실제 최소 확인: `check:domain-store` 정상 SQL 요청→발주→공급→결제→입고→수령, CHECK/FK/rollback, 지연·실패 저장/초기화, 재전송/낡은 명령, restore·손상/버전 거절·이전 승인 이력 보존 PASS. 새 클라이언트 빌드22개 파일에 실제 서버 키 비포함 확인. 이 SQL 검사기의 저장 지연/실패는 Node seam이며 브라우저 장애 주입 증거와 구분한다.
+
+로컬 브라우저 `localhost:3101/demo`: 명시 로컬 예시 검색(AI 아님)으로 콜드브루1개·GS25역삼띵동점·2,500원 확인/동의 저장(revision1), 경영주 예산10,000원 명시 저장(2), 매입1,600원 발주(3), 공급1개 확정으로 모의 결제성공/예약·입고대기(4), 전량입고(5), 고객 픽업 알림 2026-09-21 22:53:16 KST·마감09-23 22:53:16 확인. 새로고침 후 revision5·입고/마감 복원, 해당 예약번호로 경영주 전량수령(6) 완료. 실제 청구/외부 알림은 없으며 Preview의 해당 수직 흐름·독립 G4/G6는 아직 미실행이다.
+
+현재 base `aa54838`, branch `codex/ui-preview-20260921`, PR #1 draft. Preview 게시 후 정확한 source SHA·Ready·화면 확인을 기록한다. 별도 전체 정책/자연어 평가·보안/UX/실패 E2E·제품 CI는 후속이다. 미식별 니즈·미래 정책 AI·지도 및 데이터 사실 보강도 남아 있어 goal 완료로 표시하지 않는다.
