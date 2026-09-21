@@ -9,7 +9,8 @@
 | UI-01 | 조정자: 공통 화면/역할 전환·메모리 상태. Meitner: 고객 입력/후보/요청. Newton: 경영주 묶음/고객 상세/시연 승인 | `0e43f0d` commit/push·PR #1·Vercel Preview Ready. 실제 화면 로딩 확인, 제품 전체 검증 전 |
 | UI-02 | Locke: SQLite 저장/복원·seed 자산·단일 lockfile 작성. 조정자: 화면 연결 | `9c4d41c`·두 번째 Preview Ready, 로컬 저장/복원 및 배포 초기 SQL 확인 |
 | UI-03 | Meitner: 서버 OpenAI API. Newton: 두 역할 AI UI. 조정자: 비밀 설정·실호출·배포 | `18b0b31` 고객 및 `bd13e3f` 경영주 실제 AI Preview 성공. 선택/예산 적용과 거래 승인 구분 |
-| UI-04 | Meitner: 순수 거래 도메인. Locke: 정규화 SQL·저장 어댑터. Newton: 거래 화면. 조정자: `/demo` 연결·배포 | 정상 로컬 요청→발주→공급/모의 결제→입고/48시간→수령·새로고침 복원 확인. 여섯 번째 Preview 게시 중, 독립 전체 QA 후속 |
+| UI-04 | Meitner: 순수 거래 도메인. Locke: 정규화 SQL·저장 어댑터. Newton: 거래 화면. 조정자: `/demo` 연결·배포 | `b4a2854` 여섯 번째 Preview Ready. 정상 로컬 요청→발주→공급/모의 결제→입고/48시간→수령·새로고침 복원. Preview 별도 시작·이전 이력 보관 확인. 독립 전체 QA 후속 |
+| UI-05 | 점포 지도·가상 위치/직선거리 | ADR-004 공식 근거 및 두 관점 검토 중. schema/거래 정책 변경 없음 |
 | DATA-01/02 | Locke: 242개 상품 초안·실제 점포8/legacy2·합성 역할/availability·SQLite 업그레이드. Newton: 출처/실제 점포 UI | `aa54838` 다섯 번째 Preview Ready. 로컬 기존 요청 보존 확인. 최종 상품 사실/독립 데이터 검증 전 |
 | VERIFY | 전체 seed/독립 검증·정책 검토·E2E·평가·G5/G6 | 구현 후 수행, 최종 완료 조건 유지 |
 

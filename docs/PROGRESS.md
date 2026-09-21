@@ -5,13 +5,13 @@
 ## 현재 포인터
 
 ```text
-현재 task: UI-04 거래 도메인·화면 연결 완료, 여섯 번째 Preview 게시
+현재 task: UI-04 여섯 번째 Preview 완료, UI-05 점포 지도 연결
 branch: codex/ui-preview-20260921
 PR: https://github.com/dokrsky/wanna-gs/pull/1 (draft, 최종 검증 전)
 마지막 유효 게이트: 제품 게이트 미실행
 마지막 Production deployment: dpl_GB3Cr8At3Com7eJcTnboJ9W4Sika (기존 최소 데모, 최종 제품 아님)
-현재 Preview: https://wanna-2y1lgry17-d-01.vercel.app (aa54838, 상품·실제 점포 확장)
-다음 한 가지: UI-04 Preview 게시·실제 화면 확인 후 미식별/정책 AI·지도 연결
+현재 Preview: https://wanna-e2y9lytyw-d-01.vercel.app/demo (b4a2854, 요청부터 픽업)
+다음 한 가지: 점포 지도 UI-05를 작은 Preview로 공유한 뒤 미식별/정책 AI 연결
 ```
 
 ## 현재 상태
@@ -22,7 +22,7 @@ PR: https://github.com/dokrsky/wanna-gs/pull/1 (draft, 최종 검증 전)
 | 위임 운영 결정 | ADR-001 채택, 실행 검증 전 | DECISION_INDEX·ADR-001 |
 | GitHub | dokrsky/wanna-gs, 기준 cf6f95a, 작업 branch에서 UI 개발 중 | 원격 쓰기/Actions 권한 확인, 제품 CI 미구현 |
 | 로컬 설정/사전점검 검사기 | OpenAI 15개 + inventory 10개 테스트 통과 | scripts/ 및 .agents/skills/wanna-gs-preflight/scripts/ |
-| 앱·CI·게이트 실행기·DB seed | 두 역할 UI·SQLite·두 역할 실제 AI Preview Ready. UI-04 거래 화면 로컬 정상 흐름 확인, 게시 중. 제품 CI/게이트 후속 | D-46·WORKPLAN, aa54838 이후 변경 |
+| 앱·CI·게이트 실행기·DB seed | 두 역할 UI·SQLite·두 역할 실제 AI와 UI-04 거래 Preview Ready. 거래 로컬 정상 흐름 확인. 제품 CI/게이트 후속 | D-46·WORKPLAN, b4a2854 |
 | SQLite | 242개 상품·실제 점포8/legacy2 Preview 배포. 새 거래 DB 별도 namespace·실제 정규화 SQL·기존 이력 보존 | UI-04 로컬 요청→수령, IndexedDB 사본 새로고침 복원 |
 | Vercel·OpenAI | Git 자동 Preview 및 UI branch 서버 env 연결. 두 역할 실제 호출 성공 | 고객 18b0b31·경영주 bd13e3f. gpt-5-mini, 고객 로컬 719/127·Preview 719/136 tokens |
 | 앱 단위·통합·E2E·실제 모델 평가 | 미실행 | 문서 검사와 구분 |
@@ -55,7 +55,7 @@ PR: https://github.com/dokrsky/wanna-gs/pull/1 (draft, 최종 검증 전)
 
 ## 다음 작업
 
-1. D-46에 따라 연결한 UI-04 거래 화면을 작은 커밋·Preview로 공유한다.
+1. D-46에 따라 UI-05 점포 지도를 작은 커밋·Preview로 공유한다.
 2. 미식별 니즈·미래 정책 AI·지도와 데이터 사실 보강을 연결하고 각각 Preview를 공유한다.
 3. 기능이 갖춰진 뒤 독립 검증·전체 E2E·평가·최종 게이트를 실행한다. 이미 실행 중인 goal을 다시 만들지 않는다.
 
@@ -240,3 +240,11 @@ UI04-BUILD-01: 최초 통합 Next build는 `commands.ts`의 `requireRule as requ
 로컬 브라우저 `localhost:3101/demo`: 명시 로컬 예시 검색(AI 아님)으로 콜드브루1개·GS25역삼띵동점·2,500원 확인/동의 저장(revision1), 경영주 예산10,000원 명시 저장(2), 매입1,600원 발주(3), 공급1개 확정으로 모의 결제성공/예약·입고대기(4), 전량입고(5), 고객 픽업 알림 2026-09-21 22:53:16 KST·마감09-23 22:53:16 확인. 새로고침 후 revision5·입고/마감 복원, 해당 예약번호로 경영주 전량수령(6) 완료. 실제 청구/외부 알림은 없으며 Preview의 해당 수직 흐름·독립 G4/G6는 아직 미실행이다.
 
 현재 base `aa54838`, branch `codex/ui-preview-20260921`, PR #1 draft. Preview 게시 후 정확한 source SHA·Ready·화면 확인을 기록한다. 별도 전체 정책/자연어 평가·보안/UX/실패 E2E·제품 CI는 후속이다. 미식별 니즈·미래 정책 AI·지도 및 데이터 사실 보강도 남아 있어 goal 완료로 표시하지 않는다.
+
+`b4a285411f7bfb55975770eee606848cefcd9855` commit/push → `dpl_3NyU16qFWujHU5ny2msrwdRW9inK` / https://wanna-e2y9lytyw-d-01.vercel.app/demo Ready·source SHA 일치 확인. 최신 브랜치 `/demo`의 실제 브라우저에서 별도 사본 시작→revision0 저장·실제 AI 설정 표시·이전 들깨버섯밥1개/역삼미래점/1,200원 요청 보관 이력을 확인했다. 이 호출은 모델 요청이 아니며 UI-04에서 추가 live 모델 호출은 0회다. Production은 변경하지 않았다. 이번 goal turn은 UI-04 구현·커밋/배포·수직 흐름 증거를 추가한 진행이다.
+
+UI-05 준비는 O-10 점포 지도에만 제한한다. 공식 OSM 공유 iframe/타일 정책 근거를 읽고 ADR-004를 초안으로 두 관점 독립 검토에 보냈다. 가상 고객 위치·현재 선택 점포 한 곳·주소 목록 fallback이며 새 지도 SDK/유료 계정/실제 GPS는 도입하지 않는다. 미식별 저장의 기존 SQL 사본 보존 방법은 별도 읽기 전용 준비 중이며 아직 schema를 바꾸지 않았다.
+
+## UI-05 점포 지도 — 2026-09-21
+
+ADR-004를 두 독립 정책 검토 후 채택하고 Newton이 4개 소유 파일을 구현·반환했다. 고객 조건 확인에서 동일 선택 점포의 주소·가상 기준점 직선거리·명시 외부 지도 보기/닫기/재시도를 제공한다. 출처·위치 신뢰도·외부 연결 정보와 OSM attribution을 표시한다. 좌표·점포가 바뀌면 이전 iframe 상태를 폐기하고 요청/동의/거래 DB는 변경하지 않는다. helper 자체 검사는 8개 공개 점포·잘못된 좌표/bbox·공개 정보만 포함한 URL을 통과했다. 실제 지도 표시와 build/배포는 이어서 확인하며 전체 독립 UX 통과를 의미하지 않는다.

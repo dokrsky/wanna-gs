@@ -13,6 +13,7 @@
     "check:preview-store": "node scripts/prepare-preview-sqlite.mjs --check",
     "check:domain-store": "node scripts/prepare-domain-sqlite.mjs --check",
     "check:domain": "node lib/domain/check.mjs",
+    "check:store-map": "node lib/store-map.check.mjs",
     "start": "next start",
     "lint": "next lint"
   },

@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, type FormEvent, type ReactNode } from "rea
 import { previewAvailability, previewProducts, previewStores, won, type PreviewDraft, type PreviewRequest } from "../demo-preview";
 import { AssistantError, errorMessages, isObject, parseSearchOutput, type AssistantErrorCode, type AssistantStatus, type SearchOutput, type SearchResponse } from "../../lib/assistant/contracts";
 import styles from "./customer-workspace.module.css";
+import StoreMap from "./store-map";
 
 type RequestCondition = { storeId: string; productId: string; requestable: boolean; unitPrice: number; version?: string };
 type Props = {
@@ -338,7 +339,7 @@ export default function CustomerWorkspace({ requests, onRequest, busy, condition
             })}
           </select>
           <p className={styles.small}>{store?.address ?? "실제 점포의 위치 참고 자료예요. 요청 가능 표시는 데모 조건이며 실제 취급·재고·영업 여부가 아니에요."}</p>
-          {store && <p className={styles.small}>참고 좌표: {store.latitude !== undefined && store.longitude !== undefined ? `${store.latitude}, ${store.longitude}` : "미확인"} · 지도는 후속 연결 예정</p>}
+          {store && <StoreMap store={store} busy={busy} />}
           <details className={styles.storeDirectory}>
             <summary>실제 점포 {requestStores.length}곳의 주소·참고 좌표 보기</summary>
             <ul>{requestStores.map(item => {
