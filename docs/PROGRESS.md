@@ -1,16 +1,16 @@
 # 진행 기록
 
-최종 갱신: 2026-09-21. 앱 goal은 아직 시작하지 않았다.
+최종 갱신: 2026-09-21. goal 진행 중이며, 최신 D-46에 따라 화면 구현·잦은 Preview 공유를 먼저 수행한다.
 
 ## 현재 포인터
 
 ```text
-현재 task: SQLite·OpenAI 문서와 원격 경영주 상세 조회 통합·검증·커밋
-branch: main (origin/main tracking)
+현재 task: UI-01 고객/경영주 화면 우선 구현 및 Preview 게시
+branch: codex/ui-preview-20260921
 PR: 없음
 마지막 유효 게이트: 제품 게이트 미실행
-마지막 Production deployment: 없음
-다음 한 가지: 최신 원격 main 통합 후 사용자가 push. 환경 키 입력·preflight 및 앱 goal은 별도 진행
+마지막 Production deployment: dpl_GB3Cr8At3Com7eJcTnboJ9W4Sika (기존 최소 데모, 최종 제품 아님)
+다음 한 가지: 두 역할 화면 통합·빌드 후 commit/push하고 Vercel Preview URL 공유
 ```
 
 ## 현재 상태
@@ -19,13 +19,13 @@ PR: 없음
 |---|---|---|
 | 요구사항·실행 계약·스킬·템플릿 | 최신 지시 반영·문서 검증 완료 | README·card·02·WORKPLAN·GOAL |
 | 위임 운영 결정 | ADR-001 채택, 실행 검증 전 | DECISION_INDEX·ADR-001 |
-| GitHub | 원격 09c3cc3의 경영주 조회 명세와 로컬 63535e6의 SQLite/OpenAI 변경 통합 | 현재 branch·merge 결과는 Git 이력과 아래 기록 확인 |
+| GitHub | dokrsky/wanna-gs, 기준 cf6f95a, 작업 branch에서 UI 개발 중 | 원격 쓰기/Actions 권한 확인, 제품 CI 미구현 |
 | 로컬 설정/사전점검 검사기 | OpenAI 15개 + inventory 10개 테스트 통과 | scripts/ 및 .agents/skills/wanna-gs-preflight/scripts/ |
-| 앱·CI·게이트 실행기·DB seed | 미구현 | 기능 개발 goal 미시작 |
+| 앱·CI·게이트 실행기·DB seed | 두 역할 UI 구현 중. 제품 CI/게이트/seed는 후속 | D-46·WORKPLAN |
 | SQLite | D-44 한 PC·한 탭 구조 확정, 실제 앱/seed/WASM은 미구현 | 06/29번, Neon은 현재 준비 대상 제외 |
-| Vercel·OpenAI | 배포/실제 호출 미검증, 정적 검사에서 OPENAI_API_KEY 누락 확인 | D-45, .env.example/.env.local 준비·25번·P08 |
+| Vercel·OpenAI | 로컬 실제 호출 CONNECTED. Vercel Git 연결 복구, probe Preview 서버 env 등록 | 현재 repoId 1379710145 대조. 배포 실제 모델 호출은 미검증 |
 | 앱 단위·통합·E2E·실제 모델 평가 | 미실행 | 문서 검사와 구분 |
-| 최종 제출 URL | 없음 | 실제 배포 전 |
+| 최종 제출 URL | 미완료 | 기존 wanna-gs.vercel.app은 최소 데모이며 최종 G6 전 |
 
 ## 반영한 기준
 
@@ -167,3 +167,9 @@ PR: 없음
 로컬 `npm ci`와 `npm run build`가 통과했다. `vercel --prod --yes --scope d-01`로 `dpl_GB3Cr8At3Com7eJcTnboJ9W4Sika`를 배포했고, Production 상태 `Ready`, alias `https://wanna-gs.vercel.app` 및 `https://wanna-gs-d-01.vercel.app`를 확인했다. `GET /api/health`는 `{"ok":true,"service":"wanna-gs","mode":"live"}`를 반환했고, 첫 화면의 원하GS·원하지쓰·데모 안내 텍스트를 HTTP 응답에서 확인했다.
 
 사전점검은 `PARTIAL`이다. GitHub CLI 계정 `dokrsky`와 Vercel CLI 계정 `simoon-3113` 인증·프로젝트 연결은 확인했지만, Vercel 환경변수는 현재 0개이고 `OPENAI_API_KEY`가 없어 실제 모델 호출은 `not_run`이다. sql.js/WASM·IndexedDB·제품 SQLite·브라우저 수직 흐름·독립 제품 QA·G1~G6는 아직 미검증이며, 이번 배포는 최소 데모의 환경 연결을 증명할 뿐이다. 기존 미추적 `.idea/`는 사용자 파일로 보존하고 커밋하지 않는다.
+
+## 로컬 OpenAI 키 입력 후 재검사 — 2026-09-21
+
+사용자의 `.env.local` 입력 후 재검사 요청으로 `python3 scripts/check_openai_env.py`는 `CONFIGURED`, `--live`는 실제 Responses API 한 번 호출 후 `CONNECTED`·종료코드 0을 반환했다. 키 값은 출력하지 않았으며 `.env.local`의 Git 무시도 확인했다. D-45·CORE-23의 로컬 연결 증거이며, 제품 품질·구조화 출력·전체 preflight 통과를 뜻하지 않는다.
+
+같은 시점 `vercel env ls --scope d-01 --project wanna-gs`는 환경변수 0개를 반환했다. Vercel 서버 설정·배포 호출 검증은 남아 있으며 전체 준비 상태는 `PARTIAL`이다. 다음 작업은 Vercel Preview/Production의 서버 환경변수 등록과 실제 앱 모델 호출 경로의 검증이다. 이번 재검사에서 외부 설정 변경·재배포·commit/push는 수행하지 않았다.

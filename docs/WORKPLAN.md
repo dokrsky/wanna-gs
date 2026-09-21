@@ -1,6 +1,17 @@
 # 실행 Workplan
 
-상태: 구현 전 계획 기준선. 이 파일은 상세 task DAG와 증거 계약을 정의한다. preflight, 조사, Preview, PLAN-READY, SEED-READY, G0~G6 중 어느 것도 아직 실행·통과하지 않았다. 실행 시 관측한 저장소·도구·외부 근거에 맞춰 task를 구체화하되 [CORE_REQUIREMENTS](CORE_REQUIREMENTS.md), 사용자 결정, [14번 게이트](14-agent-development-loop.md)의 권위를 바꾸지 않는다.
+상태: D-46의 화면 우선 실행 중. 아래 기존 DAG는 최종 검증 목적지이며, 초기 화면·Preview의 선행 차단 조건은 아니다. 제품 게이트는 아직 통과하지 않았다.
+
+## 현재 실행 순서 — D-46
+
+| 순서 | 구현·담당 | 상태·공유 |
+|---|---|---|
+| UI-01 | 조정자: 공통 화면/역할 전환·메모리 상태. Meitner: 고객 입력/후보/요청. Newton: 경영주 묶음/고객 상세/시연 승인 | `codex/ui-preview-20260921`, 소유 파일 분리. 빌드 후 첫 commit/push·Preview 공유 |
+| UI-02 | 브라우저 SQLite 저장/복원 및 실제 서버 AI 연결 | 다음 구현 단위, 연결할 때마다 commit/push·Preview |
+| UI-03 | 발주/공급/모의 결제/입고/48시간 픽업 연결 | 단계별 동작 Preview 공유 |
+| VERIFY | 전체 seed/독립 검증·정책 검토·E2E·평가·G5/G6 | 구현 후 수행, 최종 완료 조건 유지 |
+
+연구 Locke는 이미 확보한 초기 근거를 정리한다. 별도 preflight 시험 앱과 선행 감사는 중단·보존하고 화면 구현으로 인력을 재배정했다. 임시 UI는 합성 데이터·메모리 상태/새로고침 초기화·AI/SQLite 미연결을 표시하며 제품 완료 증거로 사용하지 않는다.
 
 ## 목표와 종료 상태
 

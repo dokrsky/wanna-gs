@@ -1,5 +1,7 @@
 # 현재 유효한 결정과 변경 추적
 
+최신 실행 순서: 사용자 직접 결정 D-46에 따라 화면 구현·소규모 commit/push·Preview 공유를 먼저 진행하고 goal용 전체 검증은 이후 수행한다. 미완료 검증을 PASS로 표시하지 않으며 아래 ADR-002 초안은 화면 개발을 막는 조건이 아니다.
+
 최초 구현 기준. 사용자 정의는 02번과 [CORE_REQUIREMENTS](CORE_REQUIREMENTS.md), 위임 정책 본문은 개별 ADR이다. 이 인덱스는 현재 유효한 정책을 빠르게 찾아 다음 결정 전에 반드시 확인하기 위한 것이다. 앱 구현은 아직 시작하지 않았다. ADR-001은 개발 의존성 설계에 채택됐으며 실행 검증은 남아 있다.
 
 ## 원장
@@ -7,6 +9,7 @@
 | 결정 ID | 구분 | 상태 | 유효 범위/기준 revision | 관련 CORE·상위 결정 | 대체/충돌 관계 | 구현·테스트·PR | 담당 |
 |---|---|---|---|---|---|---|---|
 | [ADR-001](decisions/ADR-001-minimal-seed-development.md) | user-delegated 운영 | adopted, 실행 미검증 | 2026-09-21 설계·후속 구현 | CORE-14/17/18/22, D-21/25/26/28/30 | 기존 D02→D03·D05→F00 대체, 최종 요구 유지 | WORKPLAN DAG·독립 검토, 앱 테스트/PR 미실행 | 조정자·DBA |
+| [ADR-002](decisions/ADR-002-execution-and-evaluation.md) | user-delegated 실행·평가 | proposed, 두 독립 검토 대기 | codex/goal-bootstrap-20260921 초안만 | CORE-14~23/25, ADR-001, AC-21~31 | 대체 없음, 기존 필수 범위 유지 | 평가 실행 전 기준·분할·예산·CI 계획; 구현 미완료 | 조정자·독립 검토자 |
 
 실행 중 위 표에 실제 항목을 추가한다. 빈 양식은 검토·채택 증거가 아니다. 사용자 결정 D-01~최신 항목은 [02번](02-decisions-and-open-questions.md)에서 읽고, 새 위임 ADR을 이 표에 연결한다.
 
