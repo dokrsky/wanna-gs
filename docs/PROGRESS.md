@@ -5,14 +5,14 @@
 ## 현재 포인터
 
 ```text
-현재 task: EVAL-01 자료 초안/도구·원자료 보강 게시, 26suite/build 원격CI 통과
+현재 task: EVAL-02 두 역할 독립 자료 감사·실제 서비스 응답 대조기 구현
 branch: codex/ui-preview-20260921
 PR: https://github.com/dokrsky/wanna-gs/pull/1 (draft, 최종 검증 전)
 마지막 유효 게이트: 제품 게이트 미실행
 마지막 Production deployment: dpl_GB3Cr8At3Com7eJcTnboJ9W4Sika (기존 최소 데모, 최종 제품 아님)
-현재 Ready Preview: https://wanna-7q8b4sg85-d-01.vercel.app/demo (5cd1f45, POLICY01 앱 동일·EVAL01 준비 추가)
+현재 Ready Preview: https://wanna-2434ym5na-d-01.vercel.app/demo (74d2828, POLICY01 앱 동일·EVAL01 증거 기록)
 공유 브랜치 주소: https://wanna-gs-git-codex-ui-preview-20260921-d-01.vercel.app/demo
-다음 한 가지: 평가 family·시나리오/독립 라벨 검토. 비용 상한 전 대규모 모델 호출 없음
+다음 한 가지: 독립 자료/대조기 검토 반례 인계·최소 복구 후 작은 commit/push. 비용 상한 전 대규모 모델 호출 없음
 ```
 
 ## 현재 상태
@@ -480,3 +480,21 @@ staged17파일에서 실제 설정 비밀값2개와 알려진 credential 패턴 
 원격 evidence 경로 `test-results/quality/2026-09-21T17-23-32-583Z-2414/report.json`, artifact `offline-evidence-35631676133-1`/10655155112, API archive digest `12a4a14ed2e4c6f752a538fd50f95b5d08513fb428f65b6f027a7ae6e3dc2033`. 이번에는 CI의 실제 aggregate 실행·로그와 artifact 메타데이터를 읽었으며 archive를 별도로 다운로드/재검증하지 않았다. 이전 GATE01 다운로드 검증과 구분한다.
 
 Vercel `dpl_6oxDznSPsJDiJ1E2FEPvkLBNC7bx` / https://wanna-7q8b4sg85-d-01.vercel.app/demo **Ready·source5cd1f45 일치**, GitHub Vercel status success다. 앱 소스/seed는 POLICY01 그대로이며 이번에는 브라우저·모델 재실행0·Production 변경0이다. 해당 게시 성공은 평가 초안의 의미 승인이나 전체 제품 게이트 PASS가 아니다. 다음은 family/장면·독립 라벨 검토이며 비용 질문 답변 없이 대규모 실호출을 시작하지 않는다.
+
+## EVAL-02 독립 자료 감사·응답 대조기 — 2026-09-22 KST
+
+직전 turn은 EVAL01 commit/실제 CI/Ready로 progress였다. 재개 시 HEAD `74d28283691e06619687bf285b597d65de1efb14`, 사용자 `.idea/`만 untracked, Actions35631922195 success와 Vercel `dpl_3cW4smeJAqfyZTRSAJqsrFd8HdrT` / https://wanna-2434ym5na-d-01.vercel.app/demo Ready·같은source를 실제 재확인했다. 전체 preflight·유효한 기존 앱 검사를 처음부터 다시 실행하지 않았다.
+
+[EVAL02 계약](context/EVAL-02.md) revision1 hash `b854718fe0d43ecbcb09c627cca8a6309a839ea014f958f883834b0cad81531a`: main 순수 대조기, Bernoulli 고객 자료 독립 검토(`01a0c502-78a2-7012-88c3-778359ffd842`), Gibbs 경영주 자료 독립 검토(`01a0c502-7914-78c2-aa46-b793680701cb`), Euclid 좁은 코드 검토(`01a0c505-203a-7900-b8aa-a76ced583225`). 각각 보고서만 소유하며 원본 curator/앱 구현자와 다르다. 보호 상세는 평가자 전용 ignored 보고서에 남기고 main은 공개 집계와 공개 사례만 읽는다.
+
+main은 기존 API 순수 파서를 재사용해 실제 request/wire-response 쌍의 ID·세대·점포/버전·문맥·고객의 직전 실제 질문과 후속 답, SKU/kind/status·경영주 완전 tuple 대안을 대조했다. API가 안전 정규화해야 하는 wire payload를 정답으로 세지 않는다. Recall@3/정확kind 진단과 의미상 올바른 선택을 구분하며 semantic은 항상pending·provider raw는unobserved·quality는not_evaluated다. 이 모듈은 HTTP 실행·고정 분모/비용 집행·독립 의미 채점·브라우저/거래 검증을 대체하지 않는다.
+
+EVAL02-FIXTURE-01: 최초 합성 대안 반례의 view가 실제 enum에 없는 `unrequested`라31개 이후 `Invalid evaluation case`/종료1이었다. 실제 계약의 requested/approved/all을 확인하고 fixture의 view만all로 바꿨다. 정상 대안2개·금지된 필드 교차 조합 검사는 그대로 유지하고 **39 synthetic checks PASS**로 재실행했다. 테스트 기대값/앱 정책 변경·skip0이다. 생성된 도구 source hash `bec1dadffe23bb9a785e7e86c9546055a60515193cebab7b6873647625c68eaf`, checker `ec6d9d8eb8dae0df304a1fdba85cab66bfe56de0c2e6cd2b80e32c9511611836`를 Euclid에게 고정 전달했다. 독립 코드/자료 판정은 아직 진행 중이다. 공통 runner selfcheck34는 새 registry에서도 종료0이며 전체27suite/build는 후속이다.
+
+현재 앱·프롬프트·seed·보호 원자료·Production 수정0, provider호출0. 비용 상한 질문 답변은 아직 없으며 모델 대규모 호출을 시작하지 않는다. 완성되지 않은 자료 분할을 숫자만으로 승인하지 않고 독립 결과에서 실제 다음 수정 범위를 정한다.
+
+Euclid의 [독립 응답 대조 검토](reviews/eval-02-response.md)는 같은 matcher/checker/context hash에서 새 수정사항0·좁은PASS다. 별도로 만든 정상3turn/질문·정정·상관ID, 경영주 문맥·복원/정책·전체대안, 정책 안전정규화 및 원문 비노출 **47/47**을 직접 실행했다. 자체39검사를 독립 검사로 합산하지 않았다. reviewer의 최초 harness import순서 오류(exit1/0검사)는 자신의 dynamic import로 수정했으며 앱/매처 수정은 없었다. 보고서의 재현 harness도 같은47검사 재실행으로 확인했고, 공개/보호 authored corpus·모델·브라우저는 읽거나 실행하지 않았다. reviewer 인계/종료 후 자료 감사와 분리해 대조기 단위를 게시한다.
+
+main Node24 `check:offline`의 **27suite+Next production build PASS**, 원본 `test-results/quality/2026-09-21T17-32-54-177Z-46946/report.json`, SHA256 `c4f9e8ba05f979476faaab92f1feb7af100264707ab906c7bcbe86807c135748`. 같은 source/원본 로그를 `check:evidence`로 다시 확인해 종료0. 이 결과는 로컬 offline 도구/기존 앱 회귀이며 자료 의미 검토나 실제 모델 품질을 통과시킨 것이 아니다. 두 역할 자료 검토는 별도로 진행 중이며 이 작은 게시를 기다리게 하지 않는다.
+
+경영주 자료의 첫 독립 인계는 공개96건 직접 검토·보호24건 좁은 구조 검사였다. 공개자료 P1 개발 노출 family2건(M-V-09/15), P2 의미상 동등한 전체tuple 대안 누락6건(M-D-011/012/015/016/017/018)을 확인했다. protected 의미 비교 후보13건은 아직 확정 누수가 아니므로 추가5분 범위로 같은 reviewer가 비공개 상세를 확인한다. main은 보호 상세를 읽지 않는다. 자료는 아직 미수정·baseline-ready가 아니며, 이 도구 게시 후 원래 curator의 의미 보존 수정·새 revision/독립 재검증으로 이어진다.

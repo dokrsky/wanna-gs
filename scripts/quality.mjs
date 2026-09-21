@@ -8,7 +8,7 @@ import { fileURLToPath } from "node:url";
 export const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 export const hash = value => createHash("sha256").update(value).digest("hex");
 const build = { id: "build", command: "npm", args: ["run", "build"], mode: "offline", scope: "build", marker: "^Route \\(app\\)" };
-const sourcePaths = ["app", "lib", "data", "evals", "scripts", "quality", ".github", ".agents/skills/wanna-gs-preflight/scripts", "package.json", "package-lock.json", "tsconfig.json", "next.config.*", ".nvmrc", ".gitignore", "card.md", "docs/CORE_REQUIREMENTS.md", "docs/decisions", "docs/research", "docs/context/GATE-01.md", "docs/context/EVAL-01.md", "docs/09-verification-and-evals.md", "docs/14-agent-development-loop.md"];
+const sourcePaths = ["app", "lib", "data", "evals", "scripts", "quality", ".github", ".agents/skills/wanna-gs-preflight/scripts", "package.json", "package-lock.json", "tsconfig.json", "next.config.*", ".nvmrc", ".gitignore", "card.md", "docs/CORE_REQUIREMENTS.md", "docs/decisions", "docs/research", "docs/context/GATE-01.md", "docs/context/EVAL-01.md", "docs/context/EVAL-02.md", "docs/09-verification-and-evals.md", "docs/14-agent-development-loop.md"];
 const git = args => execFileSync("git", args, { cwd: root, encoding: "utf8" }).trim();
 export function fingerprint() {
   const paths = git(["ls-files", "--cached", "--others", "--exclude-standard", "-z", "--", ...sourcePaths]).split("\0").filter(Boolean);

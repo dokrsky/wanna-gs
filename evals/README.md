@@ -8,15 +8,22 @@ Node24.12.0에서 실행한다. 이 명령은 네트워크와 모델 API를 호�
 
 ```sh
 npm run check:eval-tools
+npm run check:eval-response
 node scripts/eval-dataset.mjs customer
 node scripts/eval-dataset.mjs merchant
 ```
 
-첫 명령은 **검사기 자체의 인위적 반례**다. 뒤 두 명령은 각 공개 pack의 실제 형식·기존 API 요청/정답 정규화·상품 ID·동일 group의 split 충돌·정규화된 중복 대화/상태·선언된 범주별 분모를 검사한다. 실행 전 고정된 ceil(비율×분모)를 출력하며 실제 성공률을 만들어내지 않는다. coverage 부족은 종료2, 형식 오류는 종료1이다.
+앞 두 명령은 **자료 검사기/응답 대조기 자체의 인위적 반례**다. 뒤 두 명령은 각 공개 pack의 실제 형식·기존 API 요청/정답 정규화·상품 ID·동일 group의 split 충돌·정규화된 중복 대화/상태·선언된 범주별 분모를 검사한다. 실행 전 고정된 ceil(비율×분모)를 출력하며 실제 성공률을 만들어내지 않는다. coverage 부족은 종료2, 형식 오류는 종료1이다.
 
 실제 연구 원장에 있는 RC 식별자와 CORE 식별자도 대조한다. 새로운 scenarioId의 장면 정의·연구에서의 의미상 파생은 별도 자료 검토가 필요하며, ID 형식 검사만으로 참조가 완성됐다고 하지 않는다.
 
 `customer.json`, `merchant.json`은 dev/validation 전용이다. 공개 화면 예시·기존 smoke 및 같은 의미 family는 dev에만 둔다. 상품 카탈로그는 공개 입력이지만 평가 정답·rationale·semanticChecks를 앱/프롬프트/별칭에 import하지 않는다. 문자 정규화는 단순 중복 탐지만 하므로 의미상 유사 family의 분리·tag 적합성·정답 사실은 별도의 평가자가 검토해야 한다. 이 검사는 구조적 누수를 찾는 도구이지 의미상 누수 부재 인증이 아니다.
+
+## 실제 서비스 응답의 기계 대조
+
+`scripts/eval-response.mjs`의 `matchCaseResponses(case, exchanges)`는 한 case의 실제 요청/서비스 응답 쌍을 메모리에서 대조하는 순수 모듈이다. 현재는 합성 자체검사만 실행했다. 고객은 실제 직전 응답의 질문을 다음 요청이 그대로 사용했는지, 같은 대화/세대·정답 status/SKU/kind인지 검사한다. 경영주는 실제 context와 버전/점포를 확인하고 명시된 완전 tuple 중 하나와 일치해야 한다. 대안 필드를 임의 조합하지 않는다.
+
+후보 Recall@3과 exact-kind Recall@3은 진단이며 올바른 선택/의미 성공이 아니다. 허용 대체 후보의 기계 일치도 원상품 정확 식별 성공으로 세지 않는다. `semanticStatus: pending`, `providerRawStatus: unobserved`, `qualityStatus: not_evaluated`를 항상 유지한다. 서버가 이미 정규화한 이전 provider 원시 출력은 이 도구로 복원할 수 없다. 호출 provenance·서버/브라우저 실행·고정 전체 분모 집계·사용량/비용 집행·독립 semantic 판정은 실제 runner의 후속 책임이다. 수작업 합성 응답을 넣어 match를 얻은 것은 모델 성능 증거가 아니다.
 
 ## 보호 holdout
 

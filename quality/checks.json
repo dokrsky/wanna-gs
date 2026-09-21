@@ -459,6 +459,17 @@
       "limitation": "Artificial counterexamples of eval pack validation/count arithmetic and existing pure API contracts only. Does not execute the authored corpus, protected holdout, model calls, semantic grading, browser/SQLite transactions, or any release gate. Synthetic test fixtures are not real evaluation samples."
     },
     {
+      "id": "eval-response-matcher",
+      "command": "node",
+      "args": ["scripts/eval-response.check.mjs"],
+      "marker": "^Eval response matcher: [1-9][0-9]* synthetic checks PASS \\(no live or semantic score\\)\\.$",
+      "minMatches": 1,
+      "mode": "offline",
+      "scope": "unit",
+      "core": ["CORE-21", "CORE-22", "CORE-23"],
+      "limitation": "Synthetic actual-API-contract request/response pairs only. Tests correlation, prior-question continuity, exact SKU/kind checks, complete alternative tuples and incomplete evidence. Semantic status remains pending and provider raw behavior is unobserved. No authored corpus execution, transport/live provenance, fixed-denominator run scoring, usage/cost budget enforcement, UI/SQLite/latency or release approval."
+    },
+    {
       "id": "eval-customer-public",
       "command": "node",
       "args": ["scripts/eval-dataset.mjs", "customer"],

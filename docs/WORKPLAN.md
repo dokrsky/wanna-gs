@@ -25,6 +25,7 @@
 | GATE-01 | main runner/CI, Curie registry, Hooke 독립 검토 | `1f2081c` Ready·23offline suite+build 로컬 및 실제Actions35628215424 PASS. validator34·독립반례37/원본로그 검증·main required gate 연결. 전체G1~G6·live/독립QA증거검증은별도남음 |
 | EVAL-01 | main 형식검사기, Hilbert 고객/Peirce 경영주 curator, Darwin 독립 도구 검토 | `5cd1f45` Ready·Actions35631676133의26offline suite/build PASS. 고객300/경영주120 초안·공개336/보호84. 결함6개 복구·자체66/독립원본6+인접47 PASS. family 비율/장면 정의·라벨/누수 의미 검토·실제 baseline 후속, 비용 답변 전 모델0 |
 | STORE-SOURCE | Galileo ST06 원근거, Franklin 공공 원행6개, main 재대조 | ST06 공식 KTO 좌표 대조·나머지6개 공식 배포 파일의 관측 행 대조. 부분 ZIP에서 행6개/hash/현재 좌표 main 재현 PASS. 전체 archive/CRC·모든 재이용조건·최종 데이터QA 승인 아님 |
+| EVAL-02 | main 응답 대조기, Bernoulli 고객/Gibbs 경영주 독립 자료 감사, Euclid 코드 검토 | 도구 자체39·독립47 및27offline suite/build 로컬 PASS. 자료 감사와 분리해 작은 게시 진행. 두 역할 라벨/family 감사는 진행 중. 모델0·semantic/출시 PASS 아님 |
 
 연구 Locke는 이미 확보한 초기 근거를 바탕으로 전체 seed를 확장한다. 별도 preflight 시험 앱과 선행 감사는 중단·보존하고 화면 구현으로 인력을 재배정했다. 임시 UI는 합성 데이터·실제 SQLite 저장·실제 AI 연결 범위와 아직 미연결인 거래 단계를 구분하며 제품 완료 증거로 사용하지 않는다.
 
