@@ -5,12 +5,13 @@
 ## 현재 포인터
 
 ```text
-현재 task: UI-01 고객/경영주 화면 우선 구현 및 Preview 게시
+현재 task: UI-02 SQLite 연결·로컬 복원 확인 완료, 두 번째 Preview 게시
 branch: codex/ui-preview-20260921
-PR: 없음
+PR: https://github.com/dokrsky/wanna-gs/pull/1 (draft, 최종 검증 전)
 마지막 유효 게이트: 제품 게이트 미실행
 마지막 Production deployment: dpl_GB3Cr8At3Com7eJcTnboJ9W4Sika (기존 최소 데모, 최종 제품 아님)
-다음 한 가지: 두 역할 화면 통합·빌드 후 commit/push하고 Vercel Preview URL 공유
+현재 Preview: https://wanna-j6xntmurw-d-01.vercel.app
+다음 한 가지: SQLite 저장/복원을 화면에 연결해 다음 기능 커밋·Preview 게시
 ```
 
 ## 현재 상태
@@ -21,8 +22,8 @@ PR: 없음
 | 위임 운영 결정 | ADR-001 채택, 실행 검증 전 | DECISION_INDEX·ADR-001 |
 | GitHub | dokrsky/wanna-gs, 기준 cf6f95a, 작업 branch에서 UI 개발 중 | 원격 쓰기/Actions 권한 확인, 제품 CI 미구현 |
 | 로컬 설정/사전점검 검사기 | OpenAI 15개 + inventory 10개 테스트 통과 | scripts/ 및 .agents/skills/wanna-gs-preflight/scripts/ |
-| 앱·CI·게이트 실행기·DB seed | 두 역할 UI 구현 중. 제품 CI/게이트/seed는 후속 | D-46·WORKPLAN |
-| SQLite | D-44 한 PC·한 탭 구조 확정, 실제 앱/seed/WASM은 미구현 | 06/29번, Neon은 현재 준비 대상 제외 |
+| 앱·CI·게이트 실행기·DB seed | 두 역할 UI 첫 Preview Ready. SQLite 연결 구현 중. 제품 CI/게이트/전체 seed는 후속 | D-46·WORKPLAN, 0e43f0d |
+| SQLite | 실제 sql.js·seed/WASM·IndexedDB 저장 및 로컬 새로고침 복원 연결 | UI-02, 6개 상품/2개 가상 점포의 중간 seed. 전체 상품/도메인은 후속 |
 | Vercel·OpenAI | 로컬 실제 호출 CONNECTED. Vercel Git 연결 복구, probe Preview 서버 env 등록 | 현재 repoId 1379710145 대조. 배포 실제 모델 호출은 미검증 |
 | 앱 단위·통합·E2E·실제 모델 평가 | 미실행 | 문서 검사와 구분 |
 | 최종 제출 URL | 미완료 | 기존 wanna-gs.vercel.app은 최소 데모이며 최종 G6 전 |
@@ -54,9 +55,9 @@ PR: 없음
 
 ## 다음 작업
 
-1. 이번 문서·홍보 시안을 검토한다. 사용자가 기존 main push를 완료했으므로 init/push 인증 문제를 현재 차단으로 취급하지 않는다.
-2. README의 계정·키·연동 준비 후 preflight inspect/live를 수행한다.
-3. 실제 연동 결과를 확인한 뒤 별도 `/goal`로 앱 개발을 시작한다.
+1. D-46에 따라 UI-02의 SQLite 저장/복원을 연결하고 작은 커밋·Preview로 공유한다.
+2. 실제 서버 AI와 발주·공급·모의 결제·입고/픽업을 차례로 연결하고 각각 Preview를 공유한다.
+3. 기능이 갖춰진 뒤 독립 검증·전체 E2E·평가·최종 게이트를 실행한다. 이미 실행 중인 goal을 다시 만들지 않는다.
 
 ## 기록 원칙
 
@@ -173,3 +174,19 @@ PR: 없음
 사용자의 `.env.local` 입력 후 재검사 요청으로 `python3 scripts/check_openai_env.py`는 `CONFIGURED`, `--live`는 실제 Responses API 한 번 호출 후 `CONNECTED`·종료코드 0을 반환했다. 키 값은 출력하지 않았으며 `.env.local`의 Git 무시도 확인했다. D-45·CORE-23의 로컬 연결 증거이며, 제품 품질·구조화 출력·전체 preflight 통과를 뜻하지 않는다.
 
 같은 시점 `vercel env ls --scope d-01 --project wanna-gs`는 환경변수 0개를 반환했다. Vercel 서버 설정·배포 호출 검증은 남아 있으며 전체 준비 상태는 `PARTIAL`이다. 다음 작업은 Vercel Preview/Production의 서버 환경변수 등록과 실제 앱 모델 호출 경로의 검증이다. 이번 재검사에서 외부 설정 변경·재배포·commit/push는 수행하지 않았다.
+
+## 화면 우선 전환·첫 Preview — 2026-09-21
+
+최신 사용자 D-46에 따라 별도 preflight 시험 앱/선행 정책 감사를 멈추고 Meitner를 고객 화면, Newton을 경영주 화면에 배정했다. 조정자가 공통 스타일·역할 전환·화면용 상태를 통합했다. 최신 시안의 시안/블루·원하지쓰 안내를 적용했고 합성 데이터·로컬 검색·메모리 한계와 미연결 기능을 표시했다. 기존 preflight worktree는 삭제하지 않았으며 제품 완료로 세지 않는다.
+
+`0e43f0dda33275b1040a906c3a1e3219ea309c95`를 `codex/ui-preview-20260921`에 commit/push했다. [PR #1](https://github.com/dokrsky/wanna-gs/pull/1)은 draft다. Git 연동이 자동 생성한 `dpl_HEBt64yrCyhQreUhnQejWYwxR49x`의 source SHA 일치·Ready와 [실제 Preview](https://wanna-j6xntmurw-d-01.vercel.app) 화면 로딩을 브라우저에서 확인했다. 브랜치 최신 주소는 https://wanna-gs-git-codex-ui-preview-20260921-d-01.vercel.app 이다. Production은 변경하지 않았다.
+
+최소 확인: Node 24.12의 Next 15.5.25 build/타입 검사 PASS, 로컬 브라우저의 매일우유 예시 검색과 경영주 역할 전환, staged 17개 파일의 실제 키 포함 여부 검사 PASS. 이는 독립 제품 QA·전체 G1~G6가 아니다. `.env.local`은 Git 제외이고 로컬 실제 OpenAI CONNECTED를 재확인했다. Vercel Git 연결의 이전 repoId를 현재 ID로 복구했으며 probe 전용 Preview 서버 env만 등록했다. UI Preview는 실제 모델을 아직 호출하지 않는다.
+
+Locke는 초기 조사 확보분을 별도 research worktree에 보존하고 다음 SQLite 연결 구현으로 이동했다. 공통 schema/lockfile은 이 담당자 한 명만 수정하며 첫 Preview를 기다리게 하지 않았다. 다음 단계는 저장 완료 뒤 성공 표시·새로고침 복원·역할 전환을 연결한 두 번째 Preview다.
+
+## UI-02 브라우저 SQLite 연결 — 2026-09-21
+
+실제 sql.js 1.14.2로 생성한 seed.sqlite/WASM을 빌드 자산으로 배포하고, 브라우저 SQLite 사본을 IndexedDB에 저장한다. 저장 완료 뒤 요청/승인 성공과 화면 상태를 반영하며 실패 시 이전 저장본을 유지한다. 손상/버전 불일치는 자동 초기화하지 않고 안내·명시적 초기화를 제공한다. UI는 저장 중 중복 명령을 막는다. 전체 domain/200개 상품 seed 완료가 아니라 UI-02의 중간 구조다.
+
+실행: `npm run check:preview-store`의 SQL 제약/FK/export-import/저장 및 reset 실패 보존 검사 PASS; Node 24.12에서 build·타입 PASS. 로컬 브라우저에서 매일우유 1개·2,800원·원하데모점 요청 저장→새로고침→내 요청 1건 복원→경영주 집계 5명/9개/25,500원 확인. 아직 Preview의 동일 동작·독립 전체 QA·전체 도메인/E2E 게이트는 미실행이다. 실제 AI 검색 API는 별도 변경으로 병렬 구현 중이며 이번 저장 커밋에는 포함하지 않는다.

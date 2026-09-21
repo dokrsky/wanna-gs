@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useRef, useState, type FormEvent } from "react";
 import { type PreviewRequest, previewProducts, previewStores, won } from "../demo-preview";
 import styles from "./merchant-workspace.module.css";
 
@@ -22,9 +22,10 @@ const dateFormat = new Intl.DateTimeFormat("ko-KR", {
   month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit", timeZone: "Asia/Seoul",
 });
 
-export default function MerchantWorkspace({ requests, onApprove }: {
+export default function MerchantWorkspace({ requests, onApprove, busy }: {
   requests: PreviewRequest[];
-  onApprove: (ids: string[]) => boolean;
+  onApprove: (ids: string[]) => Promise<boolean>;
+  busy: boolean;
 }) {
   const [storeId, setStoreId] = useState(previewStores[0].id);
   const [view, setView] = useState<View>("requested");
@@ -35,6 +36,7 @@ export default function MerchantWorkspace({ requests, onApprove }: {
   const [previousInput, setPreviousInput] = useState<string | null>(null);
   const [proposal, setProposal] = useState<Proposal | null>(null);
   const [message, setMessage] = useState("");
+  const submitting = useRef(false);
 
   const store = previewStores.find((item) => item.id === storeId)!;
   const storeRequests = requests.filter((item) => item.storeId === storeId);
@@ -59,6 +61,7 @@ export default function MerchantWorkspace({ requests, onApprove }: {
   const proposedItems = proposal?.ids ? storeRequests.filter((item) => proposal.ids!.includes(item.id)) : [];
 
   function toggle(items: PreviewRequest[]) {
+    if (busy || submitting.current) return;
     const ids = items.filter(canSelect).map((item) => item.id);
     const allSelected = ids.every((id) => selectedIds.includes(id));
     setSelectedIds((current) => allSelected ? current.filter((id) => !ids.includes(id)) : [...new Set([...current, ...ids])]);
@@ -67,6 +70,7 @@ export default function MerchantWorkspace({ requests, onApprove }: {
 
   function propose(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (busy || submitting.current) return;
     setProposal(null);
     setMessage("");
     const text = command.trim().replace(/[\s,.!?，。]/g, "");
@@ -94,7 +98,7 @@ export default function MerchantWorkspace({ requests, onApprove }: {
   }
 
   function applyProposal() {
-    if (!proposal || proposalStale) return;
+    if (busy || submitting.current || !proposal || proposalStale) return;
     setView(proposal.view);
     setSearch("");
     if (proposal.ids !== null) setSelectedIds(proposal.ids);
@@ -102,19 +106,25 @@ export default function MerchantWorkspace({ requests, onApprove }: {
     setProposal(null);
   }
 
-  function approve() {
-    if (!selected.length || !validBudget || overBudget || !Number.isSafeInteger(selectedTotal)) return;
-    if (onApprove(selected.map((item) => item.id))) {
-      setMessage(`${selected.length}건 · ${quantity(selected)}개를 화면 시연용으로 발주 승인했어요. 아직 공급 확보·결제·예약은 진행되지 않았어요.`);
+  async function approve() {
+    if (busy || submitting.current || !selected.length || !validBudget || overBudget || !Number.isSafeInteger(selectedTotal)) return;
+    submitting.current = true;
+    setMessage("");
+    try {
+      if (!await onApprove(selected.map((item) => item.id))) {
+        setMessage("승인을 저장하지 못했어요. 선택은 유지했으니 현재 요청 상태를 확인한 뒤 다시 시도해 주세요.");
+        return;
+      }
+      setMessage(`${selected.length}건 · ${quantity(selected)}개의 발주 승인을 이 브라우저에 저장했어요. 아직 공급 확보·결제·예약은 진행되지 않았어요.`);
       setSelectedIds([]);
       setProposal(null);
-    } else {
-      setMessage("요청 상태가 바뀌었거나 이미 승인된 항목이 있어요. 현재 목록에서 다시 선택해 주세요.");
-    }
+    } catch {
+      setMessage("승인을 저장하지 못했어요. 선택은 유지했으니 다시 시도해 주세요.");
+    } finally { submitting.current = false; }
   }
 
   return (
-    <section className={styles.workspace} aria-label="경영주 수요 관리">
+    <section className={styles.workspace} aria-label="경영주 수요 관리" aria-busy={busy}>
       <header className={styles.header}>
         <div>
           <p className={styles.eyebrow}>원하GS · 원하지쓰 <span>경영주</span></p>
@@ -123,7 +133,7 @@ export default function MerchantWorkspace({ requests, onApprove }: {
         </div>
         <label className={styles.storePicker}>
           <span>관리 점포</span>
-          <select value={storeId} onChange={(event) => {
+          <select value={storeId} disabled={busy} onChange={(event) => {
             setStoreId(event.target.value); setSelectedIds([]); setProposal(null); setMessage(""); setSearch("");
           }}>
             {previewStores.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
@@ -149,17 +159,17 @@ export default function MerchantWorkspace({ requests, onApprove }: {
             <form onSubmit={propose}>
               <label htmlFor="merchant-command" className={styles.fieldLabel}>조회 또는 이번 묶음 변경 지시</label>
               <div className={styles.commandRow}>
-                <input id="merchant-command" value={command} maxLength={240} placeholder="샌드위치는 빼고, 예산 안에서"
+                <input id="merchant-command" value={command} disabled={busy} maxLength={240} placeholder="샌드위치는 빼고, 예산 안에서"
                   onChange={(event) => { setCommand(event.target.value); setProposal(null); }}
                   onKeyDown={(event) => { if (event.key === "Enter" && event.nativeEvent.isComposing) event.preventDefault(); }} />
-                <button className={styles.primaryButton} type="submit" disabled={!command.trim()}>변경안 보기 <span aria-hidden="true">→</span></button>
+                <button className={styles.primaryButton} type="submit" disabled={busy || !command.trim()}>변경안 보기 <span aria-hidden="true">→</span></button>
               </div>
             </form>
             <div className={styles.examples} aria-label="입력 예시">
-              {examples.map((example) => <button type="button" key={example} onClick={() => {
+              {examples.map((example) => <button type="button" key={example} disabled={busy} onClick={() => {
                 setPreviousInput(command); setCommand(example); setProposal(null);
               }}>{example}</button>)}
-              {previousInput !== null && <button type="button" className={styles.undoButton} onClick={() => {
+              {previousInput !== null && <button type="button" className={styles.undoButton} disabled={busy} onClick={() => {
                 setCommand(previousInput); setPreviousInput(null); setProposal(null);
               }}>이전 입력 복원</button>}
             </div>
@@ -171,8 +181,8 @@ export default function MerchantWorkspace({ requests, onApprove }: {
               {proposal.ids !== null && validBudget && sum(proposedItems) > budget && <p className={styles.error}>현재 예산보다 {won(sum(proposedItems) - budget)} 많아요. 적용 후 선택을 줄이거나 예산을 수정해 주세요.</p>}
               {proposalStale && <p className={styles.error}>요청 또는 예산이 바뀌었어요. 변경안을 다시 만들어 주세요.</p>}
               <div className={styles.proposalActions}>
-                <button type="button" className={styles.primaryButton} disabled={proposalStale} onClick={applyProposal}>확인하고 {proposal.ids === null ? "조회 적용" : "선택 적용"}</button>
-                <button type="button" className={styles.secondaryButton} onClick={() => setProposal(null)}>취소</button>
+                <button type="button" className={styles.primaryButton} disabled={busy || proposalStale} onClick={applyProposal}>확인하고 {proposal.ids === null ? "조회 적용" : "선택 적용"}</button>
+                <button type="button" className={styles.secondaryButton} disabled={busy} onClick={() => setProposal(null)}>취소</button>
               </div>
               <p className={styles.help}>미래 정책으로 저장되지 않으며, 이 단계에서 발주하지 않아요.</p>
             </div>}
@@ -189,7 +199,7 @@ export default function MerchantWorkspace({ requests, onApprove }: {
               <label className={styles.search}><span className={styles.srOnly}>상품 또는 고객 검색</span><input type="search" placeholder="상품 또는 고객 검색" value={search} onChange={(event) => setSearch(event.target.value)} /></label>
             </div>
             <div className={styles.listToolbar}>
-              <label><input type="checkbox" checked={allVisibleSelected} disabled={!visibleEligible.length} onChange={() => toggle(visibleEligible)} /> 표시된 승인 가능 요청 선택</label>
+              <label><input type="checkbox" checked={allVisibleSelected} disabled={busy || !visibleEligible.length} onChange={() => toggle(visibleEligible)} /> 표시된 승인 가능 요청 선택</label>
               <span>{visible.length}건 · {quantity(visible)}개</span>
             </div>
 
@@ -205,7 +215,7 @@ export default function MerchantWorkspace({ requests, onApprove }: {
                 const approvedCount = items.filter((item) => item.stage === "approved").length;
                 return <article key={productId} className={`${styles.productCard} ${selectedCount > 0 ? styles.selectedCard : ""}`}>
                   <div className={styles.productSummary}>
-                    <input type="checkbox" aria-label={`${product?.name ?? productId} 승인 가능 요청 선택`} checked={eligible.length > 0 && selectedCount === eligible.length} disabled={!eligible.length} onChange={() => toggle(items)} />
+                    <input type="checkbox" aria-label={`${product?.name ?? productId} 승인 가능 요청 선택`} checked={eligible.length > 0 && selectedCount === eligible.length} disabled={busy || !eligible.length} onChange={() => toggle(items)} />
                     <span className={styles.productEmoji} style={{ background: product?.color ?? "#eef3f6" }} aria-hidden="true">{product?.emoji ?? "□"}</span>
                     <div className={styles.productName}><h3>{product?.name ?? `확인 필요 상품 · ${productId}`}</h3><p>{new Set(items.map((item) => item.actor)).size}명 · 요청 {items.length}건</p></div>
                     <div className={styles.productAmount}><strong>{quantity(items)}개</strong><span>{won(sum(items))}</span></div>
@@ -215,7 +225,7 @@ export default function MerchantWorkspace({ requests, onApprove }: {
                     <summary>고객별 요청 상세 <span>{items.length}건 · 접수·동의 확인</span></summary>
                     <div className={styles.requestRows}>
                       {items.map((item) => <div className={styles.requestRow} key={item.id}>
-                        <label className={styles.actor}><input type="checkbox" checked={selectedIds.includes(item.id) && canSelect(item)} disabled={!canSelect(item)} onChange={() => toggle([item])} /><strong>{item.actor}</strong></label>
+                        <label className={styles.actor}><input type="checkbox" checked={selectedIds.includes(item.id) && canSelect(item)} disabled={busy || !canSelect(item)} onChange={() => toggle([item])} /><strong>{item.actor}</strong></label>
                         <dl><div><dt>수량</dt><dd>{item.quantity}개</dd></div><div><dt>요청 단가</dt><dd>{won(item.unitPrice)}</dd></div><div><dt>자동 구매 동의</dt><dd className={!item.consent ? styles.error : ""}>{item.consent ? "동의함" : "미동의 · 승인 제외"}</dd></div><div><dt>접수 시각 · KST</dt><dd>{Number.isNaN(Date.parse(item.createdAt)) ? item.createdAt : <time dateTime={item.createdAt}>{dateFormat.format(new Date(item.createdAt))}</time>}</dd></div><div><dt>현재 단계</dt><dd>{item.stage === "approved" ? "발주 승인 · 공급 미확보" : "요청 접수 · 검토 대기"}</dd></div></dl>
                       </div>)}
                     </div>
@@ -240,12 +250,12 @@ export default function MerchantWorkspace({ requests, onApprove }: {
             </div>
             <div className={styles.total}><span>선택 합계 <small>{quantity(selected)}개</small></span><strong>{won(selectedTotal)}</strong></div>
             <label className={styles.budgetLabel} htmlFor="merchant-budget">이번 묶음 예산</label>
-            <div className={styles.budgetInput}><input id="merchant-budget" type="number" inputMode="numeric" min="0" step="100" value={budgetInput} aria-invalid={!validBudget || overBudget} aria-describedby="merchant-budget-help" onChange={(event) => setBudgetInput(event.target.value)} /><span>원</span></div>
+            <div className={styles.budgetInput}><input id="merchant-budget" type="number" inputMode="numeric" min="0" step="100" value={budgetInput} disabled={busy} aria-invalid={!validBudget || overBudget} aria-describedby="merchant-budget-help" onChange={(event) => setBudgetInput(event.target.value)} /><span>원</span></div>
             <p id="merchant-budget-help" className={!validBudget || overBudget ? styles.error : styles.budgetHelp}>
               {!validBudget ? "예산은 0 이상의 정수로 입력해 주세요." : overBudget ? `예산보다 ${won(selectedTotal - budget)} 초과했어요. 선택을 줄이거나 예산을 수정해 주세요.` : `선택 후 예산 여유 ${won(budget - selectedTotal)}`}
             </p>
-            <button type="button" className={styles.approveButton} disabled={!selected.length || !validBudget || overBudget || !Number.isSafeInteger(selectedTotal)} onClick={approve}>선택한 요청 발주 승인 <span aria-hidden="true">→</span></button>
-            {selected.length > 0 && <button type="button" className={styles.clearSelection} onClick={() => setSelectedIds([])}>선택 해제</button>}
+            <button type="button" className={styles.approveButton} disabled={busy || !selected.length || !validBudget || overBudget || !Number.isSafeInteger(selectedTotal)} onClick={approve}>{busy ? "승인 저장 중…" : "선택한 요청 발주 승인"} <span aria-hidden="true">→</span></button>
+            {selected.length > 0 && <button type="button" className={styles.clearSelection} disabled={busy} onClick={() => setSelectedIds([])}>선택 해제</button>}
             <p className={styles.approvalNote}>필터와 관계없이 위 선택 목록만 승인해요.<br />화면 시연용 승인으로 실제 발주·청구는 없어요.</p>
           </section>
           <section className={styles.policyCard}><div className={styles.sectionHeading}><h3>자동발주</h3><span className={styles.offBadge}>미연결</span></div><p>앞으로의 발주 정책은 아직 저장하지 않아요. 현재는 이번 묶음을 직접 확인하고 승인해 주세요.</p><div className={styles.policyFoot}><span aria-hidden="true">○</span> 자동 실행되지 않아요</div></section>

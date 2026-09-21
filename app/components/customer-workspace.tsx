@@ -4,7 +4,7 @@ import { useRef, useState, type FormEvent } from "react";
 import { previewProducts, previewStores, won, type PreviewDraft, type PreviewRequest } from "../demo-preview";
 import styles from "./customer-workspace.module.css";
 
-type Props = { requests: PreviewRequest[]; onRequest: (draft: PreviewDraft) => boolean };
+type Props = { requests: PreviewRequest[]; onRequest: (draft: PreviewDraft) => Promise<boolean>; busy: boolean };
 type Tab = "want" | "requests" | "pickup";
 const examples = ["딸기랑 크림이 들어간 샌드위치 찾아줘", "매일우유 900ml가 있었으면 좋겠어", "고소한 버터 소금빵을 찾고 있어"];
 const normalize = (value: string) => value.normalize("NFKC").toLowerCase().replace(/\s+/g, "");
@@ -15,7 +15,7 @@ function NavIcon({ tab }: { tab: Tab }) {
   </svg>;
 }
 
-export default function CustomerWorkspace({ requests, onRequest }: Props) {
+export default function CustomerWorkspace({ requests, onRequest, busy }: Props) {
   const [tab, setTab] = useState<Tab>("want");
   const [input, setInput] = useState("");
   const [undo, setUndo] = useState<string | null>(null);
@@ -59,6 +59,7 @@ export default function CustomerWorkspace({ requests, onRequest }: Props) {
 
   function search(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (busy || submitting.current) return;
     if (!input.trim()) {
       setError("찾고 싶은 상품 이름이나 특징을 적어주세요.");
       inputRef.current?.focus();
@@ -70,30 +71,32 @@ export default function CustomerWorkspace({ requests, onRequest }: Props) {
     setNotice("");
   }
 
-  function request(event: FormEvent<HTMLFormElement>) {
+  async function request(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (submitting.current || submitted.current) return;
+    if (busy || submitting.current || submitted.current) return;
+    setNotice("");
     if (!selected || !store || !validQuantity || !consent) {
       setError("상품·1~20개 수량·점포와 자동 구매 동의를 확인해주세요.");
       return;
     }
     submitting.current = true;
+    setError("");
     try {
       // Keep the same command ID when a failed callback is retried.
       const draft = draftRef.current ?? { id: crypto.randomUUID(), productId: selected.id, storeId, quantity: count, unitPrice: selected.price, consent };
       draftRef.current = draft;
-      if (!onRequest(draft)) {
-        setError("요청을 반영하지 못했어요. 내 요청의 중복 여부와 입력 조건을 확인한 뒤 다시 시도해주세요.");
+      if (!await onRequest(draft)) {
+        setError("요청을 저장하지 못했어요. 입력과 선택은 유지했으니 내 요청과 입력 조건을 확인한 뒤 다시 시도해주세요.");
         return;
       }
       submitted.current = true;
       setError("");
-      setNotice(`${selected.name} ${count}개 요청을 화면에 반영했어요. 아직 물량 확보 전이에요.`);
+      setNotice(`${selected.name} ${count}개 요청을 이 브라우저에 저장했어요. 아직 물량 확보 전이에요.`);
       setTab("requests");
       setProductId(null);
       setConsent(false);
     } catch {
-      setError("요청을 반영하지 못했어요. 입력은 유지했으니 내 요청을 확인한 뒤 다시 시도해주세요.");
+      setError("요청을 저장하지 못했어요. 입력과 선택은 유지했으니 내 요청을 확인한 뒤 다시 시도해주세요.");
     } finally { submitting.current = false; }
   }
 
@@ -102,7 +105,7 @@ export default function CustomerWorkspace({ requests, onRequest }: Props) {
     setError("");
   }
 
-  return <div className={styles.workspace}>
+  return <div className={styles.workspace} aria-busy={busy}>
     <header className={styles.hero}>
       <div className={styles.heroTop}><span className={styles.brand}>원하GS <span>· 고객</span></span><span className={styles.previewBadge}>화면 미리보기</span></div>
       <p className={styles.pronunciation}>‘원하지쓰’라고 읽어요.</p>
@@ -114,7 +117,7 @@ export default function CustomerWorkspace({ requests, onRequest }: Props) {
       </div>
     </header>
 
-    <p className={styles.previewNote}>모의 상품·가상 점포로 보는 화면 시연이에요. AI는 연결되지 않았고, 요청은 메모리에만 있어 새로고침하면 초기화됩니다.</p>
+    <p className={styles.previewNote}>모의 상품·가상 점포로 보는 화면 시연이에요. AI는 아직 연결되지 않았어요. 이 브라우저의 SQLite에 저장해요. 같은 주소에서 새로고침해도 이어져요. 다른 기기와 공유되지 않아요.</p>
     {notice && <p className={styles.success} role="status">{notice}</p>}
 
     {tab === "want" && <>
@@ -123,14 +126,14 @@ export default function CustomerWorkspace({ requests, onRequest }: Props) {
         <h2 id="customer-input-title">어떤 상품을 찾고 있나요?</h2>
         <form onSubmit={search}>
           <label className={styles.fieldLabel} htmlFor="customer-query">상품 이름이나 특징</label>
-          <textarea ref={inputRef} id="customer-query" data-testid="customer-query" value={input} maxLength={300} rows={3} onChange={event => { setUndo(null); editInput(event.target.value); }} onKeyDown={event => { if (event.key === "Enter" && event.nativeEvent.isComposing) event.stopPropagation(); }} placeholder="예: 딸기랑 크림이 들어간 샌드위치 찾아줘" aria-describedby="customer-search-note" />
+          <textarea ref={inputRef} id="customer-query" data-testid="customer-query" value={input} disabled={busy} maxLength={300} rows={3} onChange={event => { setUndo(null); editInput(event.target.value); }} onKeyDown={event => { if (event.key === "Enter" && event.nativeEvent.isComposing) event.stopPropagation(); }} placeholder="예: 딸기랑 크림이 들어간 샌드위치 찾아줘" aria-describedby="customer-search-note" />
           <p id="customer-search-note" className={styles.small}>현재는 모의 상품명·별칭을 찾는 로컬 검색이에요. 문장 전체를 이해하는 AI 검색은 아직 연결 전이에요.</p>
           <div className={styles.examples}>
-            <div className={styles.sectionLine}><strong>이렇게 말해보세요</strong>{undo !== null && <button className={styles.textButton} type="button" onClick={() => { editInput(undo); setUndo(null); inputRef.current?.focus(); }}>입력 되돌리기</button>}</div>
-            {examples.map(example => <button key={example} type="button" className={styles.example} onClick={() => { setUndo(previous => previous ?? input); editInput(example); inputRef.current?.focus(); }}><span aria-hidden="true">↗</span>{example}</button>)}
+            <div className={styles.sectionLine}><strong>이렇게 말해보세요</strong>{undo !== null && <button className={styles.textButton} type="button" disabled={busy} onClick={() => { editInput(undo); setUndo(null); inputRef.current?.focus(); }}>입력 되돌리기</button>}</div>
+            {examples.map(example => <button key={example} type="button" className={styles.example} disabled={busy} onClick={() => { setUndo(previous => previous ?? input); editInput(example); inputRef.current?.focus(); }}><span aria-hidden="true">↗</span>{example}</button>)}
             <p className={styles.small}>예시를 누르면 입력만 채워져요.</p>
           </div>
-          <button type="submit" className={styles.primary} data-testid="customer-search">상품 찾기 <span aria-hidden="true">→</span></button>
+          <button type="submit" className={styles.primary} data-testid="customer-search" disabled={busy}>상품 찾기 <span aria-hidden="true">→</span></button>
         </form>
       </section>
 
@@ -142,7 +145,7 @@ export default function CustomerWorkspace({ requests, onRequest }: Props) {
           {candidates.map(product => <article key={product.id} className={`${styles.productCard} ${productId === product.id ? styles.selectedCard : ""}`}>
             <div className={styles.productArt} style={{ backgroundColor: product.color }} aria-hidden="true">{product.emoji}<span>모의 상품</span></div>
             <div className={styles.productBody}><span className={styles.small}>{product.category}</span><h3>{product.name}</h3><p>{product.description}</p><strong>{won(product.price)} <span className={styles.small}>/ 개 · 시연 가격</span></strong>
-              <button type="button" className={productId === product.id ? styles.primary : styles.secondary} aria-pressed={productId === product.id} aria-label={`${product.name} ${productId === product.id ? "선택됨" : "이 상품 선택"}`} onClick={() => { clearConfirmation(); setProductId(product.id); setQuantity("1"); setStoreId(""); setTimeout(() => confirmationRef.current?.focus(), 0); }}>{productId === product.id ? "선택했어요 ✓" : "이 상품 선택"}</button>
+              <button type="button" className={productId === product.id ? styles.primary : styles.secondary} disabled={busy} aria-pressed={productId === product.id} aria-label={`${product.name} ${productId === product.id ? "선택됨" : "이 상품 선택"}`} onClick={() => { clearConfirmation(); setProductId(product.id); setQuantity("1"); setStoreId(""); setTimeout(() => confirmationRef.current?.focus(), 0); }}>{productId === product.id ? "선택했어요 ✓" : "이 상품 선택"}</button>
             </div>
           </article>)}
         </div> : <div className={styles.empty}><span className={styles.emptyIcon} aria-hidden="true">⌕</span><h3>조금 다른 말로 찾아볼까요?</h3><p>“매일우유”, “초코송이”, “커피”처럼 이름을 적어보세요.<br />미식별 요청 저장 기능은 아직 준비 중이에요.</p><button type="button" className={styles.secondary} onClick={() => inputRef.current?.focus()}>입력 수정하기</button></div>}
@@ -155,28 +158,28 @@ export default function CustomerWorkspace({ requests, onRequest }: Props) {
           <div className={styles.selectedProduct}><span style={{ backgroundColor: selected.color }} aria-hidden="true">{selected.emoji}</span><div><strong>{selected.name}</strong><p className={styles.small}>{won(selected.price)} / 개 · 모의 가격</p></div></div>
           <label className={styles.fieldLabel} htmlFor="customer-quantity">수량 <span className={styles.small}>1~20개</span></label>
           <div className={styles.quantityControl}>
-            <button type="button" aria-label="수량 1개 줄이기" disabled={!validQuantity || count <= 1} onClick={() => { setQuantity(String(count - 1)); clearConfirmation(); }}>−</button>
-            <input id="customer-quantity" type="number" inputMode="numeric" min={1} max={20} step={1} required value={quantity} onChange={event => { setQuantity(event.target.value); clearConfirmation(); }} />
-            <button type="button" aria-label="수량 1개 늘리기" disabled={!validQuantity || count >= 20} onClick={() => { setQuantity(String(count + 1)); clearConfirmation(); }}>+</button>
+            <button type="button" aria-label="수량 1개 줄이기" disabled={busy || !validQuantity || count <= 1} onClick={() => { setQuantity(String(count - 1)); clearConfirmation(); }}>−</button>
+            <input id="customer-quantity" type="number" inputMode="numeric" min={1} max={20} step={1} required value={quantity} disabled={busy} onChange={event => { setQuantity(event.target.value); clearConfirmation(); }} />
+            <button type="button" aria-label="수량 1개 늘리기" disabled={busy || !validQuantity || count >= 20} onClick={() => { setQuantity(String(count + 1)); clearConfirmation(); }}>+</button>
           </div>
           <label className={styles.fieldLabel} htmlFor="customer-store">요청할 점포</label>
-          <select id="customer-store" required value={storeId} onChange={event => { setStoreId(event.target.value); clearConfirmation(); }}><option value="" disabled>가상 점포를 선택해주세요</option>{previewStores.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</select>
+          <select id="customer-store" required value={storeId} disabled={busy} onChange={event => { setStoreId(event.target.value); clearConfirmation(); }}><option value="" disabled>가상 점포를 선택해주세요</option>{previewStores.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</select>
           <p className={styles.small}>{store?.address ?? "실제 위치·거리·재고를 안내하는 점포가 아니에요."}</p>
           <div className={styles.total}><span>확인할 총액</span><strong>{validQuantity ? won(selected.price * count) : "수량 확인 필요"}</strong></div>
           <div className={styles.consentBox}>
-            <label><input data-testid="customer-consent" type="checkbox" checked={consent} required onChange={event => { setConsent(event.target.checked); setError(""); draftRef.current = null; }} /><span><strong>물량 확보 후 자동 구매에 동의해요</strong><span className={styles.small}>위 상품·점포·수량·가격을 확인했어요. 조건이 바뀌면 다시 확인과 동의가 필요해요.</span></span></label>
+            <label><input data-testid="customer-consent" type="checkbox" checked={consent} required disabled={busy} onChange={event => { setConsent(event.target.checked); setError(""); draftRef.current = null; }} /><span><strong>물량 확보 후 자동 구매에 동의해요</strong><span className={styles.small}>위 상품·점포·수량·가격을 확인했어요. 조건이 바뀌면 다시 확인과 동의가 필요해요.</span></span></label>
             <p>입고 후 <strong>픽업 가능 알림이 생성된 시각부터 정확히 48시간</strong> 안에 수령해요. 요청일이나 발주일 기준이 아니에요.</p>
             <p className={styles.small}>이번 미리보기에서는 동의 표시와 요청 화면만 시연해요. 공급 확보·모의 결제·알림은 아직 작동하지 않으며 실제 청구는 없어요.</p>
           </div>
-          <button type="submit" className={styles.primary} data-testid="customer-request" disabled={!validQuantity || !store || !consent}>이 조건으로 화면 시연 요청</button>
-          <button type="button" className={styles.textButton} onClick={() => { setProductId(null); clearConfirmation(); }}>다른 상품을 고를게요</button>
+          <button type="submit" className={styles.primary} data-testid="customer-request" disabled={busy || !validQuantity || !store || !consent}>{busy ? "요청 저장 중…" : "이 조건으로 요청 저장"}</button>
+          <button type="button" className={styles.textButton} disabled={busy} onClick={() => { setProductId(null); clearConfirmation(); }}>다른 상품을 고를게요</button>
         </form>
       </section>}
     </>}
 
     {tab === "requests" && <section className={styles.results} aria-labelledby="customer-requests-title">
       <div className={styles.sectionLine}><h2 id="customer-requests-title">내 요청</h2><span className={styles.count}>{mine.length}건</span></div>
-      <p className={styles.small}>현재 화면의 ‘나’가 요청한 항목만 보여요. 새로고침하면 초기화돼요.</p>
+      <p className={styles.small}>현재 화면의 ‘나’가 요청한 항목만 보여요. 이 브라우저의 SQLite에 저장해요. 같은 주소에서 새로고침해도 이어져요. 다른 기기와 공유되지 않아요.</p>
       {mine.length ? <div className={styles.requestList}>{mine.map(item => {
         const product = previewProducts.find(product => product.id === item.productId);
         const requestStore = previewStores.find(store => store.id === item.storeId);
@@ -186,7 +189,7 @@ export default function CustomerWorkspace({ requests, onRequest }: Props) {
           <p>{requestStore?.name ?? "점포 정보 확인 필요"}</p>
           <p className={styles.requestPrice}>{won(item.unitPrice)} × {item.quantity}개 <strong>{won(item.unitPrice * item.quantity)}</strong></p>
           <p className={styles.small}>자동 구매 동의: {item.consent ? "동의함" : "동의하지 않음"}</p>
-          <div className={styles.stageNote}>{item.stage === "approved" ? "경영주의 발주 승인만 화면에 반영됐어요." : "요청을 화면에 반영했어요. 경영주 확인을 기다려요."}<br />아직 공급 확보·결제·예약·픽업 가능 상태가 아니에요.</div>
+          <div className={styles.stageNote}>{item.stage === "approved" ? "경영주의 발주 승인을 이 브라우저에 저장했어요." : "이 브라우저에 요청을 저장했어요. 경영주 확인을 기다려요."}<br />아직 공급 확보·결제·예약·픽업 가능 상태가 아니에요.</div>
         </article>;
       })}</div> : <div className={styles.empty}><NavIcon tab="requests" /><h3>아직 남긴 요청이 없어요</h3><p>원하는 상품을 찾아 조건을 확인하면<br />이곳에서 요청 상태를 볼 수 있어요.</p><button type="button" className={styles.primary} onClick={() => navigate("want")}>첫 상품 찾아보기</button></div>}
     </section>}

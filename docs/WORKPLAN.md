@@ -6,8 +6,8 @@
 
 | 순서 | 구현·담당 | 상태·공유 |
 |---|---|---|
-| UI-01 | 조정자: 공통 화면/역할 전환·메모리 상태. Meitner: 고객 입력/후보/요청. Newton: 경영주 묶음/고객 상세/시연 승인 | `codex/ui-preview-20260921`, 소유 파일 분리. 빌드 후 첫 commit/push·Preview 공유 |
-| UI-02 | 브라우저 SQLite 저장/복원 및 실제 서버 AI 연결 | 다음 구현 단위, 연결할 때마다 commit/push·Preview |
+| UI-01 | 조정자: 공통 화면/역할 전환·메모리 상태. Meitner: 고객 입력/후보/요청. Newton: 경영주 묶음/고객 상세/시연 승인 | `0e43f0d` commit/push·PR #1·Vercel Preview Ready. 실제 화면 로딩 확인, 제품 전체 검증 전 |
+| UI-02 | Locke: SQLite 저장/복원·seed 자산·단일 lockfile 작성. 조정자: 화면 연결. 실제 서버 AI는 이어서 연결 | 구현 중, 연결할 때마다 commit/push·Preview |
 | UI-03 | 발주/공급/모의 결제/입고/48시간 픽업 연결 | 단계별 동작 Preview 공유 |
 | VERIFY | 전체 seed/독립 검증·정책 검토·E2E·평가·G5/G6 | 구현 후 수행, 최종 완료 조건 유지 |
 
