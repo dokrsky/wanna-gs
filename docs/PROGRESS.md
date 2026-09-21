@@ -1,17 +1,17 @@
 # 진행 기록
 
-최종 갱신: 2026-09-21. goal 진행 중이며, 최신 D-46에 따라 화면 구현·잦은 Preview 공유를 먼저 수행한다.
+최종 갱신: 2026-09-22 KST. goal 진행 중이며, 최신 D-46에 따라 화면 구현·잦은 Preview 공유를 먼저 수행한다.
 
 ## 현재 포인터
 
 ```text
-현재 task: UI-04 여섯 번째 Preview 완료, UI-05 점포 지도 연결
+현재 task: UI-08 열한 번째 Preview 완료, UI-09A 경영주 최근 변경·정책 전달 통합
 branch: codex/ui-preview-20260921
 PR: https://github.com/dokrsky/wanna-gs/pull/1 (draft, 최종 검증 전)
 마지막 유효 게이트: 제품 게이트 미실행
 마지막 Production deployment: dpl_GB3Cr8At3Com7eJcTnboJ9W4Sika (기존 최소 데모, 최종 제품 아님)
-현재 Preview: https://wanna-e2y9lytyw-d-01.vercel.app/demo (b4a2854, 요청부터 픽업)
-다음 한 가지: 점포 지도 UI-05를 작은 Preview로 공유한 뒤 미식별/정책 AI 연결
+현재 Preview: https://wanna-2lj36g22u-d-01.vercel.app/demo (af1dce1, 실제 픽업·48시간 복원)
+다음 한 가지: UI-09A 작은 Preview·실제 복원/정책 전달 확인 후 UI-09B 영구 실행 이력
 ```
 
 ## 현재 상태
@@ -19,13 +19,13 @@ PR: https://github.com/dokrsky/wanna-gs/pull/1 (draft, 최종 검증 전)
 | 항목 | 상태 | 증거 |
 |---|---|---|
 | 요구사항·실행 계약·스킬·템플릿 | 최신 지시 반영·문서 검증 완료 | README·card·02·WORKPLAN·GOAL |
-| 위임 운영 결정 | ADR-001 채택, 실행 검증 전 | DECISION_INDEX·ADR-001 |
+| 위임 운영 결정 | ADR-001/003~006 채택, ADR-002 평가 기준 초안·후속 검토 | DECISION_INDEX, 전체 독립 품질검증 후속 |
 | GitHub | dokrsky/wanna-gs, 기준 cf6f95a, 작업 branch에서 UI 개발 중 | 원격 쓰기/Actions 권한 확인, 제품 CI 미구현 |
 | 로컬 설정/사전점검 검사기 | OpenAI 15개 + inventory 10개 테스트 통과 | scripts/ 및 .agents/skills/wanna-gs-preflight/scripts/ |
-| 앱·CI·게이트 실행기·DB seed | 두 역할 UI·SQLite·두 역할 실제 AI와 UI-04 거래 Preview Ready. 거래 로컬 정상 흐름 확인. 제품 CI/게이트 후속 | D-46·WORKPLAN, b4a2854 |
-| SQLite | 242개 상품·실제 점포8/legacy2 Preview 배포. 새 거래 DB 별도 namespace·실제 정규화 SQL·기존 이력 보존 | UI-04 로컬 요청→수령, IndexedDB 사본 새로고침 복원 |
-| Vercel·OpenAI | Git 자동 Preview 및 UI branch 서버 env 연결. 두 역할 실제 호출 성공 | 고객 18b0b31·경영주 bd13e3f. gpt-5-mini, 고객 로컬 719/127·Preview 719/136 tokens |
-| 앱 단위·통합·E2E·실제 모델 평가 | 미실행 | 문서 검사와 구분 |
+| 앱·CI·게이트 실행기·DB seed | UI01~08 Preview·실제 거래/검색/정책 연결, UI09A 통합 중. 제품 CI/전체 게이트 후속 | D-46·WORKPLAN, 최신 af1dce1 |
+| SQLite | 242개 상품·8점포 거래 schema2, 검색/니즈/추천 기록·기존 거래 사본 보존 | UI07 실제 v1 이행·UI08 픽업 새로고침 복원 |
+| Vercel·OpenAI | Git 자동 Preview 및 UI branch 서버 env 연결. 두 역할·정책·검색v2 실제 호출 관측 | 아래 UI03/06/07 증거; 계정 총 잔액/쿼터 미확인, Production 미변경 |
+| 앱 단위·통합·E2E·실제 모델 평가 | 좁은 자체/조정자 검사·일부 독립 반례 확인 및 실제 정상 흐름 관측. 전체 독립 평가·G1~G6 미실행 | 아래 단위별 실행/미실행 구분; Ready를 제품 게이트로 세지 않음 |
 | 최종 제출 URL | 미완료 | 기존 wanna-gs.vercel.app은 최소 데모이며 최종 G6 전 |
 
 ## 반영한 기준
@@ -290,3 +290,21 @@ D-46에 따라 경영주 문맥/실행 이력과 분리해 고객 화면부터 �
 `e8a5b698186ef61432c296ab409614e59f4c7a33` commit/push → `dpl_wjSQZZkz8VZ3mJpSweEykjS9dvu5` / https://wanna-q0jfsf33a-d-01.vercel.app/demo Ready·source SHA 일치. 정확한 후보의 분리 checkout Node24 Next build/타입 PASS, 클라이언트23파일/커밋12파일의 실제 키 비포함 확인. 로컬 기존 revision8의 수령 완료·니즈 이력을 유지했다. 실제 Preview revision7 기존 coffee/ST01 요청에서 공급 확정 대기를 표시했다. 이후 경영주 모의 공급1개 확정(rev8, 23:47:02 KST)→입고(rev9, 23:47:12)→고객 역할 픽업 화면에서 ‘여기 있GS · 픽업 가능’, 09-23 23:47:12 마감(정확히48시간)을 확인했다. UI08 추가 모델 호출0회. CUA reload1회는 도구 응답 지연 뒤 실제 화면 재조회로 확인했으며, 스크린샷 캡처는 실패해 시각 비교 PASS로 쓰지 않는다.
 
 UI08-P2 복구: Meitner의 독립 좁은 코드 검토에서 A3/B1을 연결한 미확정 발주4 + C2의 별도 확정공급2, A만 동의 만료한 상태에서 B가 ‘공급 확정 대기’로 잘못 표시되는 반례를 확인했다. 원인은 active link 우선 반환이 이미 확보된 잔량/FIFO 전량 충족을 가린 것이다. 조정자가 `wait.check.mjs`에 회귀 사례를 추가해 수정 전 실제 FAIL(actual SUPPLY_CONFIRMATION_PENDING / expected ALLOCATION_PENDING)을 재현했다. 기존 잔량 판정 뒤로 active-link 확인 한 줄을 옮긴 후 거래92/needs26/waiting24 PASS. 조회는 상태를 바꾸지 않고 명시 clock 처리 후 추가 공급 없이 B 예약이 확정되는 정상 기능도 유지했다. 거래/SQL/정책 변경이 아니며 Meitner에 해당 반례만 독립 재확인을 요청했다. 전체 역할 QA나 제품 게이트는 여전히 후속이다.
+
+Meitner가 수정 diff와 waiting24 검사를 직접 실행해 P2 해소·기존 공급대기 보존을 재확인했다. UI08 manifest rev1 hash도 실제 읽고 ACK했으며 소급 증거는 아니다. `af1dce1d5144ba2378d2016ed607edbd965ab51a` 수정 commit은 Node24 Next build/타입 PASS·클라이언트23파일/커밋3파일 실제 키 비포함 확인 후 push했다. `dpl_BgSCAer8nJjyWwy5Bsrz6xm4WWwT` / https://wanna-2lj36g22u-d-01.vercel.app/demo Ready·SHA 일치. 최신 브랜치 실제 브라우저 새로고침 후 revision9·세대1, coffee/ST01의 픽업 가능·최초09-21 23:47:12/마감09-23 23:47:12가 그대로 복원됐다. PR #1은 최신 구현/잔여 범위를 반영한 draft로 유지했고 Production은 변경하지 않았다. 이번 turn은 UI08 두 commit/push·Ready·실제 픽업 증거를 추가한 진행이다.
+
+후속 UI09의 ADR-006 v1을 Newton(제품/범위), Locke(상태/실패)가 서로 의견을 보기 전 독립 검토했다. 예산 키 입력 단위 이력·로그 자체 revision에 따른 제안 만료·정책 성공 receipt·취소/늦은 응답·migration 보존을 v2에 보완하고 둘 다 기보고 반례 해소를 재확인했다. 조정자가 UI09 후보 범위에 adopted로 채택했으며 최종 파일 SHA256은 `f4bf5d3ecc30c47596efd83c7f15cc3bfec192822a188a6804fb157dae37e7f1`이다. 현재 앱에 구현됐거나 품질 검증을 통과했다는 뜻은 아니다. 다음은 공통 DTO 소유자/소비자 ACK를 정한 뒤 경영주 최근 문맥·정책 초안을 먼저 작은 Preview로 연결하고 실행 기록/SQL 이행을 다음 단위로 진행한다. 현재 agent 3명은 편집 없이 handback/대기 상태다.
+
+## UI-09A 경영주 최근 문맥·정책 초안 — 2026-09-21
+
+직전 turn은 UI08 두 commit/Ready·실제 픽업 복원·P2 수정으로 진행했다. 현 branch/head `af1dce1`과 사용자 `.idea/` 보존을 확인하고 [UI09A 계약](context/UI-09A.md) hash `61f40d0f5f8e9878d35455c396d291369fc5ddd455c786d089f88b6b8b534421`을 전달했다. Meitner는 v2 계약/API/helper 단일 작성, Newton은 기존 묶음/정책 UI 소비자, 조정자는 통합/게시다. 영구 실행 로그와 schema 변경은 다음 UI09B이며 최종 요구에서 제외하지 않는다.
+
+운영 감사 UI09A-METHOD-01: Locke가 22/20번·스킬·manifest/ADR hash·UI08 commit/PROGRESS 및 현재 diff를 읽고 관측했다. 기준선은 UI08 두 정확 후보 빌드/Ready와 P2 재현→수정→독립 재확인, 관찰 구간은 이번 DTO 전달 전까지다. 성공 조건은 파일 충돌/허위 PASS/ACK 없는 구현 진행이 없는지 확인이며 1회 읽기에서 현재 UI diff가 허용된 정적 안내뿐임을 확인했다. 처분은 **현행 유지**, 신규 운영 요소·실험/추가 관리자/앱 게이트 선행 없음. index의 한 줄 stale 상태만 다음 문서 갱신으로 바로잡았다. 아직 진행 중인 DTO/새 빌드/배포를 완료로 쓰지 않으며 제품·전체 운영 검증 완료도 아니다. 새 실제 전달 누락/충돌 때만 재개한다.
+
+OpenAI Docs로 2026-09-21 공식 [gpt-5-mini](https://developers.openai.com/api/docs/models/gpt-5-mini)·[Structured Outputs](https://developers.openai.com/api/docs/guides/structured-outputs)를 다시 열어 구조화 출력 지원 및 refusal/incomplete 처리·전체 enum 상한을 확인했다. 모델을 바꾸지 않고 기존 서버 SDK 경계를 재사용한다. 시나리오는 합성 수요3종이 있는 ST04(소보로2/스콘3/토스트1)의 기존 사본을 사용해 reset 없이 준비할 수 있음을 생성된 SQLite seed의 읽기 SQL로 확인했다. 이는 실제 브라우저 실행이나 품질 평가가 아니다.
+
+2026-09-22 KST: Meitner/Newton 모두 manifest hash `61f40d0f5f8e9878d35455c396d291369fc5ddd455c786d089f88b6b8b534421` 및 adopted ADR006 hash를 실제 읽고 ACK, 소유 파일 handback 완료. v2는 64KiB 입력·16KiB 출력 및 최대5개 적용 이력, 카탈로그 전체242개 선택을 지원한다. 합집합 복원과 이전 묶음 한도를 분리하고 현재 선택을 기존 정책 비교/최종확인에 전달한다. 기본 ON/OFF·누적 예산 유지, 두 번째 모델 호출/상품 재입력/자동 저장 없음. 수동 미저장 폼 보존·실제 실행 직전 업무/현재 시각/선택 문맥을 확인하며 부가기록 revision만으로 자가 만료시키지 않는다. SQL·seed·기존 거래 명령은 불변, 영구 실행 기록은 UI09B 미연결 안내를 표시했다.
+
+Meitner 자체 계약/strict TS, Newton 인메모리 hook+mock fetch 자체검사는 독립 품질 검증이 아니다. 조정자는 새 `check:merchant-context`, 기존 policy/dialogue·domain92/needs26/waiting24를 직접 실행해 PASS를 확인했다. stale 선택을 명시 해제/교체하는 정상 지시를 보존했고, 순수 filter도 무관한 stale 선택 때문에 실패하던 반례는 Meitner가 수정 전 FAIL→filter만 좁게 허용 후 PASS로 확인했다. 선택/예산 변경·정책에는 후보/업무 snapshot 검사를 유지한다. 아직 새로운 live·빌드/배포 결과는 없으며 이어서 작은 후보로 게시한다.
+
+UI09A-P2: Newton의 추가 지적과 Locke의 좁은 독립 검토에서 filter 적용 콜백이 빈 한도(남은 예산 자동값)를 숫자로 고정하고 stale 선택 확인을 갱신하는 문제를 확인했다. Newton이 실제 컴포넌트/도메인을 읽는 인메모리 checker로 수정 전 4개 FAIL을 재현했다. 조정자는 action을 콜백으로 전달하고 filter는 uiSeq/조회만 바꾼 뒤 즉시 반환하도록 수정했다. 같은 checker 9개 PASS를 조정자/Newton이 실행했다. UI source SHA256 `1c004122f7a77c40b55bfb0cf6c22987e71edb0c17f65ec7210c1b5b643077f0`, helper `62b2385ead0e86daa417ac8da9f3100f25b9cb973e53b5cf6074b72b64e3b169`. 수정 후 Node24 Next build/타입 PASS, 클라이언트23파일의 실제 키 비포함 확인. `.env.local`은 CONFIGURED·Git ignore이며 정적 검사만으로 goal 준비 완료를 선언하지 않는다. 이번 좁은 복구는 거래/선택/정책 기준을 바꾸지 않았고 브라우저/전체 독립 UX 검사는 아니다.

@@ -4,21 +4,34 @@ import { useEffect, useRef, useState, type FormEvent } from "react";
 import { AssistantError, errorMessages, isObject, type AssistantErrorCode, type AssistantStatus } from "../../lib/assistant/contracts";
 import { parsePolicyOutput, parsePolicyRequest, resolvePolicyProposal, type CurrentPolicy, type PolicyOutput, type PolicyRequest, type PolicyResponse, type PolicySetting } from "../../lib/assistant/policy-contracts";
 import type { DomainState, Policy } from "../../lib/domain/types";
+import { getView } from "../../lib/domain/commands";
 import styles from "./domain-workspace.module.css";
 
 type Props = {
   policy: Policy; state: DomainState; actorId: string; revision: number; disabled: boolean;
   draftRevision: number; hasManualDraft: boolean;
   onSave: (setting: PolicySetting, revision: number) => Promise<boolean>;
+  forwarded?: ForwardedPolicyProposal | null;
 };
+export type ForwardedPolicyProposal = {
+  input: PolicyRequest; output: PolicyOutput; model: string; usage: PolicyResponse["usage"];
+  isCurrent: () => boolean;
+};
+// Local comparison only: never send customer details or this fingerprint to AI.
+export function merchantBusinessSnapshot(state: DomainState, actorId: string, storeId: string) {
+  const view = getView(state, { sessionId: state.sessionId, generation: state.generation, actorId, role: "merchant", storeId }, Date.now());
+  return JSON.stringify([state.sessionId, state.generation, actorId, storeId, state.conditions.filter(row => row.storeId === storeId), view.policy,
+    view.requests.map(({ waiting: _waiting, ...detail }) => detail), view.demand, view.orders, view.lines]);
+}
 type Proposal = {
   input: PolicyRequest; output: PolicyOutput; setting: PolicySetting | null;
   snapshot: string; sequence: number; model: string; usage: PolicyResponse["usage"];
+  isCurrent?: () => boolean;
 };
 const won = (value: number) => `${value.toLocaleString("ko-KR")}원`;
 const tokenCount = (value: unknown): value is number => typeof value === "number" && Number.isSafeInteger(value) && value >= 0;
 
-export default function PolicyAssistant({ policy, state, actorId, revision, disabled, draftRevision, hasManualDraft, onSave }: Props) {
+export default function PolicyAssistant({ policy, state, actorId, revision, disabled, draftRevision, hasManualDraft, onSave, forwarded }: Props) {
   const [text, setText] = useState("");
   const [status, setStatus] = useState<AssistantStatus | null>(null);
   const [statusAttempt, setStatusAttempt] = useState(0);
@@ -33,14 +46,16 @@ export default function PolicyAssistant({ policy, state, actorId, revision, disa
   const sequence = useRef(0);
   const saveLock = useRef(false);
   const mounted = useRef(false);
+  const received = useRef<string | null>(null);
   const currentPolicy: CurrentPolicy = { enabled: policy.enabled, productIds: policy.productIds, budgetWon: policy.budgetWon, version: policy.version, spentWon: policy.spentWon };
-  const snapshot = JSON.stringify([state.sessionId, state.generation, actorId, policy.storeId, revision, currentPolicy, draftRevision]);
+  const currentSnapshot = () => JSON.stringify([merchantBusinessSnapshot(state, actorId, policy.storeId), currentPolicy, draftRevision]);
+  const snapshot = currentSnapshot();
   const latest = useRef({ snapshot, disabled });
   latest.current = { snapshot, disabled };
   const allowedIds = state.products.map(product => product.id);
   const names = (ids: string[]) => ids.map(id => state.products.find(product => product.id === id)?.name ?? id).join(" · ") || "없음";
   const ready = status?.configured === true && status.mode === "live";
-  const stale = proposal !== null && (proposal.snapshot !== snapshot || proposal.sequence !== sequence.current);
+  const stale = proposal !== null && (proposal.snapshot !== snapshot || proposal.sequence !== sequence.current || proposal.isCurrent?.() === false);
   const changed = proposal?.output.action === "propose" && [proposal.output.enabled, proposal.output.productIds, proposal.output.budgetWon].some(value => value !== null);
 
   useEffect(() => {
@@ -51,6 +66,19 @@ export default function PolicyAssistant({ policy, state, actorId, revision, disa
     sequence.current++; controller.current?.abort(); controller.current = null;
     setThinking(false); setConfirmed(false);
   }, [snapshot]);
+  useEffect(() => {
+    if (!forwarded || received.current === forwarded.input.id) return;
+    received.current = forwarded.input.id;
+    sequence.current++; controller.current?.abort(); controller.current = null; setThinking(false);
+    setConfirmed(false); setError("");
+    try {
+      if (!forwarded.isCurrent()) throw new AssistantError("MERCHANT_NOT_APPLICABLE");
+      const output = parsePolicyOutput(forwarded.output, allowedIds, currentPolicy);
+      const setting = resolvePolicyProposal(forwarded.input, output, currentPolicy, allowedIds);
+      setProposal({ ...forwarded, output, setting, snapshot, sequence: sequence.current });
+      setConfirmed(true);
+    } catch { setProposal(null); setError("이번 묶음에서 전달한 정책 초안이 만료됐어요. 현재 선택과 정책을 확인해주세요."); }
+  }, [forwarded]);
   useEffect(() => {
     if (disabled && controller.current) {
       sequence.current++; controller.current.abort(); controller.current = null; setThinking(false);
@@ -111,7 +139,7 @@ export default function PolicyAssistant({ policy, state, actorId, revision, disa
     }
   }
   async function save() {
-    if (!proposal || !confirmed || !changed || disabled || saveLock.current || thinking || proposal.snapshot !== latest.current.snapshot || proposal.sequence !== sequence.current) return;
+    if (!proposal || !confirmed || !changed || disabled || saveLock.current || thinking || proposal.snapshot !== currentSnapshot() || proposal.sequence !== sequence.current || proposal.isCurrent?.() === false) return;
     saveLock.current = true; setSaving(true); setError("");
     try {
       const setting = resolvePolicyProposal(proposal.input, proposal.output, currentPolicy, allowedIds);
@@ -128,11 +156,12 @@ export default function PolicyAssistant({ policy, state, actorId, revision, disa
     <div className={styles.sectionTitle}><h4>앞으로의 자동발주, 말로 제안받기</h4><span className={styles.badge}>OpenAI · 실제 AI · 제안만</span></div>
     <p className={styles.note} role="status">{statusLoading ? "OpenAI 설정 확인 중…" : statusError || (ready ? "실제 OpenAI로 지속 정책 변경안을 만들어요. 응답만으로 저장·발주하지 않아요." : "실제 AI 설정이 필요해요. 로컬 해석으로 자동 전환하지 않으며 수동 설정은 그대로 사용할 수 있어요.")}</p>
     <button type="button" disabled={disabled || thinking || saving || statusLoading} onClick={() => { edit(text); setStatusAttempt(value => value + 1); }}>AI 설정 다시 확인</button>
-    <p className={styles.note}>AI는 이 점포의 <strong>저장된 정책</strong>을 기준으로 해석해요. 이번 묶음의 선택·예산과 아래 미저장 수동 초안은 보내지 않아요.</p>
+    <p className={styles.note}>이 입력창의 AI는 <strong>저장된 정책</strong>을 기준으로 해석해요. 미저장 수동 초안은 보내지 않아요. 위 묶음에서 전달한 초안은 현재 선택을 대상으로 하며, 이번 한도를 누적 예산으로 자동 복사하지 않아요.</p>
     {hasManualDraft && <p className={styles.warning}>미저장 수동 초안이 있어요. AI 제안으로 덮어쓰지 않아요. AI안을 최종 저장하면 저장 정책이 바뀌어 수동 폼도 새 정책으로 초기화돼요.</p>}
     <form className={styles.form} onSubmit={propose}><label>앞으로 적용할 정책 지시<input value={text} maxLength={300} disabled={disabled || saving} placeholder="앞으로 누적 매입 예산을 8만원으로 바꿔줘" onChange={event => edit(event.target.value)} onKeyDown={event => { if (event.key === "Enter" && event.nativeEvent.isComposing) event.preventDefault(); }} /></label><button className={styles.primary} disabled={disabled || saving || thinking || !ready || statusLoading || !text.trim()}>{thinking ? "정책 AI 변경안 만드는 중…" : error ? "같은 입력으로 AI 다시 요청" : "AI 정책 변경안 보기"}</button></form>
     <div className={styles.actions}>{["앞으로 누적 매입 예산을 8만원으로 바꿔줘", "자동발주를 꺼줘"].map(example => <button type="button" key={example} disabled={disabled || saving} onClick={() => edit(example)}>{example}</button>)}{thinking && <button type="button" onClick={() => edit(text)}>AI 요청 취소</button>}</div>
     <p className={styles.note}>예시는 입력만 채워요. ‘이번 묶음’은 위 묶음 화면을 사용해주세요. AI는 실제 재고·공급·가격·예약 성공을 판단하지 않아요.</p>
+    <p className={styles.note}>이번 묶음에서 전달한 정책 초안은 상품명 재입력·추가 AI 호출 없이 아래에서 확인해요. AI 실행 이력의 영구 저장은 아직 연결되지 않았어요.</p>
     {error && <p role="alert" className={styles.error}>{error} 입력은 유지했어요.</p>}
     {proposal && <div className={styles.batch}>
       <span className={styles.badge}>실제 AI · {proposal.model}</span><p>{proposal.output.message}</p>

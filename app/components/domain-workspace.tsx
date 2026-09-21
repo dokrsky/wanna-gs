@@ -4,9 +4,10 @@ import { useEffect, useRef, useState, type FormEvent } from "react";
 import { getView } from "../../lib/domain/commands";
 import { DOMAIN_POLICY, integer } from "../../lib/domain/policy";
 import type { Command, CommandContext, CommandOutcome, Condition, CustomerWaiting, DomainState, OrderLine, Policy, RequestDetail, Reservation, View } from "../../lib/domain/types";
-import { AssistantError, errorMessages, isObject, parseMerchantOutput, parseMerchantRequest, resolveMerchantProposal, type AssistantErrorCode, type AssistantStatus, type MerchantOutput, type MerchantResponse } from "../../lib/assistant/contracts";
+import { AssistantError, errorMessages, isObject, type AssistantErrorCode, type AssistantStatus, type MerchantOutput } from "../../lib/assistant/contracts";
+import { MERCHANT_CONTEXT_BODY_BYTES, parseMerchantContextRequest, parseMerchantContextResponse, resolveMerchantContextProposal, type MerchantChange, type MerchantContext, type MerchantContextRequest, type MerchantContextResponse } from "../../lib/assistant/merchant-context-contracts";
 import styles from "./domain-workspace.module.css";
-import PolicyAssistant from "./policy-assistant";
+import PolicyAssistant, { merchantBusinessSnapshot, type ForwardedPolicyProposal } from "./policy-assistant";
 import MerchantNeeds from "./merchant-needs";
 
 type Props = {
@@ -20,6 +21,7 @@ type Props = {
 };
 type Payload<T = Command> = T extends Command ? Omit<T, keyof CommandContext> : never;
 type Send = (payload: Payload, revision?: number) => Promise<boolean>;
+type MerchantScreen = { selectedProductIds: string[]; budgetWon: number; context: MerchantContext; snapshot: string };
 const won = (value: number) => `${value.toLocaleString("ko-KR")}원`;
 const dateFormat = new Intl.DateTimeFormat("ko-KR", { year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false, timeZone: "Asia/Seoul" });
 const when = (value: number | null) => value === null ? "아직 없음" : dateFormat.format(value);
@@ -127,9 +129,8 @@ function DomainPanel({ state, onCommand, role, actorId, storeId, busy, pickupOnl
     {role === "customer" ? <section aria-label={pickupOnly ? "내 예약 · 현재 점포" : "내 요청 · 현재 점포"}><div className={styles.sectionTitle}><h3>{pickupOnly ? "내 예약 · 현재 점포" : "내 요청 · 현재 점포"}</h3><span>{customerRequests.length}건</span></div>
       {customerRequests.length ? <div className={styles.grid}>{customerRequests.map(detail => <CustomerRequest key={detail.request.id} detail={detail} condition={state.conditions.find(condition => condition.storeId === storeId && condition.productId === detail.request.productId)} name={productName(detail.request.productId)} now={view.now} revision={view.revision} disabled={disabled} send={send} />)}</div> : <p className={styles.empty}>{pickupOnly ? "아직 예약이 없어요. 모의 결제 성공 후 예약이 생기고, 입고 후 픽업 가능 알림부터 48시간이에요." : "이 점포에 남긴 요청이 없어요. 기존 상품 검색에서 상품·점포·가격을 확인하고 요청해주세요."}</p>}
     </section> : <>
-      <MerchantDemand state={state} view={view} storeId={storeId} disabled={disabled} send={send} />
+      <MerchantDemand state={state} view={view} actorId={actorId} storeId={storeId} disabled={disabled} send={send} />
       <MerchantNeeds needs={view.needs} products={state.products} actors={state.actors} storeId={storeId} />
-      {view.policy && <PolicyEditor key={view.policy.version} policy={view.policy} state={state} actorId={actorId} revision={view.revision} disabled={disabled} send={send} />}
       <section className={styles.section}><div className={styles.sectionTitle}><h3>발주 · 공급 확정 · 입고</h3><span>{view.lines.length}개 라인</span></div>
         <p className={styles.note}>발주 승인은 공급 확보가 아니에요. 공급 최종 확정 후 FIFO 배정·모의 결제가 처리되고, 모든 출처가 입고돼야 픽업 알림이 생겨요.</p>
         <div className={styles.grid}>{view.lines.map(line => <SupplyLine key={line.id} line={line} name={productName(line.productId)} source={view.orders.find(order => order.id === line.orderId)?.source ?? "manual"} disabled={disabled} send={send} />)}</div>
@@ -150,9 +151,11 @@ function DomainPanel({ state, onCommand, role, actorId, storeId, busy, pickupOnl
   </section>;
 }
 
-function MerchantAssistant({ state, storeId, revision, budgetWon, selectedProductIds, pendingProductIds, disabled, onApply }: {
-  state: DomainState; storeId: string; revision: number; budgetWon: number; selectedProductIds: string[]; pendingProductIds: string[]; disabled: boolean;
-  onApply: (output: MerchantOutput, selectedIds: string[]) => void;
+function MerchantAssistant({ state, storeId, disabled, getCurrent, prepare, onApply, onPolicy }: {
+  state: DomainState; storeId: string; disabled: boolean;
+  getCurrent: () => MerchantScreen; prepare: () => MerchantScreen;
+  onApply: (resolved: ReturnType<typeof resolveMerchantContextProposal>, action: MerchantContextResponse["action"]) => void;
+  onPolicy: (proposal: ForwardedPolicyProposal | null) => void;
 }) {
   const [text, setText] = useState("");
   const [status, setStatus] = useState<AssistantStatus | null>(null);
@@ -161,12 +164,13 @@ function MerchantAssistant({ state, storeId, revision, budgetWon, selectedProduc
   const [statusError, setStatusError] = useState("");
   const [thinking, setThinking] = useState(false);
   const [error, setError] = useState("");
-  const [proposal, setProposal] = useState<{ output: MerchantOutput; ids: string[]; snapshot: string; sequence: number; model: string; usage: MerchantResponse["usage"] } | null>(null);
+  const [proposal, setProposal] = useState<{ input: MerchantContextRequest; output: MerchantContextResponse; resolved: ReturnType<typeof resolveMerchantContextProposal> | null; snapshot: string; sequence: number } | null>(null);
   const controller = useRef<AbortController | null>(null);
   const sequence = useRef(0);
-  const snapshot = JSON.stringify([state.sessionId, state.generation, revision, storeId, budgetWon, selectedProductIds, pendingProductIds]);
-  const latestSnapshot = useRef(snapshot);
-  latestSnapshot.current = snapshot;
+  const snapshot = getCurrent().snapshot;
+  const latest = useRef({ getCurrent, disabled });
+  latest.current = { getCurrent, disabled };
+  const requestSnapshot = useRef<string | null>(null);
   const allowedIds = state.products.map(product => product.id);
   const aiReady = status?.configured === true && status.mode === "live";
   const stale = proposal !== null && (proposal.snapshot !== snapshot || proposal.sequence !== sequence.current);
@@ -188,57 +192,75 @@ function MerchantAssistant({ state, storeId, revision, budgetWon, selectedProduc
     return () => { active = false; abort.abort(); clearTimeout(timer); };
   }, [statusAttempt]);
   useEffect(() => {
-    sequence.current++;
-    controller.current?.abort(); controller.current = null;
-    setThinking(false);
-    setProposal(current => current ? { ...current, sequence: -1 } : null);
+    if (controller.current && (disabled || requestSnapshot.current !== snapshot)) {
+      sequence.current++; controller.current.abort(); controller.current = null; setThinking(false);
+    }
   }, [snapshot, disabled]);
   useEffect(() => () => { sequence.current++; controller.current?.abort(); }, []);
   function edit(value: string) {
     sequence.current++; controller.current?.abort(); controller.current = null;
     setText(value); setThinking(false); setProposal(null); setError("");
+    onPolicy(null);
   }
   async function propose(event: FormEvent) {
     event.preventDefault();
     if (disabled || controller.current || !aiReady || statusLoading) return;
     setProposal(null); setError("");
-    if (selectedProductIds.length > 20 || pendingProductIds.length > 20) { setError("현재 AI 변경안 계약은 상품 20개 이내예요. 더 큰 묶음은 아래 수동 선택을 사용해주세요. 자동으로 잘라 실행하지 않아요."); return; }
     const abort = new AbortController(); controller.current = abort;
     const generation = ++sequence.current;
     let timedOut = false;
     const timer = setTimeout(() => { timedOut = true; abort.abort(); }, 45_000);
     setThinking(true);
     try {
-      const input = parseMerchantRequest({ text: text.trim(), id: crypto.randomUUID(), generation, storeId, budgetWon, selectedProductIds }, allowedIds, state.stores.map(store => store.id));
-      const response = await fetch("/api/assistant/merchant", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(input), signal: abort.signal });
+      const current = prepare();
+      requestSnapshot.current = current.snapshot;
+      const input = parseMerchantContextRequest({ text: text.trim(), id: crypto.randomUUID(), generation, storeId, budgetWon: current.budgetWon, selectedProductIds: current.selectedProductIds, context: current.context }, allowedIds, state.stores.map(store => store.id));
+      const body = JSON.stringify(input);
+      if (new TextEncoder().encode(body).byteLength > MERCHANT_CONTEXT_BODY_BYTES) throw new AssistantError("BODY_TOO_LARGE");
+      const response = await fetch("/api/assistant/merchant", { method: "POST", headers: { "Content-Type": "application/json", "X-Wanna-Merchant-Version": "2" }, body, signal: abort.signal });
       const data: unknown = await response.json().catch(() => { throw new AssistantError("MODEL_MALFORMED"); });
-      if (sequence.current !== generation || latestSnapshot.current !== snapshot) return;
+      if (sequence.current !== generation || latest.current.getCurrent().snapshot !== current.snapshot || latest.current.disabled) return;
       if (timedOut) throw new AssistantError("MODEL_TIMEOUT");
       if (!response.ok || !isObject(data) || data.ok !== true) {
         const code = isObject(data) && isObject(data.error) ? data.error.code : undefined;
         throw new AssistantError(typeof code === "string" && Object.hasOwn(errorMessages, code) ? code as AssistantErrorCode : "MODEL_UPSTREAM");
       }
-      if (data.id !== input.id || data.generation !== generation || data.mode !== "live" || typeof data.model !== "string" || !data.model.trim() || data.model.length > 120 || !isObject(data.usage) || !integer(data.usage.inputTokens) || !integer(data.usage.outputTokens)) throw new AssistantError("MODEL_MALFORMED");
-      const output = parseMerchantOutput({ action: data.action, scope: data.scope, view: data.view, selection: data.selection, productIds: data.productIds, budgetWon: data.budgetWon, message: data.message }, allowedIds);
-      const ids = output.scope === "current_batch" && !["clarify", "unsupported"].includes(output.action) ? resolveMerchantProposal(input, output, pendingProductIds, allowedIds).selectedProductIds : selectedProductIds;
-      setProposal({ output, ids, snapshot, sequence: generation, model: data.model, usage: { inputTokens: data.usage.inputTokens, outputTokens: data.usage.outputTokens } });
+      const output = parseMerchantContextResponse(data, input, allowedIds);
+      const resolved = ["clarify", "unsupported"].includes(output.action) ? null : resolveMerchantContextProposal(input, output, input, allowedIds);
+      setProposal({ input, output, resolved, snapshot: current.snapshot, sequence: generation });
     } catch (caught) {
-      if (sequence.current === generation && latestSnapshot.current === snapshot) setError(timedOut ? errorMessages.MODEL_TIMEOUT : caught instanceof AssistantError ? caught.message : errorMessages.MODEL_NETWORK);
+      if (sequence.current === generation && !latest.current.disabled) setError(timedOut ? errorMessages.MODEL_TIMEOUT : caught instanceof AssistantError ? caught.message : errorMessages.MODEL_NETWORK);
     } finally {
       clearTimeout(timer);
       if (sequence.current === generation) { controller.current = null; setThinking(false); }
     }
   }
+  function apply(policy: boolean) {
+    if (!proposal || disabled || thinking || proposal.sequence !== sequence.current) return;
+    try {
+      const current = latest.current.getCurrent();
+      if (proposal.snapshot !== current.snapshot) throw new AssistantError("MERCHANT_NOT_APPLICABLE");
+      const resolved = resolveMerchantContextProposal(proposal.input, proposal.output, { ...proposal.input, selectedProductIds: current.selectedProductIds, budgetWon: current.budgetWon, context: current.context }, allowedIds);
+      if (policy && resolved.policyDraft) {
+        const captured = proposal;
+        onPolicy({ input: { text: proposal.input.text, id: proposal.input.id, generation: proposal.input.generation, storeId, currentPolicy: proposal.input.context.currentPolicy }, output: resolved.policyDraft, model: proposal.output.model, usage: proposal.output.usage,
+          isCurrent: () => captured.sequence === sequence.current && captured.snapshot === latest.current.getCurrent().snapshot });
+      } else if (!policy && !resolved.policyDraft) onApply(resolved, proposal.output.action);
+      setProposal(null);
+    } catch { setError("선택·문맥 또는 업무 조건이 바뀌었어요. 현재 상태로 다시 제안받아주세요."); }
+  }
   return <section className={styles.assistant} aria-label="실제 AI 경영주 변경안"><div className={styles.sectionTitle}><h3>이번 묶음, 이렇게 바꿔볼까요?</h3><span className={styles.badge}>실제 AI · 제안만</span></div>
     <p className={styles.note} role="status">{statusLoading ? "AI 설정 확인 중…" : statusError || (aiReady ? "실제 AI를 호출해 선택·조회·이번 묶음 매입 한도 변경안을 만들어요." : "실제 AI 설정이 필요해요. 로컬 해석으로 자동 전환하지 않으며 수동 선택은 사용할 수 있어요.")}</p>
     <button type="button" disabled={disabled || thinking || statusLoading} onClick={() => setStatusAttempt(current => current + 1)}>AI 설정 다시 확인</button>
-    <form className={styles.form} onSubmit={propose}><label>조회·선택·이번 묶음 지시<input value={text} maxLength={300} disabled={disabled} placeholder="샌드위치는 빼고 매입 2만원 이내로" onChange={event => edit(event.target.value)} onKeyDown={event => { if (event.key === "Enter" && event.nativeEvent.isComposing) event.preventDefault(); }} /></label><button className={styles.primary} disabled={disabled || thinking || !aiReady || statusLoading || !text.trim() || !integer(budgetWon, 0, DOMAIN_POLICY.maxBudgetWon)}>{thinking ? "AI 변경안 만드는 중…" : "AI 변경안 보기"}</button></form>
-    <div className={styles.actions}>{["미확보 요청만 보여줘", "샌드위치는 빼고 매입 2만원 이내로", "선택 모두 해제"].map(example => <button key={example} type="button" disabled={disabled} onClick={() => edit(example)}>{example}</button>)}{thinking && <button type="button" onClick={() => edit(text)}>AI 요청 취소</button>}</div>
+    <form className={styles.form} onSubmit={propose}><label>조회·선택·복원·앞으로의 지시<input value={text} maxLength={300} disabled={disabled} placeholder="아까 뺀 것 다시 / 앞으로도 이렇게" onChange={event => edit(event.target.value)} onKeyDown={event => { if (event.key === "Enter" && event.nativeEvent.isComposing) event.preventDefault(); }} /></label><button className={styles.primary} disabled={disabled || thinking || !aiReady || statusLoading || !text.trim() || !integer(getCurrent().budgetWon, 0, DOMAIN_POLICY.maxBudgetWon)}>{thinking ? "AI 변경안 만드는 중…" : "AI 변경안 보기"}</button></form>
+    <div className={styles.actions}>{["미확보 요청만 보여줘", "아까 뺀 것 다시", "아까 예산으로", "앞으로도 이렇게"].map(example => <button key={example} type="button" disabled={disabled} onClick={() => edit(example)}>{example}</button>)}{thinking && <button type="button" onClick={() => edit(text)}>AI 요청 취소</button>}</div>
     <p className={styles.note}>예시는 입력만 채워요. 공급·수량·금액의 진실은 도메인 상태이며 AI 설명은 실제 가격·재고 확인이나 실행 결과가 아니에요.</p>
+    <p className={styles.note}>최근 변경 문맥은 이 화면에서만 유지하며 역할·점포 전환, 초기화, 새로고침 때 끝나요. AI 실행 이력의 SQLite 저장은 다음 단계에 연결할 예정이며, 지금은 영구 기록되지 않아요.</p>
     {error && <p className={styles.error} role="alert">{error} 입력은 유지했어요.</p>}
-    {proposal && <div className={styles.batch}><span className={styles.badge}>실제 AI · {proposal.model}</span><p>{proposal.output.message}</p>
-      {applicable ? <><p>조회: {proposal.output.view === "requested" ? "대기·재확인 요청" : proposal.output.view === "approved" ? "발주 이력·예약 요청" : "전체 요청"}<br />선택: {proposal.ids.map(id => state.products.find(product => product.id === id)?.name ?? id).join(" · ") || "없음"}<br />이번 묶음 매입 한도: {won(budgetWon)} → {won(proposal.output.budgetWon ?? budgetWon)}</p><p>적용은 화면 선택·조회·이번 묶음 한도만 변경해요. 누적 정책 예산 저장이나 발주 승인은 하지 않아요.</p>{stale && <p className={styles.warning}>점포·요청·예산·선택이 바뀌어 만료됐어요. 다시 제안받아주세요.</p>}<button type="button" className={styles.primary} disabled={disabled || thinking || stale} onClick={() => { if (proposal.snapshot !== latestSnapshot.current || proposal.sequence !== sequence.current) return; onApply(proposal.output, proposal.ids); setProposal(null); }}>확인하고 화면 변경안 적용</button></> : <p>{proposal.output.scope === "future_policy" ? "앞으로의 지속 정책은 아래 ‘앞으로의 자동발주, 말로 제안받기’에서 구체적인 대상·예산·ON/OFF를 확인해주세요. 이번 묶음의 선택이나 예산을 자동으로 정책에 옮기지 않아요." : proposal.output.action === "clarify" ? "추가 확인이 필요해요. 입력을 보완하고 다시 요청해주세요. 현재 선택은 유지돼요." : "지원하지 않는 지시예요. 이번 묶음 지시로 다시 입력하거나 수동 설정을 사용해주세요."}</p>}
-      <button type="button" disabled={disabled} onClick={() => setProposal(null)}>제안 닫기</button><details><summary>AI 사용량</summary><p>입력 {proposal.usage.inputTokens} · 출력 {proposal.usage.outputTokens} 토큰</p></details>
+    {proposal && <div className={styles.batch}><span className={styles.badge}>실제 AI · {proposal.output.model}</span><p>{proposal.output.message}</p>
+      {applicable && proposal.resolved ? <><p>조회: {proposal.output.view === "requested" ? "대기·재확인 요청" : proposal.output.view === "approved" ? "발주 이력·예약 요청" : "전체 요청"}<br />선택: {proposal.resolved.selectedProductIds.map(id => state.products.find(product => product.id === id)?.name ?? id).join(" · ") || "없음"}<br />이번 묶음 매입 한도: {won(proposal.input.budgetWon)} → {won(proposal.resolved.budgetWon)}</p><p>적용은 화면 선택·조회·이번 묶음 한도만 변경해요. 누적 정책 예산 저장이나 발주 승인은 하지 않아요.</p><button type="button" className={styles.primary} disabled={disabled || thinking || stale} onClick={() => apply(false)}>확인하고 화면 변경안 적용</button></> : proposal.resolved?.policyDraft ? <><p>현재 선택을 지속 정책 초안으로 전달해요. 아래 기존 확인 화면에서 ON/OFF·대상·누적 예산의 전후 차이를 확인하며, 아직 저장·발주하지 않아요.</p><button type="button" disabled={disabled || thinking || stale} onClick={() => apply(true)}>정책 전후 비교·최종 확인으로 이어가기</button></> : <p>{proposal.output.action === "clarify" ? "추가 확인이 필요해요. 위 최근 변경 번호나 원하는 대상을 입력해주세요. 현재 선택은 유지돼요." : "지원하지 않는 지시예요. 수동 선택·정책 설정을 사용할 수 있어요."}</p>}
+      {stale && <p className={styles.warning}>점포·업무 조건·선택·문맥이 바뀌어 만료됐어요. 다시 제안받아주세요.</p>}
+      <button type="button" disabled={disabled} onClick={() => setProposal(null)}>제안 닫기</button><details><summary>AI 사용량</summary><p>입력 {proposal.output.usage.inputTokens} · 출력 {proposal.output.usage.outputTokens} 토큰</p></details>
     </div>}
   </section>;
 }
@@ -312,11 +334,14 @@ function CustomerRequest({ detail, condition, name, now, revision, disabled, sen
   </article>;
 }
 
-function MerchantDemand({ state, view, storeId, disabled, send }: { state: DomainState; view: View; storeId: string; disabled: boolean; send: Send }) {
+function MerchantDemand({ state, view, actorId, storeId, disabled, send }: { state: DomainState; view: View; actorId: string; storeId: string; disabled: boolean; send: Send }) {
   const [selected, setSelected] = useState<string[]>([]);
-  const [selectionRevision, setSelectionRevision] = useState(view.revision);
+  const businessSnapshot = merchantBusinessSnapshot(state, actorId, storeId);
+  const [selectionSnapshot, setSelectionSnapshot] = useState(businessSnapshot);
   const [batchBudgetInput, setBatchBudgetInput] = useState("");
   const [filter, setFilter] = useState<MerchantOutput["view"]>("all");
+  const [forwarded, setForwarded] = useState<ForwardedPolicyProposal | null>(null);
+  const [, updateContext] = useState(0);
   const eligible = view.demand.filter(demand => demand.orderableQuantity > 0);
   const items = eligible.filter(demand => selected.includes(demand.productId)).flatMap(demand => {
     const condition = state.conditions.find(condition => condition.storeId === storeId && condition.productId === demand.productId);
@@ -326,26 +351,73 @@ function MerchantDemand({ state, view, storeId, disabled, send }: { state: Domai
   const remaining = view.policy ? view.policy.budgetWon - view.policy.spentWon : 0;
   const batchBudget = batchBudgetInput.trim() === "" ? remaining : Number(batchBudgetInput);
   const validBudget = integer(batchBudget, 0, DOMAIN_POLICY.maxBudgetWon);
-  const pendingIds = [...new Set(view.requests.filter(detail => detail.request.status === "pending" && detail.consentValid).map(detail => detail.request.productId))];
+  const memory = useRef<{ uiSeq: number; changes: MerchantChange[]; selected: string[]; budget: number }>({ uiSeq: 0, changes: [], selected: [], budget: batchBudget });
+  const budgetEdit = useRef<number | null>(null);
+  const committedBudget = useRef(batchBudget);
+  if (budgetEdit.current === null && batchBudgetInput.trim() === "") committedBudget.current = batchBudget;
+  memory.current.selected = selected; memory.current.budget = batchBudget;
+  const bump = () => { memory.current.uiSeq++; updateContext(memory.current.uiSeq); };
+  function remember(ids: string[], beforeBudget: number, afterBudget: number) {
+    const addedProductIds = ids.filter(id => !memory.current.selected.includes(id));
+    const removedProductIds = memory.current.selected.filter(id => !ids.includes(id));
+    if (!addedProductIds.length && !removedProductIds.length && beforeBudget === afterBudget) return;
+    bump();
+    memory.current.changes = [...memory.current.changes, { id: crypto.randomUUID(), seq: memory.current.uiSeq, addedProductIds, removedProductIds, beforeBudgetWon: beforeBudget, afterBudgetWon: afterBudget }].slice(-5);
+  }
+  function finishBudget() {
+    if (budgetEdit.current !== null && integer(memory.current.budget, 0, DOMAIN_POLICY.maxBudgetWon)) {
+      remember(memory.current.selected, budgetEdit.current, memory.current.budget);
+      committedBudget.current = memory.current.budget; budgetEdit.current = null;
+    }
+  }
+  function choose(ids: string[]) {
+    if (disabled) return;
+    finishBudget();
+    // An invalid, unfinished budget draft must not enter a valid history record.
+    remember(ids, committedBudget.current, committedBudget.current);
+    memory.current.selected = ids; setSelected(ids); setSelectionSnapshot(merchantBusinessSnapshot(state, actorId, storeId));
+  }
+  function getCurrent(): MerchantScreen {
+    const fresh = getView(state, { sessionId: state.sessionId, generation: state.generation, actorId, role: "merchant", storeId }, Date.now());
+    const policy = fresh.policy!;
+    const context: MerchantContext = { uiSeq: memory.current.uiSeq, changes: memory.current.changes, pendingProductIds: fresh.demand.filter(row => row.shortage > 0).map(row => row.productId),
+      currentPolicy: { enabled: policy.enabled, productIds: policy.productIds, budgetWon: policy.budgetWon, spentWon: policy.spentWon, version: policy.version } };
+    return { selectedProductIds: memory.current.selected, budgetWon: memory.current.budget, context,
+      snapshot: JSON.stringify([merchantBusinessSnapshot(state, actorId, storeId), memory.current.uiSeq, memory.current.selected, memory.current.budget, filter]) };
+  }
   const hasUnavailable = selected.some(id => !items.some(item => item.productId === id));
   const shownRequests = view.requests.filter(detail => filter === "all" || (filter === "requested" ? ["pending", "review_required"].includes(detail.request.status) : detail.links.length > 0 || detail.reservation !== null));
-  const stale = selectionRevision !== view.revision;
-  return <section className={styles.section}>
-    <MerchantAssistant state={state} storeId={storeId} revision={view.revision} budgetWon={batchBudget} selectedProductIds={selected} pendingProductIds={pendingIds} disabled={disabled} onApply={(output, ids) => {
-      setFilter(output.view);
-      if (output.action === "select") { setSelected(ids); setSelectionRevision(view.revision); }
-      if (output.budgetWon !== null) setBatchBudgetInput(String(output.budgetWon));
+  const stale = selectionSnapshot !== businessSnapshot;
+  return <><section className={styles.section}>
+    <details className={styles.contextHistory}><summary>최근 적용 변경 · {memory.current.changes.length}/5</summary>
+      <p className={styles.note}>이 화면의 선택·이번 한도 변경만 기억해요. 거래·과거 동의를 되돌리지 않아요. 예산은 입력을 마친 한 번의 편집으로 기록해요.</p>
+      {memory.current.changes.length ? <ol>{memory.current.changes.map(change => <li key={change.id}><strong>변경 {change.seq}</strong><p>추가: {change.addedProductIds.map(id => state.products.find(product => product.id === id)?.name ?? id).join(" · ") || "없음"}<br />제외: {change.removedProductIds.map(id => state.products.find(product => product.id === id)?.name ?? id).join(" · ") || "없음"}<br />이번 한도 {won(change.beforeBudgetWon)} → {won(change.afterBudgetWon)}</p></li>)}</ol> : <p className={styles.note}>아직 적용한 변경이 없어요. 문맥이 끝난 뒤에는 이전 변경을 추측해서 복원하지 않아요.</p>}
+    </details>
+    <MerchantAssistant state={state} storeId={storeId} disabled={disabled} getCurrent={getCurrent} prepare={() => { finishBudget(); return getCurrent(); }} onPolicy={proposal => { setForwarded(proposal); if (proposal) requestAnimationFrame(() => document.getElementById("merchant-policy-editor")?.scrollIntoView({ behavior: "smooth", block: "start" })); }} onApply={(resolved, action) => {
+      if (action === "filter") {
+        if (filter !== resolved.view) bump();
+        setFilter(resolved.view);
+        return;
+      }
+      finishBudget();
+      const seq = memory.current.uiSeq;
+      remember(resolved.selectedProductIds, memory.current.budget, resolved.budgetWon);
+      if (filter !== resolved.view && memory.current.uiSeq === seq) bump();
+      memory.current.selected = resolved.selectedProductIds; memory.current.budget = resolved.budgetWon;
+      committedBudget.current = resolved.budgetWon;
+      setFilter(resolved.view); setSelected(resolved.selectedProductIds); setSelectionSnapshot(merchantBusinessSnapshot(state, actorId, storeId));
+      setBatchBudgetInput(String(resolved.budgetWon));
     }} />
     <div className={styles.sectionTitle}><h3>수요 묶음 · 보수적 발주</h3><span>{view.demand.length}개 상품</span></div>
     <div className={styles.metrics}><p>누적 매입 예산<strong>{won(view.policy?.budgetWon ?? 0)}</strong></p><p>사용·점유<strong>{won(view.policy?.spentWon ?? 0)}</strong></p><p>남은 예산<strong>{won(remaining)}</strong></p></div>
     <p className={styles.note}>처음 예산은 0원이며 아래 설정에서 명시적으로 확인해야 해요. 발주 가능 수량은 도메인의 현재 수요·미확정 발주·확보 잔량·MOQ·포장·매입 예산 계산 결과예요. 각 상품의 가능량을 모두 합치면 예산을 넘을 수 있어요.</p>
-    <div className={styles.actions} aria-label="요청 조회 필터">{([['all', '전체 요청'], ['requested', '대기·재확인'], ['approved', '발주 이력·예약']] as const).map(([value, title]) => <button key={value} type="button" disabled={disabled} aria-pressed={filter === value} onClick={() => setFilter(value)}>{title}</button>)}</div>
-    <div className={styles.actions}><button type="button" disabled={disabled || !eligible.length} onClick={() => { setSelected(eligible.map(demand => demand.productId)); setSelectionRevision(view.revision); }}>현재 발주 가능 상품 전체 선택</button><button type="button" disabled={disabled} onClick={() => { setSelected([]); setSelectionRevision(view.revision); }}>선택 해제</button></div>
+    <div className={styles.actions} aria-label="요청 조회 필터">{([['all', '전체 요청'], ['requested', '대기·재확인'], ['approved', '발주 이력·예약']] as const).map(([value, title]) => <button key={value} type="button" disabled={disabled} aria-pressed={filter === value} onClick={() => { if (filter !== value) bump(); setFilter(value); }}>{title}</button>)}</div>
+    <div className={styles.actions}><button type="button" disabled={disabled || !eligible.length} onClick={() => choose(eligible.map(demand => demand.productId))}>현재 발주 가능 상품 전체 선택</button><button type="button" disabled={disabled} onClick={() => choose([])}>선택 해제</button></div>
     <div className={styles.grid}>{view.demand.filter(demand => shownRequests.some(detail => detail.request.productId === demand.productId)).map(demand => {
       const product = state.products.find(product => product.id === demand.productId);
       const condition = state.conditions.find(condition => condition.storeId === storeId && condition.productId === demand.productId);
       const details = shownRequests.filter(detail => detail.request.productId === demand.productId);
-      return <article className={styles.card} key={demand.productId}><label className={styles.check}><input type="checkbox" checked={selected.includes(demand.productId)} disabled={disabled || !demand.orderableQuantity} onChange={event => { setSelected(current => event.target.checked ? [...new Set([...current, demand.productId])] : current.filter(id => id !== demand.productId)); setSelectionRevision(view.revision); }} /><strong>{product?.name ?? demand.productId}</strong></label>
+      return <article className={styles.card} key={demand.productId}><label className={styles.check}><input type="checkbox" checked={selected.includes(demand.productId)} disabled={disabled || (!selected.includes(demand.productId) && !demand.orderableQuantity)} onChange={event => choose(event.target.checked ? [...new Set([...selected, demand.productId])] : selected.filter(id => id !== demand.productId))} /><strong>{product?.name ?? demand.productId}</strong></label>
         <dl className={styles.facts}><div><dt>유효 수요</dt><dd>{demand.validQuantity}개</dd></div><div><dt>미확정 발주</dt><dd>{demand.outstandingQuantity}개</dd></div><div><dt>미배정 확보</dt><dd>{demand.pooledQuantity}개</dd></div><div><dt>부족분</dt><dd>{demand.shortage}개</dd></div><div><dt>발주 가능</dt><dd>{demand.orderableQuantity}개</dd></div><div><dt>매입 단가</dt><dd>{condition ? won(condition.unitCost) : "미확인"}</dd></div></dl>
         {condition && <p className={styles.note}>최소 {condition.moq}개 · {condition.packSize}개 단위 · 판매가 {won(condition.unitPrice)} (모의)</p>}
         {demand.reason && <p className={styles.warning}>{labels[demand.reason] ?? demand.reason}</p>}
@@ -355,18 +427,18 @@ function MerchantDemand({ state, view, storeId, disabled, send }: { state: Domai
     {!view.demand.length && <p className={styles.empty}>현재 점포의 요청이 없어요. 고객 검색에서 요청을 저장하면 여기에 반영돼요.</p>}
     {!!view.demand.length && !shownRequests.length && <p className={styles.empty}>이 조회 조건의 요청이 없어요. 전체 요청에서 확인해주세요.</p>}
     <div className={styles.batch}><strong>선택 {selected.length}개 상품 · 현재 가능 매입 합계 {won(cost)}</strong>
-      <label className={styles.field}>이번 묶음 매입 한도 (원)<input type="number" min="0" max={DOMAIN_POLICY.maxBudgetWon} step="1" value={batchBudgetInput} disabled={disabled} placeholder={String(remaining)} onChange={event => setBatchBudgetInput(event.target.value)} /></label><p>빈칸이면 남은 누적 예산 {won(remaining)}을 한도로 사용해요. 이 입력은 저장된 정책 예산을 변경하지 않아요.</p>
+      <label className={styles.field}>이번 묶음 매입 한도 (원)<input type="number" min="0" max={DOMAIN_POLICY.maxBudgetWon} step="1" value={batchBudgetInput} disabled={disabled} placeholder={String(remaining)} onFocus={() => { budgetEdit.current ??= integer(batchBudget, 0, DOMAIN_POLICY.maxBudgetWon) ? batchBudget : committedBudget.current; }} onBlur={finishBudget} onChange={event => { budgetEdit.current ??= committedBudget.current; memory.current.budget = event.target.value.trim() === "" ? remaining : Number(event.target.value); setBatchBudgetInput(event.target.value); bump(); }} /></label><p>빈칸이면 남은 누적 예산 {won(remaining)}을 한도로 사용해요. 이 입력은 저장된 정책 예산을 변경하지 않아요.</p>
       {items.map(item => <p key={item.productId}>{state.products.find(product => product.id === item.productId)?.name ?? item.productId} · {item.quantity}개 × 매입 {won(item.unitCost)} = {won(item.quantity * item.unitCost)}</p>)}
       <p>필터와 무관하게 위 선택 전체를 승인해요. 수량은 도메인의 발주 가능량이며 임의로 예산에 맞춰 줄이지 않아요. 하나라도 조건이 바뀌면 전체 미실행이에요. 공급 확보·모의 결제·예약은 별도 상태예요.</p>
       {stale && selected.length > 0 && <p className={styles.warning}>목록이 바뀌었어요. 선택을 해제하고 현재 묶음을 다시 확인해주세요.</p>}
       {hasUnavailable && <p className={styles.warning}>선택에 현재 발주 불가 상품이 포함돼 있어요. 일부만 몰래 승인하지 않아요. 선택을 해제하고 조건을 다시 확인해주세요.</p>}
       {(!validBudget || cost > remaining || cost > batchBudget) && <p className={styles.warning}>묶음 합계가 이번 한도 또는 남은 누적 예산을 넘거나 한도가 올바르지 않아요. 상품 선택·이번 한도·정책 예산을 확인해주세요.</p>}
-      <button type="button" className={styles.primary} disabled={disabled || stale || hasUnavailable || !items.length || !validBudget || cost > remaining || cost > batchBudget || !integer(cost)} onClick={async () => { if (await send({ type: "order.approve", items: items.map(({ productId, quantity, conditionVersion }) => ({ productId, quantity, conditionVersion })) }, selectionRevision)) setSelected([]); }}>확인한 묶음 발주 승인 (모의)</button>
+      <button type="button" className={styles.primary} disabled={disabled || stale || hasUnavailable || !items.length || !validBudget || cost > remaining || cost > batchBudget || !integer(cost)} onClick={async () => { finishBudget(); if (selectionSnapshot !== merchantBusinessSnapshot(state, actorId, storeId)) return; if (await send({ type: "order.approve", items: items.map(({ productId, quantity, conditionVersion }) => ({ productId, quantity, conditionVersion })) }, state.revision)) { memory.current.selected = []; setSelected([]); bump(); } }}>확인한 묶음 발주 승인 (모의)</button>
     </div>
-  </section>;
+  </section>{view.policy && <PolicyEditor key={view.policy.version} policy={view.policy} state={state} actorId={actorId} revision={view.revision} disabled={disabled} send={send} forwarded={forwarded} onForwardedDone={() => setForwarded(null)} />}</>;
 }
 
-function PolicyEditor({ policy, state, actorId, revision, disabled, send }: { policy: Policy; state: DomainState; actorId: string; revision: number; disabled: boolean; send: Send }) {
+function PolicyEditor({ policy, state, actorId, revision, disabled, send, forwarded, onForwardedDone }: { policy: Policy; state: DomainState; actorId: string; revision: number; disabled: boolean; send: Send; forwarded?: ForwardedPolicyProposal | null; onForwardedDone: () => void }) {
   const [enabled, setEnabled] = useState(policy.enabled);
   const [budget, setBudget] = useState(String(policy.budgetWon));
   const [productIds, setProductIds] = useState(policy.productIds);
@@ -377,10 +449,10 @@ function PolicyEditor({ policy, state, actorId, revision, disabled, send }: { po
   const budgetWon = Number(budget);
   const valid = budget.trim() !== "" && integer(budgetWon, policy.spentWon, DOMAIN_POLICY.maxBudgetWon) && (!enabled || productIds.length > 0);
   const products = state.products.filter(product => state.conditions.some(condition => condition.storeId === policy.storeId && condition.productId === product.id));
-  return <section className={styles.policy}>
+  return <section className={styles.policy} id="merchant-policy-editor">
     <div className={styles.sectionTitle}><h3>점포 예산 · 자동발주 정책</h3><span className={styles.badge}>{policy.enabled ? "저장된 정책 켜짐" : "저장된 정책 꺼짐"}</span></div>
     <p className={styles.note}>기본 꺼짐. 초기화까지 누적 매입 예산이며 일별로 복구되지 않아요. 이미 사용·점유한 {won(policy.spentWon)} 아래로 낮출 수 없어요. 활성화하면 현재 수요에도 즉시 발주할 수 있어요.</p>
-    <PolicyAssistant policy={policy} state={state} actorId={actorId} revision={revision} disabled={disabled} draftRevision={draftRevision} hasManualDraft={hasManualDraft} onSave={(setting, expectedRevision) => send({ type: "policy.set", ...setting }, expectedRevision)} />
+    <PolicyAssistant policy={policy} state={state} actorId={actorId} revision={revision} disabled={disabled} draftRevision={draftRevision} hasManualDraft={hasManualDraft} forwarded={forwarded} onSave={async (setting, expectedRevision) => { const saved = await send({ type: "policy.set", ...setting }, expectedRevision); if (saved) onForwardedDone(); return saved; }} />
     <h4>직접 정책 설정</h4>
     <form onSubmit={event => { event.preventDefault(); if (valid && !disabled) { setDraftRevision(value => value + 1); setProposal({ enabled, budgetWon, productIds: [...productIds], revision }); } }}>
       <label className={styles.check}><input type="checkbox" checked={enabled} disabled={disabled} onChange={event => { setEnabled(event.target.checked); edited(); }} />앞으로 이 점포의 선택 상품에 보수적 자동발주 사용</label>

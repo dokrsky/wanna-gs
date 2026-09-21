@@ -106,14 +106,14 @@ export function parseSearchOutput(value: unknown, allowedIds: readonly string[])
 }
 
 // Shared Responses envelope parsing; never expose the raw response/refusal.
-export function parseStructuredResponse(response: unknown) {
+export function parseStructuredResponse(response: unknown, maxTextChars = 4096) {
   if (!isObject(response) || !Array.isArray(response.output)) throw new AssistantError("MODEL_MALFORMED", 502);
   if (response.output.some(item => isObject(item) && item.type === "message" && Array.isArray(item.content) && item.content.some(part => isObject(part) && part.type === "refusal"))) {
     throw new AssistantError("MODEL_REFUSAL", 422);
   }
   if (response.status === "incomplete") throw new AssistantError("MODEL_INCOMPLETE", 502);
   if (response.status !== "completed") throw new AssistantError("MODEL_UPSTREAM", 502);
-  if (typeof response.output_text !== "string" || response.output_text.length > 4096) throw new AssistantError("MODEL_MALFORMED", 502);
+  if (typeof response.output_text !== "string" || response.output_text.length > maxTextChars) throw new AssistantError("MODEL_MALFORMED", 502);
   let value: unknown;
   try { value = JSON.parse(response.output_text); }
   catch { throw new AssistantError("MODEL_MALFORMED", 502); }

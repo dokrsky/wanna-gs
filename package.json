@@ -15,6 +15,7 @@
     "check:domain": "node lib/domain/check.mjs",
     "check:store-map": "node lib/store-map.check.mjs",
     "check:policy-assistant": "node --conditions=react-server lib/assistant/policy.check.mjs",
+    "check:merchant-context": "node --conditions=react-server lib/assistant/merchant-context.check.mjs && node app/components/merchant-context-ui.check.mjs",
     "check:dialogue": "node --conditions=react-server lib/assistant/dialogue.check.mjs",
     "check:search-needs": "node lib/domain/needs.check.mjs",
     "start": "next start",
