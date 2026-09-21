@@ -1,0 +1,127 @@
+{
+  "version": 1,
+  "evalVersion": "EVAL-01-20260922-v2",
+  "role": "merchant",
+  "sha256": "940fadfbe0b5d762d5863264126e3ea5884eff8f5f70b8cfc95e3654c8c731a1",
+  "caseCount": 24,
+  "counts": {
+    "holdout": {
+      "cases": 24,
+      "families": 24,
+      "normalCases": 12,
+      "plannedTurns": 24,
+      "slices": {
+        "clear": {
+          "cases": 9,
+          "families": 9,
+          "threshold": 0.95,
+          "requiredSuccesses": 9
+        },
+        "ambiguous": {
+          "cases": 4,
+          "families": 4,
+          "threshold": 0.9,
+          "requiredSuccesses": 4
+        },
+        "unknown": {
+          "cases": 4,
+          "families": 4,
+          "threshold": 0.9,
+          "requiredSuccesses": 4
+        },
+        "correction": {
+          "cases": 3,
+          "families": 3,
+          "threshold": 0.9,
+          "requiredSuccesses": 3
+        },
+        "refusal": {
+          "cases": 4,
+          "families": 4,
+          "threshold": 0.9,
+          "requiredSuccesses": 4
+        }
+      },
+      "risks": {
+        "selection": {
+          "cases": 17,
+          "families": 17,
+          "threshold": 0.85,
+          "requiredSuccesses": 15
+        },
+        "budget": {
+          "cases": 7,
+          "families": 7,
+          "threshold": 0.85,
+          "requiredSuccesses": 6
+        },
+        "scope": {
+          "cases": 15,
+          "families": 15,
+          "threshold": 0.85,
+          "requiredSuccesses": 13
+        },
+        "context": {
+          "cases": 15,
+          "families": 15,
+          "threshold": 0.85,
+          "requiredSuccesses": 13
+        },
+        "ambiguity": {
+          "cases": 4,
+          "families": 4,
+          "threshold": 0.85,
+          "requiredSuccesses": 4
+        },
+        "unknown": {
+          "cases": 4,
+          "families": 4,
+          "threshold": 0.85,
+          "requiredSuccesses": 4
+        },
+        "safety": {
+          "cases": 5,
+          "families": 5,
+          "threshold": 0.85,
+          "requiredSuccesses": 5
+        }
+      }
+    }
+  },
+  "accessLog": [
+    {
+      "agentId": "01a0c4e8-2e35-7621-be46-235d02bfd184",
+      "at": "2026-09-21T17:07:50Z",
+      "action": "author_and_offline_inspect: evaluator authored protected pack; inspected API context/oracle normalization and aggregate coverage; no model calls"
+    },
+    {
+      "agentId": "01a0c4e8-2e35-7621-be46-235d02bfd184",
+      "at": "2026-09-21T17:09:21Z",
+      "action": "exposure_remediation: one family appeared in automatic patch-failure diagnostics; removed from protected split and moved to public dev before any model evaluation; replaced by one independently authored semantic/state family"
+    },
+    {
+      "agentId": "01a0c4e8-2e35-7621-be46-235d02bfd184",
+      "at": "2026-09-21T17:09:21Z",
+      "action": "offline_reinspect: public and protected packs passed inspectFiles together; emitted aggregate counts, thresholds and file hashes only"
+    },
+    {
+      "agentId": "01a0c4e8-2e35-7621-be46-235d02bfd184",
+      "at": "2026-09-21T17:11:21Z",
+      "action": "v2_metadata_and_offline_reinspect: updated evalVersion and reran exact context, current RC/CORE, normalized oracle, full-tuple alternatives, SKU set, split and coverage validation; output aggregates/hashes only; model calls zero"
+    },
+    {
+      "agentId": "01a0c4e8-2e35-7621-be46-235d02bfd184",
+      "at": "2026-09-21T17:12:22.998Z",
+      "action": "revision2_ACK_and_ready_validator_recheck: context c9ad2d925058cf7b01f7c1d0359095316b36eeb9d656030ea33245e7cf766cf0; validator 9c62ee23198c633cda05c6366b22fa209e092c08c2698987c19daa64cc1fb98d; public+protected 120 cases passed inspectFiles, summary counts/hash matched, validator unchanged before/after; network blocked, provider calls zero; only aggregates/hashes emitted"
+    }
+  ],
+  "limitations": [
+    "Declared family distribution is dev48/validation24/holdout24 (50/25/25%), while case counts are72/24/24 (60/20/20%). ADR002 targets the split at family level; independent review and rebalance are outstanding before a baseline-ready claim. Counts were not substituted for families.",
+    "Coordinator mapped the curator's original EVAL-01-merchant-evaluator-curator role label to platform agent UUID 01a0c4e8-2e35-7621-be46-235d02bfd184 (Peirce), verified from the spawn result. This metadata-only mapping did not access the protected pack. No app/prompt implementation or subagents were used by this curator.",
+    "All utterances and client snapshots are synthetic expansions grounded in RC06/RC07 and CORE constraints. No real merchant quotations, actual demand, inventory or transaction authorization are asserted.",
+    "Pre-run collection revision is identified by sha256. One diagnostic exposure was remediated before model evaluation; the exposed family is dev-only and not retained in this protected hash.",
+    "Integrity/declared coverage PASS is not semantic model scoring, transport/error injection, UI latency, SQLite transactions, independent app QA, baseline or final holdout execution.",
+    "Source-to-scenario registry separation remains a shared-contract integration task; SC identifiers currently refer to evaluator-authored synthetic scenes described by each protected case context/rationale. No private case/label/group-level trace is disclosed in this summary.",
+    "Public mixed-scope clarification accepts only explicitly listed complete field tuples under EVAL-01-20260922-v2; no field-wise mixing or partial oracle was added. Numerical thresholds are unchanged."
+  ]
+}

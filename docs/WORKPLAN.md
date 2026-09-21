@@ -23,6 +23,8 @@
 | POLICY-01 | main: 정책 UI 공통 한도 적용, Schrodinger: 실제 callback checker, Planck: 독립 검토 | `3f6420b` Ready·같은origin 기록/설정 유지. UI4096/API·trace8192 불일치 복구, 실제262대상5,159B RED→GREEN·8192/8193 경계·승인 불변 좁은 독립 검사/build PASS. 최대대상 실브라우저/live는 미실행 |
 | VERIFY | 전체 seed/독립 검증·정책 검토·E2E·평가·G5/G6 | ADR002 revision2 두 관점 보완ACK 후 채택·21/23/index 동기화. 다음 최소 실행기/CI·평가manifest·비용경계·두 역할 독립QA. 실행/전체게이트PASS 아님, 중간Preview 비차단 |
 | GATE-01 | main runner/CI, Curie registry, Hooke 독립 검토 | `1f2081c` Ready·23offline suite+build 로컬 및 실제Actions35628215424 PASS. validator34·독립반례37/원본로그 검증·main required gate 연결. 전체G1~G6·live/독립QA증거검증은별도남음 |
+| EVAL-01 | main 형식검사기, Hilbert 고객/Peirce 경영주 curator, Darwin 독립 도구 검토 | 고객300/경영주120 초안·공개336/보호84. 결함6개 복구·자체66/독립원본6+인접47 PASS·26offline suite/build 로컬 PASS. family 비율/장면 정의·라벨/누수 의미 검토·실제 baseline 후속, 비용 답변 전 모델0 |
+| STORE-SOURCE | Galileo ST06 원근거, Franklin 공공 원행6개, main 재대조 | ST06 공식 KTO 좌표 대조·나머지6개 공식 배포 파일의 관측 행 대조. 부분 ZIP에서 행6개/hash/현재 좌표 main 재현 PASS. 전체 archive/CRC·모든 재이용조건·최종 데이터QA 승인 아님 |
 
 연구 Locke는 이미 확보한 초기 근거를 바탕으로 전체 seed를 확장한다. 별도 preflight 시험 앱과 선행 감사는 중단·보존하고 화면 구현으로 인력을 재배정했다. 임시 UI는 합성 데이터·실제 SQLite 저장·실제 AI 연결 범위와 아직 미연결인 거래 단계를 구분하며 제품 완료 증거로 사용하지 않는다.
 

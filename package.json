@@ -21,6 +21,7 @@
     "check:search-needs": "node lib/domain/needs.check.mjs",
     "check:customer-write": "node lib/customer-command-client.check.mjs",
     "check:quality": "node scripts/quality.check.mjs",
+    "check:eval-tools": "node scripts/eval-dataset.check.mjs",
     "check:offline": "node scripts/quality.mjs",
     "check:evidence": "node scripts/quality.mjs --verify",
     "start": "next start",

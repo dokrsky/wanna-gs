@@ -5,14 +5,14 @@
 ## 현재 포인터
 
 ```text
-현재 task: GATE-01 offline 실행기·독립 검토·실제 GitHub CI 통과, main required gate 연결
+현재 task: EVAL-01 합성 평가 자료·검사기 준비, 점포 원자료 대조 보강
 branch: codex/ui-preview-20260921
 PR: https://github.com/dokrsky/wanna-gs/pull/1 (draft, 최종 검증 전)
 마지막 유효 게이트: 제품 게이트 미실행
 마지막 Production deployment: dpl_GB3Cr8At3Com7eJcTnboJ9W4Sika (기존 최소 데모, 최종 제품 아님)
-현재 Ready Preview: https://wanna-127cqwuzf-d-01.vercel.app/demo (1f2081c, POLICY01 앱 동일·offline CI 연결)
+현재 Ready Preview: https://wanna-buow00z89-d-01.vercel.app/demo (ffdca60, POLICY01 앱 동일·offline CI 연결)
 공유 브랜치 주소: https://wanna-gs-git-codex-ui-preview-20260921-d-01.vercel.app/demo
-다음 한 가지: 전체 seed 사실·평가셋/runner 준비, 비용 상한 답변 전에는 대규모 모델 호출 없이 진행
+다음 한 가지: EVAL01 소규모 commit/push·CI/Preview 확인 후 평가 family·시나리오/독립 라벨 검토. 비용 상한 전 대규모 모델 호출 없음
 ```
 
 ## 현재 상태
@@ -23,7 +23,8 @@ PR: https://github.com/dokrsky/wanna-gs/pull/1 (draft, 최종 검증 전)
 | 위임 운영 결정 | ADR-001~006 채택, ADR002 revision2 평가 기준의 두 독립 검토 완료 | DECISION_INDEX, 실행기/전체 독립 품질검증은 후속 |
 | GitHub | dokrsky/wanna-gs, 기준 cf6f95a, 작업 branch/PR #1에서 개발 중 | 실제 offline CI 통과·main required gate 설정. 전체 제품 릴리스 게이트 후속 |
 | 로컬 설정/사전점검 검사기 | OpenAI 15개 + inventory 10개 테스트 통과 | scripts/ 및 .agents/skills/wanna-gs-preflight/scripts/ |
-| 앱·CI·게이트 실행기·DB seed | UI01~11/DATA02/POLICY01 Preview·실제 거래/검색/정책/복원 연결. 기존23suite/build CI 구현·실행, 전체 게이트 후속 | D-46·WORKPLAN, Ready1f2081c·Actions35628215424 |
+| 앱·CI·게이트 실행기·DB seed | UI01~11/DATA02/POLICY01 Preview·실제 거래/검색/정책/복원 연결. 23suite/build 원격CI, EVAL01 포함26suite/build 로컬 PASS | D-46·WORKPLAN, Readyffdca60·Actions35628693688; EVAL01 원격 실행 후속 |
+| 자연어 평가 자료·도구 | 고객300/경영주120 합성 초안, 공개336/보호84. 도구 독립 재검토·공개 최소 coverage 통과 | EVAL01. family 비율·별도 장면 정의·독립 의미 검토/실제 baseline 미완료 |
 | SQLite | 262개 상품·8점포·524조건 거래 schema3, 고객 검색/니즈/추천·경영주 AI 기록·기존 사본 보존 | DATA02 실제 domain/이전 Preview 이행·거래/픽업/정책 복원 |
 | Vercel·OpenAI | Git 자동 Preview 및 UI branch 서버 env 연결. 두 역할·정책·검색v2 실제 호출 관측 | 아래 UI03/06/07 증거; 계정 총 잔액/쿼터 미확인, Production 미변경 |
 | 앱 단위·통합·E2E·실제 모델 평가 | 좁은 자체/조정자 검사·일부 독립 반례 확인 및 실제 정상 흐름 관측. 전체 독립 평가·G1~G6 미실행 | 아래 단위별 실행/미실행 구분; Ready를 제품 게이트로 세지 않음 |
@@ -447,3 +448,27 @@ Artifact `offline-evidence-35628215424-1`/10653460145(14일 보관), archive SHA
 main의 protection없음/rulesets빈배열을 다시 확인한 뒤 `gate`를 GitHub Actions app15368의 required check로 설정했다. strict최신base·관리자에게도적용·PR필수, 별도GitHub사람승인수0, force push/삭제 금지다. API read-back으로 확인했으며 기존 보호 완화·가짜approval·merge·Production변경은 없다. 이 required check는 **offline 집합만 강제**한다. 전체 G1~G6 증거/독립QA/live/CORE·ADR 추적의 기계적 릴리스 판정은 아직 후속이다.
 
 Vercel `dpl_8gdWFjf6N448BC3TuVoVB8rWx86B` / https://wanna-127cqwuzf-d-01.vercel.app/demo Ready, source1f2081c 일치 확인. 앱 소스는 POLICY01과 같고 이번에는 브라우저/모델을 다시 실행하지 않았다. 현재 작업은 progress이며 전체 goal 완료 또는 외부 차단으로 표시하지 않는다. 비용 질문은 답변 대기이고, 독립 데이터/평가셋·결정적 검증 준비는 계속할 수 있다.
+
+## EVAL-01 자료·도구 준비와 원자료 보강 — 2026-09-22 KST
+
+직전 기록 commit `ffdca60bf729eece37d3d0e8d07d0cb31a46d845`의 Actions35628693688/gate 성공과 Vercel `dpl_Hsv9ijm8jhhRCkG5AfxaaMWnELbs` / https://wanna-buow00z89-d-01.vercel.app/demo Ready·source일치를 재확인했다. 기존 앱/Production/모델 설정을 바꾸지 않고 D-46의 작은 게시 단위를 이어간다.
+
+[EVAL01 revision2 계약](context/EVAL-01.md) hash `c9ad2d925058cf7b01f7c1d0359095316b36eeb9d656030ea33245e7cf766cf0`, evalVersion `EVAL-01-20260922-v2`. main 도구/공통 파일, Hilbert 고객 자료, Peirce 경영주 자료, Darwin 읽기 전용 도구 검토로 소유권을 나눴다. 자연어 실험·검증 스킬에 따라 공개 dev/validation과 보호 holdout을 구분하고, ponytail 원칙으로 기존 순수 API 파서와 Node 표준 라이브러리를 재사용했다. 새 의존성·앱/프롬프트/seed 변경0, 모델 호출0이다.
+
+자료는 **합성 초안 고객300/경영주120**이다. 공개 고객240(dev180/validation60), 경영주96(72/24); Git 무시 보호 자료는 담당 curator가 각각60/24를 작성·검사했다고 인계했다. main은 보호 원문을 열지 않고 공개 집계/접근 이력만 읽었다. 공개 hash는 고객 `2ca5ae5e268f6d9e013339375c6f61f71992fcc1bdb762f1de5b85b9b927ed41`, 경영주 `099fb87f983536d87097d0e4d8a85be32b6c910243d38bc71a0eecab63bf8286`; 공개 holdout-summary hash는 각각 `24e608e60656f81e2c5e0f8e1cfdcbf8ec16acfe637554ed44f3c318abe03b2f`, `d803fdbc5ba78f4a31daec74b1bf4b548ee0bf49c1b6ea7099f7bbf4a9b2da94`다. 보호 hash·접근 이력은 그 summary에 있으며 성능 결과가 아니다. 경영주 curator는 초기 패치 진단에 노출된 family를 dev로 옮기고 다른 보호 family로 교체한 이력을 남겼다.
+
+family 개수는 고객69/33/30, 경영주48/24/24로 **60/20/20 목표를 아직 만족하지 않는다**. 별도 장면 기록·라벨 적합성·의미상 family 누수의 독립 검토도 남아 있다. 새 SC 식별자는 현재 inline 참조이며 완전한 연구→장면→case 추적이라고 주장하지 않는다. 공개 검사의 coverageReady는 선언된 최소 case/범주 분모 검사만 뜻한다. SEED-READY·baseline-ready·실제 품질 PASS가 아니다. 고객의 대체 후보 사례를 원상품 정확 식별 성공과 혼합하지 않아야 한다.
+
+검사기는 실제 카탈로그/점포와 서비스별 API 요청·정답 정규화, RC/CORE ID membership, case/group/split 경계·정규화 중복, 고정 분모·ceil95/90/85를 검사한다. 실제 호출/응답 scorer·semantic 판정·UI 지연 측정은 후속이다. 공개 CLI는 공개 두 경로만 받으며 보호 자료 임의 경로를 받지 않는다. 연구 ID membership은 출처 사실/의미 파생 검증을 대신하지 않는다.
+
+Darwin의 [독립 보고](reviews/eval-01-tooling.md)는 최초 P1 1/P2 5를 발견했다: slice/정답 모순, 불가능한 세 번째 질문, 가짜 연구 참조, 덮어쓰기 context로 중복 우회, SKU 집합 순서 우회, 소수점 제거로 정상 예산 충돌. recovery 규칙에 따라 원래 정상 입력을 유지하며 수정했다. 경영주 명령의 실제로 모호한 두 확인 scope는 부분 필드 조합이 아니라 전체 tuple 대안을 명시하도록 v2에 추가했다. 최초 실패 이력은 보존했다. 최종 도구 hash `9c62ee23198c633cda05c6366b22fa209e092c08c2698987c19daa64cc1fb98d`, 자체 checker `98cda43dfa29d521ad6e8281bb463508a0deebb69c82dcd144721005461e3cba`: 자체66·독립 원본반전6/6·별도 인접47 PASS, 이 도구 범위 신규/미해결 P1/P2 없음. corpus 의미·모델 성능 판정으로 확대하지 않는다.
+
+Node24 실제 `check:offline`: 기존23+새3개, **26 suite·production build PASS**. `test-results/quality/2026-09-21T17-18-42-970Z-43104/report.json` hash `5c649ecf49cf67f572cba43f7f4355318fd068ee5a82e3f36aaace1ceeba0640`, source digest `8505a8c0e4ae51a5f0552efe171eac9fec57721552d6c1e39d84e0714541e5d2`, 실행중 sourceChanged=false. 원본 로그/현재 source를 `check:evidence`로 재대조해 종료0. commit 후에는 새 remote CI로 검증하며 이 실행을 다른 HEAD로 승격하지 않는다.
+
+### 점포 원자료의 좁은 사실 대조
+
+Galileo의 [원출처 보강](research/goal-20260922/store-origin-followup.md)은 ST06과 동일한 공식 KTO 기록의 좌표를 확인했고 현재6자리 좌표와 일치했다. 옛 P07 404·기존 수집 이력·개별 재이용조건 미확인까지 해소한 것은 아니다.
+
+Franklin의 [공공 원행 대조](research/goal-20260922/store-primary-rows.md)는 공식 20260630 배포 파일을120초/360MB 상한으로1회 읽었다. HTTP200이었으나120초에252,608,512B에서 중단됐으며 **전체 ZIP이 아니다**. 이미 받은 서울 member의 해제 가능한 prefix에서 ST01/02/03/04/05/08의 완전한39필드 행6개를 관측했다. main도 보존된 부분 파일을 네트워크 없이 별도로 읽어6개 row hash/ID/CRLF·현재6자리 좌표/선택 CSV hash `a99c88261cbb7c1dfcd4e3f37af5ae6bb4f6ff6b60fcab4e3a47bba955216830`를 재현했다. 전체 ZIP/서울 CSV CRC·전역 ID 유일성·현재 영업/출입구 정밀도는 미검증이다. 부분 원본은 `/private/tmp/wanna-gs-store-primary.5YyUzM/semas-20260630.zip`에 남아 있고 저장소에 올리지 않는다. 앱 data/source metadata는 이번에 변경하지 않았으며 최종 data QA 승인이 아니다.
+
+이번 단위는 준비/복구/실제 로컬검사로 progress다. 비용 상한 질문은 답변 대기이며 대규모 모델 호출 없이 할 수 있는 독립 자료 검토·runner 준비를 계속한다. 사용자 `.idea/`·비밀값·보호 원문·Production은 보존한다. 다음은 이 단위의 commit/push·실제 CI/Preview 확인 후 family/장면과 독립 라벨 검토다.

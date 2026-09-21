@@ -446,6 +446,39 @@
         "CORE-18"
       ],
       "limitation": "Adversarial unit checks of the quality evidence validator using synthetic registry, source fingerprints, child results and raw logs. Covers missing/failed/zero/skipped/timeout/stale/tampered evidence and invalid registry or phase claims. Only the final nonzero QUALITY summary counts as one completed suite; per-case PASS lines are not suites. Does not run the registered application checks, build, actual CI or protected-branch enforcement; no application, browser, live model, independent UX or release approval evidence."
+    },
+    {
+      "id": "eval-dataset-validator",
+      "command": "node",
+      "args": ["scripts/eval-dataset.check.mjs"],
+      "marker": "^Eval dataset validator: [1-9][0-9]* counterexamples PASS \\(offline tooling, not NL quality\\)\\.$",
+      "minMatches": 1,
+      "mode": "offline",
+      "scope": "unit",
+      "core": ["CORE-15", "CORE-21", "CORE-22"],
+      "limitation": "Artificial counterexamples of eval pack validation/count arithmetic and existing pure API contracts only. Does not execute the authored corpus, protected holdout, model calls, semantic grading, browser/SQLite transactions, or any release gate. Synthetic test fixtures are not real evaluation samples."
+    },
+    {
+      "id": "eval-customer-public",
+      "command": "node",
+      "args": ["scripts/eval-dataset.mjs", "customer"],
+      "marker": "^Eval dataset integrity/declared coverage PASS; no live or release approval\\.$",
+      "minMatches": 1,
+      "mode": "offline",
+      "scope": "static",
+      "core": ["CORE-21", "CORE-22"],
+      "limitation": "Public customer dev/validation pack format, pure API oracle constraints, reference membership, duplicate/family IDs and declared minimum counts only. No protected pack, semantic family/label review, family-ratio approval, model inference, latency, UX or release performance."
+    },
+    {
+      "id": "eval-merchant-public",
+      "command": "node",
+      "args": ["scripts/eval-dataset.mjs", "merchant"],
+      "marker": "^Eval dataset integrity/declared coverage PASS; no live or release approval\\.$",
+      "minMatches": 1,
+      "mode": "offline",
+      "scope": "static",
+      "core": ["CORE-21", "CORE-22"],
+      "limitation": "Public merchant dev/validation pack format, pure API normalization of each complete oracle tuple, reference membership, duplicate/family IDs and declared minimum counts only. No protected pack, semantic family/label review, family-ratio approval, model inference, latency, UX or release performance."
     }
   ]
 }

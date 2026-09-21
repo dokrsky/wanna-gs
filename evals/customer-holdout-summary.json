@@ -1,0 +1,136 @@
+{
+  "version": 1,
+  "evalVersion": "EVAL-01-20260922-v2",
+  "role": "customer",
+  "sha256": "d2fb3333cec069b217a24bdcab642a19cd97a6b646a2659c7efbd3806355cfe2",
+  "caseCount": 60,
+  "counts": {
+    "holdout": {
+      "cases": 60,
+      "families": 30,
+      "normalCases": 36,
+      "plannedTurns": 66,
+      "slices": {
+        "clear": {
+          "cases": 30,
+          "families": 15,
+          "threshold": 0.95,
+          "requiredSuccesses": 29
+        },
+        "ambiguous": {
+          "cases": 8,
+          "families": 4,
+          "threshold": 0.9,
+          "requiredSuccesses": 8
+        },
+        "unknown": {
+          "cases": 8,
+          "families": 4,
+          "threshold": 0.9,
+          "requiredSuccesses": 8
+        },
+        "correction": {
+          "cases": 6,
+          "families": 3,
+          "threshold": 0.9,
+          "requiredSuccesses": 6
+        },
+        "refusal": {
+          "cases": 8,
+          "families": 4,
+          "threshold": 0.9,
+          "requiredSuccesses": 8
+        }
+      },
+      "risks": {
+        "identity": {
+          "cases": 38,
+          "families": 19,
+          "threshold": 0.85,
+          "requiredSuccesses": 33
+        },
+        "lexical": {
+          "cases": 19,
+          "families": 15,
+          "threshold": 0.85,
+          "requiredSuccesses": 17
+        },
+        "attributes": {
+          "cases": 30,
+          "families": 15,
+          "threshold": 0.85,
+          "requiredSuccesses": 26
+        },
+        "ambiguity": {
+          "cases": 14,
+          "families": 7,
+          "threshold": 0.85,
+          "requiredSuccesses": 12
+        },
+        "unknown": {
+          "cases": 8,
+          "families": 4,
+          "threshold": 0.85,
+          "requiredSuccesses": 7
+        },
+        "correction": {
+          "cases": 6,
+          "families": 3,
+          "threshold": 0.85,
+          "requiredSuccesses": 6
+        },
+        "safety": {
+          "cases": 18,
+          "families": 9,
+          "threshold": 0.85,
+          "requiredSuccesses": 16
+        }
+      }
+    }
+  },
+  "accessLog": [
+    {
+      "agentId": "01a0c4e8-2d4e-7a92-ace3-25a11d6162f5",
+      "at": "2026-09-21T16:59:15Z",
+      "action": "Assigned evaluator accepted EVAL-01 revision1; read public requirements, research and catalog; no pre-existing private pack read."
+    },
+    {
+      "agentId": "01a0c4e8-2d4e-7a92-ace3-25a11d6162f5",
+      "at": "2026-09-21T17:06:11Z",
+      "action": "Authored protected pack and inspected public+private packs locally with inspectFiles; emitted aggregate counts and hashes only; no provider, app or external evaluation calls."
+    },
+    {
+      "agentId": "01a0c4e8-2d4e-7a92-ace3-25a11d6162f5",
+      "at": "2026-09-21T17:14:48Z",
+      "action": "Second bounded tranche: expanded public pack by174 cases; changed private evalVersion only to v2 and privately re-inspected combined packs with validator SHA256 9c62ee23198c633cda05c6366b22fa209e092c08c2698987c19daa64cc1fb98d. Outputs restricted to aggregate counts, coverage errors and file hashes. No model/API/baseline calls."
+    },
+    {
+      "agentId": "01a0c4e8-2d4e-7a92-ace3-25a11d6162f5",
+      "at": "2026-09-21T17:16:30Z",
+      "action": "Added30 protected same-family expression/context variants without public content disclosure; evaluator-only v2 combined inspection confirms all target counts and declared coverage. No model calls."
+    },
+    {
+      "agentId": "01a0c4e8-2d4e-7a92-ace3-25a11d6162f5",
+      "at": "2026-09-21T17:17:28Z",
+      "action": "User supplied actual evaluator platform identity Hilbert; mapped prior logical-role access entries to this UUID. Summary metadata correction and freeze checkpoint only; no cases added or changed. Local v2 integrity/hash/summary checks; aggregate-only output."
+    }
+  ],
+  "limitations": [
+    "Target unchanged and authored: customer public240(dev180/validation60) plus protected60. Remaining count dev0, validation0, holdout0; semantic independent review and scene-record traceability remain incomplete.",
+    "Second tranche added dev144, validation30 and protected30 (204 total). All three owned artifacts now use EVAL-01-20260922-v2; same-family variants remain in their original split/group.",
+    "v2 format/API/FK/reference/final-slice/three-turn/normalized-duplicate/declared-family split checks passed, coverageReady=true for public and combined packs. This is not semantic, source-fact or application performance approval.",
+    "Public dev180 comprises69 declared families,138 normal cases,201 planned turns; validation60 comprises33 families,39 normal cases,69 planned turns. Protected60 comprises30 families,36 normal cases,66 planned turns. All validation/holdout slices and risks have at least3 declared families.",
+    "Public pack now contains9 three-turn conversations (dev6/validation3), all correction ending matched after two clarify steps, and9 clear alternative-candidate cases (dev6/validation3), each paired with a same-family strict-condition unknown counterexample. Per-case semantic checks distinguish alternative from original identity and preserve consent.",
+    "Public examples/smoke and PD-RP research families remain dev; authored paraphrases reuse their family group. The204 added cases are curation, not independent quality approval; semantic near-duplicates and family boundaries still require independent review.",
+    "Every SC-* identifier in these packs is an inline evaluation scenario reference, not a separately defined scenario record. External scene-record lineage is outstanding for the full corpus. Do not report SEED-READY or complete research-to-executable-scenario traceability.",
+    "All utterances are synthetic expansions grounded in existing research taxonomy/catalog or explicit CORE requirements. Catalog-synthetic identity/size and reference names do not establish current commercial stock, ingredient certification, nutrition, health effects or prices.",
+    "Remaining quality gaps include three-turn unresolved/unknown endings, broader spontaneous clarification styles, longer noisy utterances and broader alternative candidate sets. Finite declared coverage does not guarantee arbitrary Korean queries.",
+    "No additional independent evaluator review, model/API/baseline calls, HTTP/UI/SQLite transaction/latency checks or release approval occurred in either tranche. No app, prompt, source, seed or shared progress files were changed by this evaluator.",
+    "Original v1 public SHA256 7f2af1bb08736a8603189710b0bcf43d86f049f6f26ea6abc58aaed11e2c419c; original protected SHA256 452a7bed229c2bd9787dea11d7e4ec86a9caada739f16d886478ac08f982cb26; original summary SHA256 e6a0b6fa385a607a1db86b9fcd5c4e7af2506f12a4352bcbd5f1c5074e3a0d35. v1 was provisional tooling history, not valid corpus approval or a baseline.",
+    "Consumed revision2 context SHA256 c9ad2d925058cf7b01f7c1d0359095316b36eeb9d656030ea33245e7cf766cf0. Validator used SHA256 9c62ee23198c633cda05c6366b22fa209e092c08c2698987c19daa64cc1fb98d. Required counts and ADR002 thresholds were not lowered.",
+    "Protected contents, labels, per-case traces and group identities are absent from public reporting. Storage uses the existing Git-ignored private path and evaluator ownership, not OS access isolation; main/implementers must not read it.",
+    "accessLog agentId is the actual platform UUID 01a0c4e8-2d4e-7a92-ace3-25a11d6162f5 (Hilbert), supplied by the user and mapped to the prior EVAL-01-customer-evaluator-curator role. Only this evaluator accessed the protected pack; no other agent was contacted.",
+    "Declared family counts dev69/validation33/holdout30 total132 imply52.27%/25.00%/22.73% (approximately52/25/23), differing from ADR002's60/20/20 family target by-7.73/+5.00/+2.73 percentage points. Independent review of this deviation and semantic family boundaries remains required; case-count60/20/20 does not prove the family target. No thresholds were lowered, no automatic acceptance of the deviation, and no full baseline READY claim.",
+    "Frozen at this metadata handback by explicit user instruction. Customer cases remain300 (dev180/validation60/holdout60), with zero new curation in this update; public and protected pack hashes are unchanged. Corpus freeze is not SEED-READY, full baseline READY, independent semantic approval or permission to run a model baseline."
+  ]
+}
