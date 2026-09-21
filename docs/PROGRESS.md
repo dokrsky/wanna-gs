@@ -5,14 +5,14 @@
 ## 현재 포인터
 
 ```text
-현재 task: UI-11/POLICY-01 Preview Ready, ADR002 채택 후 최소 검증 실행기 준비
+현재 task: GATE-01 offline 실행기·23suite/build 로컬 통과, 독립 검토/원격CI 준비
 branch: codex/ui-preview-20260921
 PR: https://github.com/dokrsky/wanna-gs/pull/1 (draft, 최종 검증 전)
 마지막 유효 게이트: 제품 게이트 미실행
 마지막 Production deployment: dpl_GB3Cr8At3Com7eJcTnboJ9W4Sika (기존 최소 데모, 최종 제품 아님)
-현재 Ready Preview: https://wanna-l8wbnq8l6-d-01.vercel.app/demo (3f6420b, POLICY01)
+현재 Ready Preview: https://wanna-8zmty0cuh-d-01.vercel.app/demo (6db1d9b, POLICY01 앱 동일·평가 기준 문서)
 공유 브랜치 주소: https://wanna-gs-git-codex-ui-preview-20260921-d-01.vercel.app/demo
-다음 한 가지: GATE-BOOTSTRAP 최소 실행기/CI와 평가 manifest·독립 QA 준비
+다음 한 가지: GATE-01 독립 반례 검토→commit/push·실제 Actions→지원되는 required gate 설정
 ```
 
 ## 현재 상태
@@ -421,3 +421,17 @@ Vercel `dpl_5LkJtU6xrJhoTd4qvupF4qBY1Yqq` / https://wanna-l8wbnq8l6-d-01.vercel.
 핵심 보완: baseline dev+validation/선정후 보호holdout·case/turn/attempt 분리; 고정전체분모/미실행과transport실패·정상절반/각slice분리; SKU/속성/scope/상태oracle·전체UX부담; 선언요인 외 동일조건/경계재비교1회; 현SDKretry0·층별timeout·실행전 수치비용상한/unknownusage; 실제CI 미구현·Production 비활성 구분. 고객300/경영주120·95/90/85%·불변식0·후보6/6·연속비개선3회 유지. 판정은 최종 검증 **기준 채택**이며 전체 QA/비용 승인/CI 강제/PLAN-READY/G5/G6 PASS가 아니다.
 
 이번 turn은 UI11 실제 공개·POLICY01 소비자 회귀 수정/게시·ADR002 두 관점 보완 채택으로 진행했다. Production/키/사용자 `.idea/` 보존. 다음은 기존 체크를 잇는 최소 GATE-BOOTSTRAP/CI와 버전별 평가·독립 두 역할 QA를 준비한다. 대규모 API 평가는 수치상한·권한 경계 확인 전 실행하지 않는다. D-46의 작은 변경/Preview 공유와 최종 목표의 필수 완료 조건을 함께 유지한다.
+
+## GATE-01 실제 offline CI 연결 — 2026-09-22 KST
+
+직전 goal turn은 UI11/POLICY01 배포·ADR002 채택으로 progress였다. 실제 HEAD `6db1d9bebf8db4647117cf4cbea2d0caefefbdb2`·사용자 `.idea/`만 untracked를 확인했다. 문서 commit의 Vercel `dpl_5VAjJSZKXHQBnpbyiT8sBe8F7ehH` / https://wanna-8zmty0cuh-d-01.vercel.app/demo Ready·source일치 재확인. 기존 구현/연동을 처음부터 다시 preflight하지 않았다.
+
+[GATE01 계약](context/GATE-01.md) hash `7c806224dbcdbd6cc00a6967dda3d210d4c118ad4f1ef4a9378efec43beecc70`: main 실행기/CI/package/.nvmrc, Curie registry, Hooke 독립 검토. Node24.12.0 고정·새 의존성/lockfile 변경0·API키 없는offline경로다. Curie는 기존검사 최종완료신호·순서/제약을 읽어21개를 등록하고 인계에서 누락된 inspector unit 및 새validator selfcheck2개를 보완해23개·23완료suite로 반환했다. 반환hash `e534263c12c122e944ff053bf6117c8461c99b7ceb2c351e977f833de6020ac4`. 완료suite 수와assert/상품/내부사례 수는 다르다. DATA02 과거Git object 때문에 checkout fetch-depth0을 사용한다.
+
+`scripts/quality.mjs`는 실제 shell없는argv 프로세스·완료marker/exit/signal/timeout·원본loghash·현재HEAD/소스fingerprint·시각을 별도실행 폴더에 기록한다. 실패해도 나머지offline집합과build를 수행한 뒤aggregate판정한다. 실패/zero/skip/누락/중복/변조log/stale/실행중drift·unsupportedlive/G6 phase를 거절한다. unsigned로컬파일의악의적위조방지까지보장하지 않는다. G1~G6/독립QA/live 증거 검증기는 아직 별도 후속이며 이offline결과로 출시를승인하지않는다.
+
+main 실제실행: `check:quality` 반례34 PASS, `check:offline` 등록23suite 및 Next15.5.25 production build/타입 PASS, 원본 `test-results/quality/2026-09-21T16-47-08-810Z-35104/report.json`. `check:evidence -- <동일report>` 종료0·현재source대조 통과. `.env.local`·test-results ignore 확인, 모델호출0. checker 자체테스트는 앱의34개필수AC PASS가 아니다. 실제source/hash·원본로그는보고서에 있으며 commit후HEAD가바뀌면 로컬증거는 그대로새HEAD PASS로재사용하지않고CI에서재실행한다.
+
+원격 read-only 확인: 지정repo public·admin/push/Actions 허용, main branch protection404(없음)·rulesets빈배열. 아직 보호 설정을 변경하지 않았다. 공식 Actions release/ref를API로조회해 checkoutv7.0.1/setup-nodev7.0.0/upload-artifactv7.0.1의commit SHA로pin했다. workflow는contents:read·credential미보존·PR/main·always aggregate/artifact이며실제원격실행은후속이다. 기존 Production·키·사용자.idea는그대로다. 전체모델평가비용상한을비동기질문했고답변전대규모실호출은하지않는다.
+
+Hooke의 [GATE01 독립 검토](reviews/gate-01.md)는 현재hash에서 P1/P2없음·좁은PASS다. Node24 자체검사34를독립실행하고 별도반례37개로실패/누락/zero/skip/stale/로그변조·phase오인/실행종료를확인했다. main의23suite+build원본도현재fingerprint/argv/loghash로검증했고 전체runner/build를중복실행하지않았다. 이것은원격Actions·제품G1~G6/모델/브라우저PASS가아니다. 비밀검사는staged10/client23개 실제키없음·개인/생성파일제외였다. reviewer보고서포함최종staging을한뒤commit/push해실제CI증거를만든다.

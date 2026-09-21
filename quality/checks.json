@@ -1,0 +1,451 @@
+{
+  "version": 1,
+  "checks": [
+    {
+      "id": "data-generator",
+      "command": "node",
+      "args": [
+        "data/generate.mjs",
+        "--check"
+      ],
+      "marker": "(?:^|\\r?\\n)\\{\\r?\\n  \"check\": \"PASS\",\\r?\\n  \"generatorMatchesFiles\": true,[\\s\\S]*?\\r?\\n  \"releaseVerified\": false\\r?\\n\\}(?=\\r?\\n|$)",
+      "minMatches": 1,
+      "mode": "offline",
+      "scope": "static",
+      "core": [
+        "CORE-01",
+        "CORE-14",
+        "CORE-22"
+      ],
+      "limitation": "Read-only deterministic comparison of the six data JSON files with the generator, IDs, provenance links/hashes, synthetic actors and sparse availability. Local research JSON is an input; source facts, current popularity, actual stock, SQL, browser, live model and protected eval quality are not verified. One completed checker, not product/scenario/assertion counts."
+    },
+    {
+      "id": "preview-store",
+      "command": "node",
+      "args": [
+        "scripts/prepare-preview-sqlite.mjs",
+        "--check"
+      ],
+      "marker": "(?:^|\\r?\\n)PASS preview-store:[^\\r\\n]*(?=\\r?\\n|$)",
+      "minMatches": 1,
+      "mode": "offline",
+      "scope": "integration",
+      "core": [
+        "CORE-04",
+        "CORE-14",
+        "CORE-17"
+      ],
+      "limitation": "Requires installed sql.js and current data/app preview sources. Even --check writes public/preview-db seed, WASM and manifest; run before data02. Actual sql.js with injected persistence covers legacy preview migrations, approvals, delayed/failed saves and reset. No browser IndexedDB, live model, final domain flow or independent source/UX QA. Only the final PASS is a suite completion; the prepared message is not."
+    },
+    {
+      "id": "domain-store",
+      "command": "node",
+      "args": [
+        "scripts/prepare-domain-sqlite.mjs",
+        "--check"
+      ],
+      "marker": "(?:^|\\r?\\n)PASS domain-store SQL:[^\\r\\n]*(?=\\r?\\n|$)",
+      "minMatches": 1,
+      "mode": "offline",
+      "scope": "integration",
+      "core": [
+        "CORE-04",
+        "CORE-06",
+        "CORE-07",
+        "CORE-08",
+        "CORE-09",
+        "CORE-10",
+        "CORE-14",
+        "CORE-17",
+        "CORE-25",
+        "CORE-26"
+      ],
+      "limitation": "Requires installed sql.js and current domain/data sources. Even --check writes public/domain-db seed, WASM and manifest; run before data02. Actual SQL covers transaction flow, constraints, rollback, migrations v1/v2 to v3, trace/search records and injected persistence/restore/reset failures. No browser IndexedDB, live model or independent UX QA. Count the final domain-store completion once; UI07/UI09B intermediate PASS lines and row/assertion counts are not additional registered suites."
+    },
+    {
+      "id": "data02",
+      "command": "node",
+      "args": [
+        "scripts/check-data02.mjs"
+      ],
+      "marker": "(?:^|\\r?\\n)\\{\\r?\\n  \"check\": \"PASS DATA-02\",[\\s\\S]*?\\r?\\n  \"modelCalls\": 0\\r?\\n\\}(?=\\r?\\n|$)",
+      "minMatches": 1,
+      "mode": "offline",
+      "scope": "integration",
+      "core": [
+        "CORE-04",
+        "CORE-07",
+        "CORE-08",
+        "CORE-09",
+        "CORE-10",
+        "CORE-14",
+        "CORE-17",
+        "CORE-22",
+        "CORE-25",
+        "CORE-26"
+      ],
+      "limitation": "Run after preview-store and domain-store: reads both generated public seed.sqlite files. Requires local Git object 65765f77cd19811f85cacfecba2272562e7dd9ac and git show (CI fetch-depth: 0). Checks original DATA-01 identities, appended data, exact old seed bytes and SQL/legacy preview migration preservation with injected persistence. No network, source-fact review, browser/IndexedDB, live model or release QA; oldSchemaMigrationCases and row counts are not suite counts."
+    },
+    {
+      "id": "domain-pure",
+      "command": "node",
+      "args": [
+        "lib/domain/check.mjs"
+      ],
+      "marker": "(?:^|\\r?\\n)PASS domain pure checker: [1-9][0-9]* commands/rejections;[^\\r\\n]*(?=\\r?\\n|$)",
+      "minMatches": 1,
+      "mode": "offline",
+      "scope": "unit",
+      "core": [
+        "CORE-04",
+        "CORE-05",
+        "CORE-06",
+        "CORE-07",
+        "CORE-08",
+        "CORE-09",
+        "CORE-10",
+        "CORE-14",
+        "CORE-25",
+        "CORE-26"
+      ],
+      "limitation": "Pure state-machine checks with current data DTOs and synthetic transaction fixtures: FIFO, consent, budgets, replay, role/store/session scope, failure recovery and exact time boundaries. No SQL, persistence, browser, live model or independent E2E. Command/rejection totals are internal coverage counts, not completed suites."
+    },
+    {
+      "id": "waiting-pure",
+      "command": "node",
+      "args": [
+        "lib/domain/wait.check.mjs"
+      ],
+      "marker": "(?:^|\\r?\\n)PASS waiting pure checker: [1-9][0-9]* projections;[^\\r\\n]*(?=\\r?\\n|$)",
+      "minMatches": 1,
+      "mode": "offline",
+      "scope": "unit",
+      "core": [
+        "CORE-04",
+        "CORE-07",
+        "CORE-08",
+        "CORE-09",
+        "CORE-10",
+        "CORE-25",
+        "CORE-26"
+      ],
+      "limitation": "Synthetic in-memory states exercise waiting-reason priority, private customer projections, normal trade/pickup and read-only state/clock behavior. No SQL, browser, persistence, live model or rendered waiting-state QA. Projection totals are not suite counts."
+    },
+    {
+      "id": "needs-pure",
+      "command": "node",
+      "args": [
+        "lib/domain/needs.check.mjs"
+      ],
+      "marker": "(?:^|\\r?\\n)PASS needs pure checker: [1-9][0-9]* commands/rejections;[^\\r\\n]*(?=\\r?\\n|$)",
+      "minMatches": 1,
+      "mode": "offline",
+      "scope": "unit",
+      "core": [
+        "CORE-03",
+        "CORE-04",
+        "CORE-11",
+        "CORE-23",
+        "CORE-25"
+      ],
+      "limitation": "Synthetic in-memory dialogue/search/need/recommendation records cover actor/store scope, safe merchant clues, explicit need confirmation, linkage and unchanged trade state. A mode:live envelope is synthetic metadata only; no API calls, live interpretation quality, SQL, browser or independent UX QA."
+    },
+    {
+      "id": "merchant-trace-pure",
+      "command": "node",
+      "args": [
+        "lib/domain/merchant-trace.check.mjs"
+      ],
+      "marker": "(?:^|\\r?\\n)PASS merchant trace pure: [1-9][0-9]* commands/assertions;[^\\r\\n]*(?=\\r?\\n|$)",
+      "minMatches": 1,
+      "mode": "offline",
+      "scope": "unit",
+      "core": [
+        "CORE-05",
+        "CORE-06",
+        "CORE-08",
+        "CORE-23",
+        "CORE-25"
+      ],
+      "limitation": "In-memory merchant trace contracts, current catalog byte limits, scope/isolation, immutable terminal outcomes, late observation, unknown usage and receipt linkage. Model labels/responses are synthetic. No SQL, actual API usage, browser, live model or independent QA; command/assertion counts do not count suites."
+    },
+    {
+      "id": "customer-command-client",
+      "command": "node",
+      "args": [
+        "lib/customer-command-client.check.mjs"
+      ],
+      "marker": "(?:^|\\r?\\n)PASS customer write P2:[^\\r\\n]*(?=\\r?\\n|$)",
+      "minMatches": 1,
+      "mode": "offline",
+      "scope": "integration",
+      "core": [
+        "CORE-04",
+        "CORE-08",
+        "CORE-09",
+        "CORE-17",
+        "CORE-25"
+      ],
+      "limitation": "Actual in-memory sql.js plus the customer-write adapter verifies unrelated-log stale revision recovery, one bounded retry, receipt replay and unchanged/rechecked consent. Synthetic data and persistence seam; no browser IndexedDB, live model or complete customer journey."
+    },
+    {
+      "id": "merchant-trace-client",
+      "command": "node",
+      "args": [
+        "lib/merchant-trace-client.check.mjs"
+      ],
+      "marker": "(?:^|\\r?\\n)PASS merchant trace client queue:[^\\r\\n]*(?=\\r?\\n|$)",
+      "minMatches": 1,
+      "mode": "offline",
+      "scope": "unit",
+      "core": [
+        "CORE-05",
+        "CORE-08",
+        "CORE-17",
+        "CORE-23",
+        "CORE-25"
+      ],
+      "limitation": "Mock store/client queue covers exact retries, committed receipts, stale-only rebase, conflicts, role switch, reset and bounded IDs. No actual SQL, browser IndexedDB, network, model calls or whole merchant QA."
+    },
+    {
+      "id": "merchant-trace-integration",
+      "command": "node",
+      "args": [
+        "lib/merchant-trace-integration.check.mjs"
+      ],
+      "marker": "(?:^|\\r?\\n)PASS actual sql\\.js \\+ client trace:[^\\r\\n]*(?=\\r?\\n|$)",
+      "minMatches": 1,
+      "mode": "offline",
+      "scope": "integration",
+      "core": [
+        "CORE-05",
+        "CORE-06",
+        "CORE-08",
+        "CORE-17",
+        "CORE-23",
+        "CORE-25"
+      ],
+      "limitation": "Actual in-memory sql.js and client trace manager with injected save failures verify policy receipt preservation, log retry and snapshot restore. The mode:live response is a synthetic envelope; no live calls, browser IndexedDB, full merchant journey or independent QA."
+    },
+    {
+      "id": "assistant-contracts",
+      "command": "node",
+      "args": [
+        "--conditions=react-server",
+        "lib/assistant/check.mjs"
+      ],
+      "marker": "(?:^|\\r?\\n)PASS assistant offline checker:[^\\r\\n]*(?=\\r?\\n|$)",
+      "minMatches": 1,
+      "mode": "offline",
+      "scope": "unit",
+      "core": [
+        "CORE-02",
+        "CORE-03",
+        "CORE-05",
+        "CORE-06",
+        "CORE-23",
+        "CORE-25"
+      ],
+      "limitation": "Requires react-server condition for server-only imports. Validates customer/merchant contracts, current catalog/store IDs, proposals, body/origin/environment guards and sanitized synthetic provider errors. Environment objects and API errors are fabricated; fetch is forbidden. No actual environment inspection, API calls, live NL quality, browser, persistence or deployed server verification."
+    },
+    {
+      "id": "policy-assistant",
+      "command": "node",
+      "args": [
+        "--conditions=react-server",
+        "lib/assistant/policy.check.mjs"
+      ],
+      "marker": "(?:^|\\r?\\n)PASS policy offline checker:[^\\r\\n]*(?=\\r?\\n|$)",
+      "minMatches": 1,
+      "mode": "offline",
+      "scope": "unit",
+      "core": [
+        "CORE-05",
+        "CORE-06",
+        "CORE-23",
+        "CORE-25"
+      ],
+      "limitation": "Requires react-server condition. Current/full catalog targets, strict nullable policy contracts, stale/no-op/floor handling, UTF-8 request limits and synthetic output failure checks only. Fetch is forbidden; no live API, natural-language accuracy, SQL, browser or actual policy-save journey."
+    },
+    {
+      "id": "merchant-context",
+      "command": "node",
+      "args": [
+        "--conditions=react-server",
+        "lib/assistant/merchant-context.check.mjs"
+      ],
+      "marker": "(?:^|\\r?\\n)PASS merchant-context offline:[^\\r\\n]*(?=\\r?\\n|$)",
+      "minMatches": 1,
+      "mode": "offline",
+      "scope": "unit",
+      "core": [
+        "CORE-05",
+        "CORE-06",
+        "CORE-23",
+        "CORE-25"
+      ],
+      "limitation": "Requires react-server condition. Deterministic context references, selection repair, union/budget behavior, policy handoff, stale snapshots and bounded input/output contracts. Synthetic responses and forbidden fetch; no live interpretation/eval, SQL, browser or end-to-end merchant approval."
+    },
+    {
+      "id": "dialogue-contracts",
+      "command": "node",
+      "args": [
+        "--conditions=react-server",
+        "lib/assistant/dialogue.check.mjs"
+      ],
+      "marker": "(?:^|\\r?\\n)PASS dialogue offline checker:[^\\r\\n]*(?=\\r?\\n|$)",
+      "minMatches": 1,
+      "mode": "offline",
+      "scope": "unit",
+      "core": [
+        "CORE-02",
+        "CORE-03",
+        "CORE-11",
+        "CORE-23",
+        "CORE-25"
+      ],
+      "limitation": "Requires react-server condition. Current catalog and synthetic dialogue contracts exercise bounded questions, evidence/ranges, candidate constraints, sibling retention, byte limits and refusal/incomplete/usage parsing. No live model quality, held-out evaluation, SQL, browser or independent customer QA."
+    },
+    {
+      "id": "store-map",
+      "command": "node",
+      "args": [
+        "lib/store-map.check.mjs"
+      ],
+      "marker": "(?:^|\\r?\\n)PASS UI10 actual React markup:[^\\r\\n]*(?=\\r?\\n|$)",
+      "minMatches": 1,
+      "mode": "offline",
+      "scope": "static",
+      "core": [
+        "CORE-04",
+        "CORE-14",
+        "CORE-24",
+        "CORE-25"
+      ],
+      "limitation": "Uses installed TypeScript, React and current stores JSON for pure map helpers and actual server-rendered markup. Final UI10 marker occurs after both helper and markup checks; earlier PASS and store/link counts are not extra suite completions. No map network/provider availability, coordinate-source verification, browser rendering, live model or independent visual QA."
+    },
+    {
+      "id": "merchant-context-ui",
+      "command": "node",
+      "args": [
+        "app/components/merchant-context-ui.check.mjs"
+      ],
+      "marker": "(?:^|\\r?\\n)Merchant filter callback regression PASS \\(in-memory only\\)\\.[^\\r\\n]*(?=\\r?\\n|$)",
+      "minMatches": 1,
+      "mode": "offline",
+      "scope": "unit",
+      "core": [
+        "CORE-05",
+        "CORE-06",
+        "CORE-25"
+      ],
+      "limitation": "Installed TypeScript/React with in-memory callback/state overrides and AST wiring checks; verifies filtering preserves budget draft and sends no transaction. Final marker follows collected-failure assertion. No actual browser, SQL, persistence, live model or independent merchant UX QA."
+    },
+    {
+      "id": "merchant-run-history-ui",
+      "command": "node",
+      "args": [
+        "app/components/merchant-run-history.check.mjs"
+      ],
+      "marker": "(?:^|\\r?\\n)Merchant trace UI [1-9][0-9]* checks PASS[^\\r\\n]*(?=\\r?\\n|$)",
+      "minMatches": 1,
+      "mode": "offline",
+      "scope": "unit",
+      "core": [
+        "CORE-05",
+        "CORE-08",
+        "CORE-23",
+        "CORE-25"
+      ],
+      "limitation": "UI lifecycle helpers run against a mock trace port with fixed time and source-wiring assertions. No SQL/persistence, browser, network, live usage or independent UX QA. Count only the final summary as one suite, not per-case PASS lines or its internal check count."
+    },
+    {
+      "id": "policy-request-ui",
+      "command": "node",
+      "args": [
+        "app/components/policy-request-ui.check.mjs"
+      ],
+      "marker": "(?:^|\\r?\\n)POLICY-01 narrow callback regression PASS[^\\r\\n]*(?=\\r?\\n|$)",
+      "minMatches": 1,
+      "mode": "offline",
+      "scope": "unit",
+      "core": [
+        "CORE-05",
+        "CORE-06",
+        "CORE-23",
+        "CORE-25"
+      ],
+      "limitation": "Executes the AST-extracted TSX propose callback with stubbed transport/trace: full-catalog Korean input, 8192/8193-byte boundaries, malformed inputs and proposal-only behavior. RED reproduction and GREEN lines are intermediate observations. No React mount, actual environment, network, SQL, browser, live model, actual save or whole QA claim."
+    },
+    {
+      "id": "customer-layout",
+      "command": "node",
+      "args": [
+        "app/components/customer-layout.check.mjs"
+      ],
+      "marker": "(?:^|\\r?\\n)UI11 customer layout [1-9][0-9]* checks PASS;[^\\r\\n]*(?=\\r?\\n|$)",
+      "minMatches": 1,
+      "mode": "offline",
+      "scope": "static",
+      "core": [
+        "CORE-02",
+        "CORE-03",
+        "CORE-04",
+        "CORE-10",
+        "CORE-24",
+        "CORE-25"
+      ],
+      "limitation": "Actual React static markup with state overrides and pinned source/handler hashes checks input order, visible errors, local/live labels, explicit consent, 48-hour copy and request/pickup access. No browser geometry, CSS rendering, interaction, persistence, live model or independent UX QA. Final summary is one suite, not the seven internal cases."
+    },
+    {
+      "id": "openai-env-unit",
+      "command": "python3",
+      "args": [
+        "-B",
+        "scripts/test_check_openai_env.py"
+      ],
+      "marker": "(?:^|\\r?\\n)Ran [1-9][0-9]* tests? in [0-9]+(?:\\.[0-9]+)?s\\r?\\n\\r?\\nOK(?=\\r?\\n|$)",
+      "minMatches": 1,
+      "mode": "offline",
+      "scope": "unit",
+      "core": [
+        "CORE-23"
+      ],
+      "limitation": "Python stdlib unittest uses temporary synthetic dotenv files, explicit synthetic environment mappings and mocked HTTP openers. No real .env.local/process configuration inspection or live request. Marker requires a nonzero Ran summary followed by bare OK; OK (skipped=...), failures and zero tests do not match. One completed unittest suite, not the current 15 test methods; -B avoids repository bytecode writes."
+    },
+    {
+      "id": "preflight-inspector-tests",
+      "command": "python3",
+      "args": [
+        "-B",
+        ".agents/skills/wanna-gs-preflight/scripts/test_inspect_environment.py"
+      ],
+      "marker": "(?:^|\\r?\\n)Ran [1-9][0-9]* tests? in [0-9]+(?:\\.[0-9]+)?s\\r?\\n\\r?\\nOK(?=\\r?\\n|$)",
+      "minMatches": 1,
+      "mode": "offline",
+      "scope": "integration",
+      "core": [
+        "CORE-19",
+        "CORE-23"
+      ],
+      "limitation": "Environment-inspector validator tests with mocked authentication/command failures, temporary files, real in-memory Python SQLite and an isolated temporary Git repository; local CLI version and environment-name presence probes may run, but no dotenv values or real authentication are inspected. Git must be installed: its skipUnless branch must not count as success. Nonzero Ran plus bare OK rejects zero tests, skips and failures; one suite, not individual methods. No application, sql.js/WASM, browser, live model, remote access, deployment or preflight-readiness claim; -B avoids repository bytecode writes."
+    },
+    {
+      "id": "quality-self-check",
+      "command": "node",
+      "args": [
+        "scripts/quality.check.mjs"
+      ],
+      "marker": "(?:^|\\r?\\n)QUALITY self-check: [1-9][0-9]* cases PASS;[^\\r\\n]*(?=\\r?\\n|$)",
+      "minMatches": 1,
+      "mode": "offline",
+      "scope": "unit",
+      "core": [
+        "CORE-15",
+        "CORE-17",
+        "CORE-18"
+      ],
+      "limitation": "Adversarial unit checks of the quality evidence validator using synthetic registry, source fingerprints, child results and raw logs. Covers missing/failed/zero/skipped/timeout/stale/tampered evidence and invalid registry or phase claims. Only the final nonzero QUALITY summary counts as one completed suite; per-case PASS lines are not suites. Does not run the registered application checks, build, actual CI or protected-branch enforcement; no application, browser, live model, independent UX or release approval evidence."
+    }
+  ]
+}
