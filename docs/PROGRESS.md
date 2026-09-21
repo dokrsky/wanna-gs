@@ -328,3 +328,23 @@ UI09A Preview `dpl_9AodSphPaxwBpDMHKZYifFXKzXAB` / https://wanna-38tb3io8w-d-01.
 UI09B-P2(계약/순차 저장): Meitner의 읽기 전용 검토에서 경영주 로그 직후 고객 요청의 cached revision이 낡아 같은 명령 재시도가 계속 실패할 수 있음을 발견했다. 조정자 소유 app/demo/page.tsx에만 연결된 작은 고객 저장 helper를 추가했다. 실제 SQL 최소 재현은 명시 고객 actor 누락 fixture를 바로잡은 뒤 수정 전 STALE/assertion FAIL, 수정 후 PASS. 확정 STALE·receipt 없음·동일 세션/세대의 신규 고객 요청/부가기록에만 1회 revision 재시도를 허용한다. 동의/가격/조건 version/명령 키는 그대로이며 실제 domain이 다시 검증한다. 재시도 전 exact command를 cache하므로 결과 불명확 시 다른 명령을 만들지 않는다. 조건 변경은 거절, 정상 요청/같은 receipt 재전송은 단1건, merchant/이전 세대/불확실 결과는 rebase하지 않는 검사 PASS. 기대값/제품 정책 변경 없음. helper hash `64bbd0c2a374f8f857c233e3f94fa2ef44b3d5e31e3cbfabcb1d99973714347b`, page `c9d6ec759ab8315799322807dba0d36dbc232c52de4f63b688ae288b7ba6f5b5`.
 
 Meitner 독립 재확인: 위 exact helper/page hash와 checker `dbd187bc6c44a7bce077de196d312cb6817fd14f51e0bc5cd07e491c3189c1f1` 검사 전후 일치, `check:customer-write` 직접 종료0·P2 해소. 좁은 코드/실제 SQL 검토이며 브라우저/live/전체 QA는 아니다. 최종 후보 Node24 Next build/타입 PASS, 클라이언트23파일·staged25파일 실제 서버 키 비포함 확인. 실제 Preview migration/두 입력 경로 호출·복원은 게시 후 확인한다. 전체 독립 UX·최종 데이터/eval·GATE-BOOTSTRAP·G5/G6·Production은 아직 미실행/미완료다.
+
+`9e2b6bfd116929e56b9d3735bccdec6ff1ba99c2` commit/push → Vercel `dpl_CtaqnehhSBF1gNGiTiuoUNysYigK` / https://wanna-7hk3pq5l9-d-01.vercel.app/demo **Ready·source SHA 일치**. 같은 브랜치 주소를 실제 새로고침해 알려진 schema2 사본을 schema3 앱에서 복원했다. revision11/세대1·내 요청2건·보관이력·ST01 커피 픽업 최초09-21 23:47:12/마감09-23 23:47:12가 유지됐다. ST04 OFF·누적100,000원·대상3종·발주0도 유지했으며 reset하지 않았다. 모든 행 보존은 위 SQL 검사, 이 브라우저 관측은 화면에 보이는 대표 기존 기록의 보존 증거다.
+
+UI09B live는 정확히2회, gpt-5-mini/서버 OpenAI 경로다. (1) ‘미확보 요청만 보여줘’ 입력24,177/출력261 tokens, UI 계측4,028ms: 시작/성공 로그 저장 후 revision13에서도 제안이 자가 만료되지 않음. 명시 적용 전 ‘아직 적용 안 함’, 적용 뒤 ‘화면 변경안 적용’/revision14·대기 조회·발주0. (2) ‘앞으로 누적 매입 예산을 9만원으로 바꿔줘’ 입력23,744/출력239 tokens, 4,918ms: OFF/대상3종 유지·100,000→90,000원 제안, 별도 최종확인/명시 저장(C) 후 정책 저장 기록(L), revision18. 이는 종단 UI 처리 시간이며 provider 전용 latency라고 주장하지 않는다.
+
+실제 새로고침/역할·점포 선택 후 ST04 AI 기록2건의 각 입력·종료·관측·화면적용/정책저장 상태와 저장 시각 복원 확인. OFF·90,000원·대상3종·사용0·발주0, 선택0·빈 이번 한도 유지. ST01에는 ST04 실행 기록이 노출되지 않았다. 실제 저장 장애/취소·늦은 응답 브라우저 주입은 이번 두 정상 경로에서 하지 않았으며 Node seam 결과와 분리한다. browser selector 한 건은 role 없는 정책 컨테이너를 region으로 조회해 timeout됐으나 화면 자체 오류는 아니며 현재 AX를 읽어 정상 진행했다. 전체 독립 UX/시각 스크린샷 판정은 후속이다.
+
+이번 turn은 UI09B 구현·P2 재현/최소 복구·정확한 Ready·실제 모델2호출/로그 복원으로 진행했다. 소유권 반환된 기존3에이전트는 종료했다. 사용자 `.idea/`와 `.env.local`을 보존하고 Production은 변경하지 않았다. 다음은 지도 정상 렌더와 데이터 사실 보강을 작은 단위로 진행한 뒤 전체 goal 검증/CI·평가·독립 두 역할 QA·최종 제출까지 이어간다. 이 두 live 사례로 전체 품질이나 goal 완료를 선언하지 않는다.
+
+## UI-10 지도 fallback · DATA-02 병행 — 2026-09-22 KST
+
+직전 turn은 UI09B 실제 배포/복원으로 progress였다. 현 HEAD `9e2b6bfd116929e56b9d3735bccdec6ff1ba99c2`·branch·사용자 `.idea/`와 후속 증거 docs3파일을 확인했다. [UI10/DATA02 계약](context/UI-10-DATA-02.md) hash `2a45dcd6cea95ad2b0d4962b93cf1239b1f36ec028a5d4e0c09dbc569b74db0d`: main 지도, Singer 상품 조사, McClintock 점포 근거, Avicenna 좁은 지도 독립 검토. 연구 파일과 지도/공유 docs 소유를 분리했다.
+
+UI05 지도 지연 재진단: [공식 OSM 공유 iframe](https://wiki.openstreetmap.org/wiki/Export)과 [타일 정책](https://operations.osmfoundation.org/policies/tiles/)을 다시 직접 읽었다. 같은 공개 지도 URL의 HTTP HEAD는200이며 웹사이트 iframe 삽입 자체가 지원된다. 기존 앱 탭2에서는 다시 12초 timeout/iframe 제거가 관측됐다. 별도 공식 지도 탭6에서는 컨트롤/마커가 나타났고, browser visibility를 켠 뒤 실제 타일/마커 스크린샷을 확인했다. 서버200이나 iframe load만을 정상 지도 증거로 삼지 않는다.
+
+기존 앱 탭2를 닫고 보이는 탭6에 같은 Preview 사본을 열어 revision24/세대1 보존 확인. 로컬 예시(실제 AI 아님) 우유 검색/선택과 ST01 명시 선택 후 iframe DOM 내부의 지도·마커·확대/축소가 표시되고 실제 확대 버튼이 동작했다. 추가 검색/후보 사건으로 revision27이며 구매 요청/동의/발주를 만들지 않았다. 앱 페이지 전체/지도 clip 캡처는 계속 실패했다. 공급자 단독 시각 증거와 앱 DOM 동작을 분리하며 앱 지도 시각/전체 UX PASS를 선언하지 않는다. 환경/표시 상태와 외부 load에 영향을 받는 것으로 관측했으나 최초 timeout의 단일 원인은 확정하지 않았다.
+
+최소 개선은 새 SDK/타일 프록시·timeout 증가 대신 **같은 검증된 공개 점포 iframe URL을 명시 새 탭으로 여는 링크**다. 기존 iframe·주소/목록·선택/동의·거래는 유지하고 외부 연결 설명·지연 안내·키보드 focus만 보완했다. ADR004의 기존 단일 선택 점포·같은 공급자 fallback 구현이며 새로운 고객 정책/좌표/개인정보 전송이 아니다. `check:store-map` 기존8점포/좌표/URL 검사와 실제 React 정적 markup의8개 정확한 링크·noopener·기본 Referer·명시 동작 전 iframe 없음·미확인 점포 링크 없음 PASS. Node24 Next build/타입 PASS. 모델 호출0회이며 실제 브라우저 새 링크 클릭/Preview는 이어서 확인한다.
+
+data 연구는 첫12분 이내 확보 근거를 인계하도록 제한했다. 현재 catalog·SQL·seed는 변경하지 않았고, recent20~30/원배포·좌표/최종 데이터 검증 완료로 보고하지 않는다. 전체 goal 게이트·Production은 후속이다.

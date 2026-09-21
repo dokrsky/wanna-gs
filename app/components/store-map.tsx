@@ -30,12 +30,13 @@ function SelectedStoreMap({ store, busy = false }: StoreMapProps) {
       {store.confidence === "low" && <p className={styles.warning}>좌표 신뢰도가 낮아요. 지하 점포 등은 지도 표시와 실제 출입구가 다를 수 있어 주소를 함께 확인해주세요.</p>}
       <p className={styles.note}>출처: {store.sourceIds?.join(" · ") || "확인된 출처 없음"} · 점포 변경은 기존 점포 목록에서 해주세요. 지도 조작은 구매 점포·요청·동의를 바꾸지 않아요.</p>
       {map && <>
-        <p className={styles.privacy}>‘지도 보기’ 또는 ‘다시 보기’를 누르면 외부 OpenStreetMap에 연결해요. 공개 점포 좌표와 IP·브라우저 기본 정보가 전달될 수 있어요. 발화·개인정보·상품·거래·동의 내용은 지도 URL에 넣지 않아요.</p>
+        <p className={styles.privacy}>지도를 열거나 다시 보면 외부 OpenStreetMap에 연결해요. 공개 점포 좌표와 IP·브라우저 기본 정보가 전달될 수 있어요. 발화·개인정보·상품·거래·동의 내용은 지도 URL에 넣지 않아요.</p>
         <div className={styles.actions}>
           {attempt === null ? <button type="button" disabled={busy} onClick={() => setAttempt(1)}>지도 보기</button> : <>
             <button type="button" disabled={busy} onClick={() => setAttempt(current => (current ?? 0) + 1)}>다시 보기</button>
             <button type="button" className={styles.secondary} onClick={() => setAttempt(null)}>지도 닫기</button>
           </>}
+          <a href={map.url} target="_blank" rel="noopener">지도를 새 탭에서 보기</a>
         </div>
         {attempt !== null && <MapFrame key={attempt} url={map.url} name={store.name} />}
       </>}
@@ -74,8 +75,8 @@ function MapFrame({ url, name }: { url: string; name: string }) {
     <p role="status" className={styles.note}>{phase === "loading"
       ? "외부 지도를 불러오는 중이에요. 주소로도 점포를 확인할 수 있어요."
       : phase === "unavailable"
-        ? "지도 연결이 지연되거나 사용할 수 없어요. 주소를 확인하거나 ‘다시 보기’를 눌러주세요. 요청 기능은 그대로 사용할 수 있어요."
-        : "지도 표시 여부는 자동으로 확인할 수 없어요. 비어 있거나 오류가 보이면 주소를 확인하거나 ‘다시 보기’를 눌러주세요."}</p>
+        ? "지도 연결이 지연되거나 사용할 수 없어요. ‘지도를 새 탭에서 보기’로 같은 점포를 확인하거나 다시 시도해주세요. 주소·요청 기능은 그대로 사용할 수 있어요."
+        : "지도 표시 여부는 자동으로 확인할 수 없어요. 비어 있거나 오류가 보이면 새 탭에서 열거나 다시 시도해주세요."}</p>
     {phase !== "unavailable" && <iframe className={styles.frame} src={url} title={`${name} 위치 참고 — OpenStreetMap`} allow="geolocation 'none'" onLoad={loaded} onError={failed} />}
   </div>;
 }
