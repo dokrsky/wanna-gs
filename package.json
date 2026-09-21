@@ -2,21 +2,45 @@
   "name": "wanna-gs",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "node": "24.x"
+  },
   "scripts": {
+    "predev": "node scripts/prepare-preview-sqlite.mjs && node scripts/prepare-domain-sqlite.mjs",
     "dev": "next dev",
+    "prebuild": "node scripts/prepare-preview-sqlite.mjs && node scripts/prepare-domain-sqlite.mjs",
     "build": "next build",
+    "check:preview-store": "node scripts/prepare-preview-sqlite.mjs --check",
+    "check:domain-store": "node scripts/prepare-domain-sqlite.mjs --check",
+    "check:domain": "node lib/domain/check.mjs",
+    "check:store-map": "node lib/store-map.check.mjs",
+    "check:policy-assistant": "node --conditions=react-server lib/assistant/policy.check.mjs",
+    "check:merchant-context": "node --conditions=react-server lib/assistant/merchant-context.check.mjs && node app/components/merchant-context-ui.check.mjs",
+    "check:merchant-trace": "node lib/domain/merchant-trace.check.mjs && node lib/merchant-trace-client.check.mjs && node lib/merchant-trace-integration.check.mjs && node app/components/merchant-run-history.check.mjs",
+    "check:dialogue": "node --conditions=react-server lib/assistant/dialogue.check.mjs",
+    "check:search-needs": "node lib/domain/needs.check.mjs",
+    "check:customer-write": "node lib/customer-command-client.check.mjs",
+    "check:quality": "node scripts/quality.check.mjs",
+    "check:eval-tools": "node scripts/eval-dataset.check.mjs",
+    "check:eval-response": "node scripts/eval-response.check.mjs",
+    "check:offline": "node scripts/quality.mjs",
+    "check:evidence": "node scripts/quality.mjs --verify",
     "start": "next start",
     "lint": "next lint"
   },
   "dependencies": {
     "next": "^15.5.0",
+    "openai": "7.20.0",
     "react": "^19.1.0",
-    "react-dom": "^19.1.0"
+    "react-dom": "^19.1.0",
+    "server-only": "0.0.1",
+    "sql.js": "1.14.2"
   },
   "devDependencies": {
     "@types/node": "^22.15.0",
     "@types/react": "^19.1.0",
     "@types/react-dom": "^19.1.0",
+    "@types/sql.js": "1.4.11",
     "typescript": "^5.8.0"
   }
 }

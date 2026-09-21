@@ -2,6 +2,8 @@
 
 논리 모델이다. 테이블·필드·URL의 최종 이름은 구현에서 일관되게 조정할 수 있다. 의미·업무 불변 조건은 유지한다.
 
+UI-04 후보의 거래 의미는 채택된 [ADR-003](decisions/ADR-003-demo-transactions.md)을 적용한다. 기존 표의 O/R 미정 표기는 초기 검토 이력이며, 코드 구현·SQLite·독립 검증 완료를 뜻하지 않는다. 실제 물리 계약은 단일 작성자의 `lib/domain/types.ts`와 SQLite 스키마로 연결한다.
+
 ## 공통
 
 - 식별자: UUID 또는 충돌 없는 앱 생성 ID.
@@ -35,6 +37,8 @@
 | `product_embeddings` | product_id, model_id, dimensions, text_hash, vector, generated_at | 선택 실험 |
 
 경영주 고객 상세 조회는 새 생명주기 테이블을 만들지 않고 `demo_actors` → `purchase_requests` → `request_order_links` → `allocations` → `mock_payments`/`reservations`의 기존 연결을 읽는다. `actor_id`는 데모 세션 안에서만 유효하며 실제 개인정보를 뜻하지 않는다.
+
+후속 경영주 실행 기록은 [ADR-006](decisions/ADR-006-merchant-context.md)을 적용한다. 시도 종료/관측한 모델 결과/실제 적용을 구분하고 미관측 사용량은 null로 남긴다. 적용 기록 실패가 성공한 정책을 재실행시키지 않도록 committed receipt에 연결한다. 단기 문맥과 영구 기록은 별개이며 기록 쓰기는 거래·업무 시계를 처리하지 않는다. 알려진 이전 SQLite 사본만 모든 거래/이력/receipt를 보존해 이행한다. 현재 schema2에 구현됐다는 주장은 아니다.
 
 발주 비용과 고객 판매 가격은 원래 다른 개념이다. 테스트 데이터에도 명시적으로 구분할지 결정하고, 발주 예산 계산에 판매가를 조용히 대신 사용하지 않는다. 초기 단순화가 필요하면 사용한 가격 기준을 UI·seed에 명시한다.
 

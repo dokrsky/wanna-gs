@@ -1,0 +1,21 @@
+.card { display: grid; gap: 12px; min-width: 0; padding: 20px; border: 1px solid var(--line, #d9e5ed); border-radius: 18px; background: #fff; color: var(--ink, #123344); overflow-wrap: anywhere; }
+.heading { display: grid; gap: 8px; }
+.card h3, .card p { margin: 0; }
+.card h3 { font-size: 18px; line-height: 1.4; }
+.badge { justify-self: start; padding: 5px 10px; border-radius: 99px; background: var(--soft, #e3f7fc); color: var(--action, #007a9e); font-size: 13px; font-weight: 700; }
+.address { font-size: 16px; line-height: 1.6; }
+.distance { font-size: 16px; font-weight: 700; }
+.note, .privacy, .warning { font-size: 14px; line-height: 1.65; }
+.note { color: var(--muted, #526575); }
+.privacy { padding: 12px; border-radius: 12px; background: var(--soft, #e3f7fc); }
+.warning { padding: 12px; border-radius: 12px; background: #fff7e5; color: #714b13; }
+.actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.actions button { min-height: 48px; padding: 10px 18px; border: 1px solid var(--action, #007a9e); border-radius: 12px; background: var(--action, #007a9e); color: #fff; font: inherit; font-weight: 700; cursor: pointer; }
+.actions .secondary { background: #fff; color: var(--action, #007a9e); }
+.actions a { display: inline-flex; align-items: center; min-height: 48px; padding: 10px 6px; color: var(--action, #007a9e); font-weight: 700; }
+.actions button:disabled { opacity: .5; cursor: not-allowed; }
+.actions button:focus-visible, .actions a:focus-visible, .attribution:focus-visible { outline: 3px solid var(--ink, #123344); outline-offset: 3px; }
+.mapArea { display: grid; gap: 10px; min-width: 0; }
+.frame { display: block; width: 100%; height: 300px; border: 1px solid var(--line, #d9e5ed); border-radius: 12px; background: var(--soft, #e3f7fc); }
+.attribution { justify-self: start; display: inline-flex; align-items: center; min-height: 44px; color: var(--action, #007a9e); font-size: 14px; }
+@media (max-width: 480px) { .card { padding: 16px; } .frame { height: 260px; } }

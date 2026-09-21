@@ -1,6 +1,33 @@
 # 실행 Workplan
 
-상태: 구현 전 계획 기준선. 이 파일은 상세 task DAG와 증거 계약을 정의한다. preflight, 조사, Preview, PLAN-READY, SEED-READY, G0~G6 중 어느 것도 아직 실행·통과하지 않았다. 실행 시 관측한 저장소·도구·외부 근거에 맞춰 task를 구체화하되 [CORE_REQUIREMENTS](CORE_REQUIREMENTS.md), 사용자 결정, [14번 게이트](14-agent-development-loop.md)의 권위를 바꾸지 않는다.
+상태: D-46의 화면 우선 실행 중. 아래 기존 DAG는 최종 검증 목적지이며, 초기 화면·Preview의 선행 차단 조건은 아니다. 제품 게이트는 아직 통과하지 않았다.
+
+## 현재 실행 순서 — D-46
+
+| 순서 | 구현·담당 | 상태·공유 |
+|---|---|---|
+| UI-01 | 조정자: 공통 화면/역할 전환·메모리 상태. Meitner: 고객 입력/후보/요청. Newton: 경영주 묶음/고객 상세/시연 승인 | `0e43f0d` commit/push·PR #1·Vercel Preview Ready. 실제 화면 로딩 확인, 제품 전체 검증 전 |
+| UI-02 | Locke: SQLite 저장/복원·seed 자산·단일 lockfile 작성. 조정자: 화면 연결 | `9c4d41c`·두 번째 Preview Ready, 로컬 저장/복원 및 배포 초기 SQL 확인 |
+| UI-03 | Meitner: 서버 OpenAI API. Newton: 두 역할 AI UI. 조정자: 비밀 설정·실호출·배포 | `18b0b31` 고객 및 `bd13e3f` 경영주 실제 AI Preview 성공. 선택/예산 적용과 거래 승인 구분 |
+| UI-04 | Meitner: 순수 거래 도메인. Locke: 정규화 SQL·저장 어댑터. Newton: 거래 화면. 조정자: `/demo` 연결·배포 | `b4a2854` 여섯 번째 Preview Ready. 정상 로컬 요청→발주→공급/모의 결제→입고/48시간→수령·새로고침 복원. Preview 별도 시작·이전 이력 보관 확인. 독립 전체 QA 후속 |
+| UI-05 | Newton: 점포 지도·가상 위치/직선거리. 조정자 통합 | `1012772` 일곱 번째 Preview Ready. 외부 iframe 두 번 지연 fallback, 주소·거리 및 지도 없이 요청 저장 확인. 정상 지도 렌더 미확인 |
+| UI-06 | Meitner: 정책 AI API. Newton: 정책 변경안/확인 UI. 조정자 통합 | `5502200` 여덟 번째 Preview Ready. live1회 변경안→별도 확인→예산1만원/커피1개 자동발주·새로고침 복원, 전체 독립 품질검증 전 |
+| UI-07 | Meitner: 제한 대화 API. Locke: domain DTO/기록 명령/SQL migration 단일 작성. Newton: 고객 대화/기록. 조정자: 페이지/경영주 안전 조회 | `81a4369` 아홉 번째 Preview Ready. 실제 로컬v1 수령이력 보존·니즈 등록/경영주 안전조회, Preview live검색1회→검색/선택/구매연결 저장. live추가질문·전체 독립 품질 후속 |
+| UI-08 | Locke: 읽기 전용 고객 대기/안전 조회 DTO. Newton: 대기 사유·발음·픽업 위계. 조정자: 통합/Preview | [context/UI-08.md](context/UI-08.md), `e8a5b69` 열 번째 Preview Ready·실제 공급→입고/픽업 확인. `af1dce1` 잔량 우선 안내 보완·열한 번째 Preview Ready·픽업/마감 복원, domain92/needs26/waiting24·독립 좁은 P2 재확인 PASS. 전체 검증 후속 |
+| UI-09A | Meitner: 문맥 v2 계약/API. Newton: 최근 변경·정책 전달 UI. 조정자: 통합/Preview | `cfda3c9` 열두 번째 Preview Ready. 최근5개·합집합 복원→명시 적용·정책 확인 전달 실제2호출, OFF/누적예산 유지·수동draft 보존·정책 저장/복원 확인. 조회-only P2 독립 재확인, 전체 품질 후속 |
+| UI-09B | Locke: domain/SQL 단일 작성. Newton: 실행 이력 UI. 조정자: 저장 어댑터/통합. Meitner: 좁은 독립 검토 | `9e2b6bf` 열세 번째 Preview Ready. trace58/UI13·실제 SQL v1/v2→3 보존·로그/고객 충돌 P2 독립 재확인. 실제2호출→화면적용/정책저장 로그·사용량/시간·새로고침 복원, 기존 픽업/정책 보존. 전체 품질 후속 |
+| UI-10 | 조정자: 지도 지연 진단·동일 공개 좌표 새 탭 링크. Avicenna: 좁은 독립 검토 | `65765f7` Preview Ready. 실제 링크→같은 점포 외부 지도 탭/컨트롤 확인, 기존 거래 유지. React markup/독립 좁은 검사·build PASS. 앱 자체 시각 캡처 실패는 미해결 |
+| DATA-02 | Singer/McClintock 연구, Boyle data/SQL, Herschel 사실·Lagrange 정책 크기·Helmholtz SQL 독립 검토, 조정자 UI/통합 | [context/DATA-02.md](context/DATA-02.md). `25e1e9d` Preview Ready·262상품/524조건·새 예시2개. 두 SQLite 사본/기존 요청·픽업/경영주 정책·로그 실제 보존. 전체 대상 정책4KiB 회귀→8KiB 복구·좁은 독립 검사/build PASS. 새 상품 live1회 정확 후보·선택·기록 복원, 전체 데이터/eval/UX QA 후속 |
+| DATA-01/02 | Locke: 242개 상품 초안·실제 점포8/legacy2·합성 역할/availability·SQLite 업그레이드. Newton: 출처/실제 점포 UI | `aa54838` 다섯 번째 Preview Ready. 로컬 기존 요청 보존 확인. 최종 상품 사실/독립 데이터 검증 전 |
+| UI-11 | Aristotle: 고객 입력 우선 배치, main: 공통 화면/브라우저/게시, Erdos: 좁은 독립 검토 | `e2450fd` Ready·실제390px 입력 y1336→617/CTA첫화면·기존요청2/기록보존. 360px 가로 넘침0·후보/조건·미동의 확인. 초기화 확인창 P2 해소·독립 좁은 검사/build PASS. 캡처/1280·전체QA 후속 |
+| POLICY-01 | main: 정책 UI 공통 한도 적용, Schrodinger: 실제 callback checker, Planck: 독립 검토 | `3f6420b` Ready·같은origin 기록/설정 유지. UI4096/API·trace8192 불일치 복구, 실제262대상5,159B RED→GREEN·8192/8193 경계·승인 불변 좁은 독립 검사/build PASS. 최대대상 실브라우저/live는 미실행 |
+| VERIFY | 전체 seed/독립 검증·정책 검토·E2E·평가·G5/G6 | ADR002 revision2 두 관점 보완ACK 후 채택·21/23/index 동기화. 다음 최소 실행기/CI·평가manifest·비용경계·두 역할 독립QA. 실행/전체게이트PASS 아님, 중간Preview 비차단 |
+| GATE-01 | main runner/CI, Curie registry, Hooke 독립 검토 | `1f2081c` Ready·23offline suite+build 로컬 및 실제Actions35628215424 PASS. validator34·독립반례37/원본로그 검증·main required gate 연결. 전체G1~G6·live/독립QA증거검증은별도남음 |
+| EVAL-01 | main 형식검사기, Hilbert 고객/Peirce 경영주 curator, Darwin 독립 도구 검토 | `5cd1f45` Ready·Actions35631676133의26offline suite/build PASS. 고객300/경영주120 초안·공개336/보호84. 결함6개 복구·자체66/독립원본6+인접47 PASS. family 비율/장면 정의·라벨/누수 의미 검토·실제 baseline 후속, 비용 답변 전 모델0 |
+| STORE-SOURCE | Galileo ST06 원근거, Franklin 공공 원행6개, main 재대조 | ST06 공식 KTO 좌표 대조·나머지6개 공식 배포 파일의 관측 행 대조. 부분 ZIP에서 행6개/hash/현재 좌표 main 재현 PASS. 전체 archive/CRC·모든 재이용조건·최종 데이터QA 승인 아님 |
+| EVAL-02 | main 응답 대조기, Bernoulli 고객/Gibbs 경영주 독립 자료 감사, Euclid 코드 검토 | 도구 자체39·독립47 및27offline suite/build 로컬 PASS. 자료 감사와 분리해 작은 게시 진행. 두 역할 라벨/family 감사는 진행 중. 모델0·semantic/출시 PASS 아님 |
+
+연구 Locke는 이미 확보한 초기 근거를 바탕으로 전체 seed를 확장한다. 별도 preflight 시험 앱과 선행 감사는 중단·보존하고 화면 구현으로 인력을 재배정했다. 임시 UI는 합성 데이터·실제 SQLite 저장·실제 AI 연결 범위와 아직 미연결인 거래 단계를 구분하며 제품 완료 증거로 사용하지 않는다.
 
 ## 목표와 종료 상태
 
@@ -264,7 +291,7 @@ U01/U02는 독립 QA가 평가할 실행 가능한 흐름을 준비한다. Q01/Q
 | PREFLIGHT-CURRENT | NOT_RUN | 현재 repo/auth/integration 증거 |
 | PREVIEW-SHELL | NOT_RUN | immutable Preview URL/deployment/source SHA와 browser 기본 동작 검사 |
 | PLAN-READY | NOT_RUN | 실행 시점 조사+구체 DAG+소유권+검증/중단/릴리스 경로 |
-| GATE-BOOTSTRAP | NOT_RUN | runner/CI와 실패 반례 거절 |
+| GATE-BOOTSTRAP | PARTIAL | GATE01 offline runner/실패 반례·실제CI/required gate 완료. 전체 phase/독립성/CORE·ADR 릴리스 증거 검증 후속 |
 | SEED-MIN-READY | NOT_RUN | 최소 seed·공통 importer의 실제 DB 검사와 독립 검토. F00 시작 조건 |
 | SEED-READY | NOT_RUN | 스키마 뒤 deterministic seed, ~200 SKU, 8~12 verified stores, actors/scenarios/eval 출처·변경 이력 |
 | G1/G2/G3/G4 | NOT_RUN | 14번의 레벨별 실제 결과와 독립 판정 |

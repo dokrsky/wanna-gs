@@ -4,7 +4,29 @@
 
 이 문서 묶음은 최초 구현의 현재 기준이다. 별도의 문서 릴리스 번호를 붙이지 않고 Git 이력과 결정 기록으로 변경을 추적한다.
 
-이 저장소에는 설계 문서, 에이전트 작업 지침, 사전점검 도구와 Vercel-ready 데모 앱이 있다. 현재 Production 배포는 [wanna-gs.vercel.app](https://wanna-gs.vercel.app)이며, 실제 SQLite·OpenAI·제품 흐름 구현은 `/goal`의 후속 작업이다. 실행 증거와 남은 준비는 [진행 기록](docs/PROGRESS.md)에서 확인한다.
+이 저장소에는 고객/경영주 화면·브라우저 SQLite·서버 OpenAI와 사전점검/검사 도구가 있다. [개발 Preview](https://wanna-gs-git-codex-ui-preview-20260921-d-01.vercel.app/demo)에서 현재 구현을 확인한다. [Production](https://wanna-gs.vercel.app)은 아직 기존 최소 데모이며 최종 제품 검증 전이다. 실행 증거와 남은 범위는 [진행 기록](docs/PROGRESS.md)을 따른다.
+
+## 로컬 개발·offline 검사
+
+Node24.12.0(`.nvmrc`), npm, Python3, Git을 사용한다. nvm 사용 환경에서는 다음과 같이 시작한다. 이미 입력된 `.env.local`은 덮어쓰지 않으며 서버 키를 Git/브라우저에 노출하지 않는다.
+
+```bash
+nvm use
+npm ci
+npm run dev
+```
+
+`http://localhost:3000/demo`에서 역할을 바꿔 시연한다. 거래는 한 브라우저 SQLite 사본이며 기기 간 공유·실제 청구가 없다. 개발 서버를 종료한 뒤 다음을 실행한다(`.next` build 출력 충돌 방지).
+
+```bash
+npm run check:quality
+npm run check:offline
+npm run check:evidence -- test-results/quality/<run-id>/report.json
+```
+
+`quality/checks.json`의 기존 offline 검사를 모두 실제 실행한 뒤 production build를 수행한다. 마지막 출력에 실제 report 경로가 나온다. 각 실행의 명령/로그/hash·HEAD/소스 fingerprint를 남기고 실패·누락·zero·skip·stale를 거절한다. 개수는 완료된 **검사 suite 수**이며 개별 assert나 상품 수가 아니다. 원본 로그/보고서는 Git 무시 `test-results/`에 보존한다. 로컬 파일은 서명된 악의적 변조 방지 증거가 아니며, 원격 CI 실행·artifact와 독립 검토를 함께 확인한다.
+
+이 offline 집합은 실제 모델·브라우저/IndexedDB·전체 데이터 사실/UX·독립 검증·G1~G6 승인 대신이 아니다. `.github/workflows/quality.yml`은 PR/main에서 키 없이 실행하고 항상 aggregate `gate`와 원본 artifact를 남긴다. 실제 원격 검사/보호 규칙의 현재 상태는 PROGRESS에 기록한다. 중간 Preview는 D-46대로 계속 게시하며 최종 제출에는 후속 제품 게이트가 필요하다.
 
 ## 이 goal의 목적과 차별점
 
@@ -36,7 +58,7 @@
 
 ## 시작 전 준비
 
-1. [GitHub 저장소](https://github.com/Woo-Dong/wanna-gs)를 원하는 위치에 clone하거나 기존 clone/worktree를 연다. Git 작성자·인증, push/PR/merge·Actions 권한과 실제 브랜치 보호·승인 경로를 확인한다.
+1. [GitHub 저장소](https://github.com/dokrsky/wanna-gs)를 원하는 위치에 clone하거나 기존 clone/worktree를 연다. Git 작성자·인증, push/PR/merge·Actions 권한과 실제 브랜치 보호·승인 경로를 확인한다.
 2. Codex 환경에서 프로젝트·Git 메타데이터 쓰기, 패키지 설치, 네트워크, 브라우저·서브 에이전트 권한을 준비한다. 설정 파일 이름뿐 아니라 P00의 실제 작업 결과를 확인한다. 새 장비의 신뢰/실행 키 위치와 선택적 설정 예시는 [18번](docs/18-environment-preflight.md)의 안내를 따른다.
 3. Vercel에 로그인하고 이 GitHub 저장소를 프로젝트에 연결한다. 플랜의 행사 이용 조건, Production 브랜치, Preview/Production 환경과 배포 권한을 확인한다. 자동 테스트용 보호 우회와 심사자용 공유 링크/공개 접근을 나누어 준비하고 로그인하지 않은 브라우저에서도 확인한다.
 4. 외부 DB 계정·Marketplace 설정은 필요 없다. [브라우저 SQLite 안내](docs/29-browser-sqlite-demo.md)에 따라 한 PC의 일반 브라우저에서 WASM·저장소 접근을 점검한다. SQLite seed 생성·삽입·배포 자산 준비는 Codex의 초기 구축 작업이다.

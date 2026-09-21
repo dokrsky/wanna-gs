@@ -17,6 +17,8 @@ node_modules/
 dist/
 out/
 *.tsbuildinfo
+public/preview-db/
+public/domain-db/
 
 # Test output and temporary data
 coverage/

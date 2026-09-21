@@ -1,0 +1,325 @@
+// Node24: generate local SQL/WASM assets; --check adds bounded SQL/adapter tests.
+// No app imports, network, browser/Next build, or claim of final data validation.
+import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { createRequire, registerHooks } from "node:module";
+import { dirname, resolve } from "node:path";
+import initSqlJs from "sql.js";
+import products from "../data/catalog.json" with { type: "json" };
+import stores from "../data/stores.json" with { type: "json" };
+import actors from "../data/actors.json" with { type: "json" };
+import availability from "../data/availability.json" with { type: "json" };
+import provenance from "../data/provenance.json" with { type: "json" };
+
+// Match the pure-domain Node24 checker without changing its Next-compatible imports.
+registerHooks({ resolve(specifier, context, next) {
+  if (context.parentURL?.includes("/lib/") && specifier.startsWith(".") && !/\.[a-z]+$/i.test(specifier)) specifier += ".ts";
+  return next(specifier, context);
+} });
+const { DOMAIN_SCHEMA_VERSION, DOMAIN_V1_SOURCE_HASH, DOMAIN_V2_SOURCE_HASH, DomainMigrationSaveError, LOCAL_CUSTOMER_ID, createDomainSeed, createDomainStore, readDomainState, writeDomainState, readPreviewArchive } = await import("../lib/domain/storage.ts");
+const { DOMAIN_POLICY } = await import("../lib/domain/policy.ts");
+const SQL = await initSqlJs();
+const hash = bytes => createHash("sha256").update(bytes).digest("hex");
+const seedInput = {
+  products: products.map(({ id, name, category }) => ({ id, name, category })),
+  stores: stores.map(({ id, name }) => ({ id, name })),
+  actors: [...actors.map(({ id, role, displayName, storeId }) => ({ id, role, displayName, ...(storeId ? { storeId } : {}) })),
+    { id: LOCAL_CUSTOMER_ID, role: "customer", displayName: "나 (합성 데모 고객)" }],
+  conditions: availability.map(c => ({ storeId: c.storeId, productId: c.productId,
+    requestable: c.requestable && c.supplyStatus !== "unknown", unitPrice: c.unitPrice, unitCost: c.unitCost,
+    moq: c.moq, packSize: c.packSize, supplyStatus: c.supplyStatus,
+    // Unknown remains unknown/non-requestable, never inferred available from catalog membership.
+    supplyQuantity: c.supplyQuantity ?? 0, version: c.version, orderClosesAt: null })),
+};
+const sourceHash = hash(JSON.stringify({ schemaVersion: DOMAIN_SCHEMA_VERSION, bootstrapVersion: 1,
+  policy: DOMAIN_POLICY, products, stores, actors, availability, provenance }));
+const seed = createDomainSeed(SQL, seedInput, sourceHash, { products, stores, sources: provenance.sources, provenance });
+const output = new URL("../public/domain-db/", import.meta.url);
+await mkdir(output, { recursive: true });
+const dist = dirname(createRequire(import.meta.url).resolve("sql.js"));
+const assets = {
+  "seed.sqlite": seed,
+  "sql-wasm.js": await readFile(resolve(dist, "sql-wasm.js")),
+  "sql-wasm.wasm": await readFile(resolve(dist, "sql-wasm.wasm")),
+  "LICENSE.sql.js": await readFile(resolve(dist, "../LICENSE")),
+};
+for (const [name, bytes] of Object.entries(assets)) await writeFile(new URL(name, output), bytes);
+const counts = { products: products.length, realStores: stores.length, conditions: availability.length,
+  seedActors: actors.length, actorsWithLocalCustomer: seedInput.actors.length, pendingRequests: 20, sources: provenance.sources.length };
+await writeFile(new URL("manifest.json", output), JSON.stringify({ schemaVersion: DOMAIN_SCHEMA_VERSION, sourceHash,
+  policyVersion: DOMAIN_POLICY.version, dataVersion: provenance.version, counts,
+  files: Object.fromEntries(Object.entries(assets).map(([name, bytes]) => [name, hash(bytes)])),
+  clock: "Seed is a deterministic time-zero template. First confirmed initialization/reset rebases consent to current wall clock.",
+  limitations: "One tab local simulated transactions. DATA-01 facts not finally verified. All prices, availability, people and transactions simulated; missing availability remains unknown. Original Preview is read-only archive, never upgraded into orders.",
+}, null, 2) + "\n");
+console.log("Generated domain-db", JSON.stringify({ ...counts, sourceHash }));
+
+if (process.argv.includes("--check")) {
+  globalThis.fetch = async () => { throw Error("Network forbidden in SQL checker"); };
+  const scalar = (db, sql) => db.exec(sql)[0]?.values[0]?.[0];
+  const open = bytes => { const db = new SQL.Database(bytes); db.run("PRAGMA foreign_keys=ON"); return db; };
+  const inspect = (bytes, check) => { const db = open(bytes); try { check(db); } finally { db.close(); } };
+  inspect(seed, db => {
+    assert.equal(scalar(db, "PRAGMA integrity_check"), "ok");
+    assert.deepEqual(db.exec("PRAGMA foreign_key_check"), []);
+    for (const [table, count] of Object.entries({ products: 262, stores: 8, actors: 29, conditions: 524, requests: 20, sources: provenance.sources.length }))
+      assert.equal(scalar(db, `SELECT count(*) FROM ${table}`), count);
+    assert.equal(scalar(db, "SELECT count(*) FROM stores WHERE latitude IS NOT NULL AND longitude IS NOT NULL"), 8);
+  });
+
+  // Small old-Preview fixture exercises preservation, not a migration into orders.
+  const old = new SQL.Database();
+  old.run(`PRAGMA user_version=2;
+    CREATE TABLE metadata(key TEXT,value TEXT); INSERT INTO metadata VALUES ('source_hash','archive-check-v2');
+    CREATE TABLE products(id TEXT,name TEXT); INSERT INTO products VALUES ('milk','모의 우유');
+    CREATE TABLE stores(id TEXT,name TEXT,address TEXT); INSERT INTO stores VALUES ('demo-central','이전 가상 중앙점','가상 주소');
+    CREATE TABLE requests(id TEXT,actor TEXT,product_id TEXT,store_id TEXT,quantity INTEGER,unit_price INTEGER,consent INTEGER,created_at TEXT,stage TEXT,position INTEGER);
+    INSERT INTO requests VALUES ('old-approved','나','milk','demo-central',2,2800,1,'2026-09-21T00:00:00.000Z','approved',0);`);
+  const oldBytes = old.export(); old.close();
+  const oldHash = hash(oldBytes);
+  let wallNow = Date.UTC(2026, 8, 21), writes = 0, serial = 0, session = 0;
+  let persisted, fail = false, hold;
+  const archive = readPreviewArchive(SQL, oldBytes, wallNow);
+  assert.equal(archive.status, "preserved"); assert.equal(archive.requests[0].stage, "approved");
+  assert.equal(archive.requests[0].storeId, "demo-central"); assert.equal(hash(oldBytes), oldHash);
+  const persist = async bytes => {
+    if (hold) await hold;
+    if (fail) throw Error("injected persistence failure");
+    persisted = bytes.slice(); writes++;
+  };
+  const store = await createDomainStore({ SQL, seed, persist, archive, now: () => wallNow, sessionId: () => `check-session-${++session}` });
+  assert.equal(writes, 1); assert.equal(store.ready, true);
+  assert.equal(store.state.requests.length, 20);
+  assert.ok(store.state.requests.every(r => r.status === "pending" && r.consentAt === wallNow && r.consentExpiresAt === wallNow + DOMAIN_POLICY.consentMs));
+  assert.ok(store.state.policies.every(p => !p.enabled && p.budgetWon === 0));
+  assert.equal(store.state.orders.length, 0); assert.deepEqual(store.archive, archive);
+  const condition = store.state.conditions.find(c => c.requestable && c.moq === 1 && c.packSize === 1 && c.supplyQuantity >= 1 &&
+    !store.state.requests.some(r => r.storeId === c.storeId && r.productId === c.productId));
+  assert.ok(condition);
+  const merchant = store.state.actors.find(a => a.role === "merchant" && a.storeId === condition.storeId);
+  const local = store.state.actors.find(a => a.id === LOCAL_CUSTOMER_ID);
+  const command = (action, actor = merchant) => ({ sessionId: store.state.sessionId, generation: store.state.generation,
+    expectedRevision: store.state.revision, actorId: actor.id, role: actor.role, storeId: condition.storeId,
+    idempotencyKey: `sql-check-${++serial}`, ...action });
+  const execute = async (action, actor) => {
+    const c = command(action, actor), outcome = await store.execute(c);
+    assert.equal(outcome.ok, true, JSON.stringify(outcome)); return c;
+  };
+  const requestAction = { type: "request.create", requestId: "sql-local-request", productId: condition.productId,
+    quantity: 1, consent: true, unitPrice: condition.unitPrice, conditionVersion: condition.version };
+
+  // SQL CHECK/FK reject invalid writes; no hidden margin floor; failed whole transaction rolls back.
+  inspect(persisted, db => {
+    assert.throws(() => db.run("UPDATE conditions SET unitCost=-1"), /CHECK/);
+    assert.throws(() => db.run("UPDATE conditions SET unitCost=9007199254740992"), /CHECK/);
+    db.run("UPDATE conditions SET unitCost=unitPrice+1");
+    assert.throws(() => db.run("UPDATE requests SET actorId='not-an-actor'"), /FOREIGN KEY/);
+    const before = readDomainState(db), bad = structuredClone(before);
+    bad.events.push({ id: "bad-fk-event", commandKey: "missing-receipt", type: "check", entityId: condition.productId, storeId: condition.storeId, at: wallNow });
+    assert.throws(() => writeDomainState(db, bad), /FOREIGN_KEY|FOREIGN KEY/);
+    assert.deepEqual(readDomainState(db), before);
+  });
+
+  // Nothing observable changes before durable completion; next command cannot interleave.
+  const before = store.state, beforeBytes = persisted.slice();
+  let release;
+  hold = new Promise(resolve => { release = resolve; });
+  const create = command(requestAction, local);
+  const saving = store.execute(create);
+  const queued = store.execute(command({ type: "clock.tick" }));
+  await new Promise(resolve => setImmediate(resolve));
+  assert.deepEqual(store.state, before); assert.deepEqual(persisted, beforeBytes);
+  hold = undefined; release();
+  assert.equal((await saving).ok, true);
+  const stale = await queued; assert.equal(stale.ok, false); assert.equal(stale.error.code, "STALE_REVISION");
+  const replayWrites = writes;
+  assert.equal((await store.execute(create)).replayed, true); assert.equal(writes, replayWrites);
+
+  await execute({ type: "policy.set", enabled: false, productIds: [condition.productId], budgetWon: 1000000 });
+  await execute({ type: "order.approve", items: [{ productId: condition.productId, quantity: 1, conditionVersion: condition.version }] });
+  const lineId = store.state.lines[0].id;
+  await execute({ type: "supply.finalize", lineId, quantity: 1 });
+  await execute({ type: "receive.full", lineId });
+  const reservation = store.state.reservations[0];
+  assert.equal(reservation.pickupDeadlineAt, wallNow + DOMAIN_POLICY.pickupMs);
+  await execute({ type: "reservation.collect", reservationId: reservation.id, code: reservation.code });
+  assert.equal(store.state.reservations[0].status, "collected");
+  inspect(persisted, db => {
+    for (const table of ["orders", "lines", "links", "payments", "allocations", "reservations", "notifications", "events", "receipts", "receipt_entities", "policy_products"])
+      assert.ok(scalar(db, `SELECT count(*) FROM ${table}`) > 0, `${table} is normalized SQL`);
+    assert.equal(scalar(db, "PRAGMA foreign_keys"), 1);
+    assert.deepEqual(db.exec("PRAGMA foreign_key_check"), []);
+    assert.deepEqual(readDomainState(db), store.state);
+  });
+
+  // Save/reset rejection must preserve both previous durable bytes and published state.
+  const saved = persisted.slice(), committed = store.state;
+  fail = true;
+  await assert.rejects(store.execute(command({ type: "clock.advance", milliseconds: 1000 })), /injected persistence/);
+  assert.deepEqual(persisted, saved); assert.deepEqual(store.state, committed);
+  await assert.rejects(store.reset(), /injected persistence/);
+  assert.deepEqual(persisted, saved); assert.deepEqual(store.state, committed);
+  fail = false;
+  let restoreWrites = 0;
+  const restored = await createDomainStore({ SQL, seed, initial: saved, persist: async () => { restoreWrites++; } });
+  assert.equal(restoreWrites, 0); assert.deepEqual(restored.state, committed); assert.deepEqual(restored.archive, archive);
+  assert.equal((await restored.execute(create)).replayed, true); assert.equal(restoreWrites, 0);
+  for (const variant of ["version", "hash", "corrupt"]) {
+    let bytes;
+    if (variant === "corrupt") bytes = new Uint8Array([1, 2, 3]);
+    else {
+      const db = open(saved);
+      db.run(variant === "version" ? "PRAGMA user_version=999" : "UPDATE metadata SET value='unknown' WHERE key='source_hash'");
+      bytes = db.export(); db.close();
+    }
+    await assert.rejects(createDomainStore({ SQL, seed, initial: bytes, persist: async () => { restoreWrites++; } }));
+  }
+  assert.equal(restoreWrites, 0, "unknown/corrupt snapshots never silently reset");
+
+  // Shipped-v1-shaped snapshot with a completed transaction and legacy archive.
+  // New record tables are empty here; removing only those restores the exact v1 table set.
+  const legacy = open(saved);
+  legacy.run("DROP TABLE merchant_runs");
+  for (const table of ["recommendation_events", "needs", "search_candidate_evidence", "search_candidates", "search_clues", "search_turns", "search_runs"]) legacy.run(`DROP TABLE ${table}`);
+  legacy.run("PRAGMA user_version=1");
+  legacy.run("UPDATE metadata SET value=? WHERE key='source_hash'", [DOMAIN_V1_SOURCE_HASH]);
+  const v1 = legacy.export(); legacy.close();
+  const allOldRows = bytes => {
+    const db = open(bytes);
+    try {
+      const tables = db.exec("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' ORDER BY name")[0].values.flat();
+      return Object.fromEntries(tables.filter(name => !["merchant_runs", "recommendation_events", "needs", "search_candidate_evidence", "search_candidates", "search_clues", "search_turns", "search_runs"].includes(name)).map(name =>
+        [name, db.exec(`SELECT * FROM ${name}${name === "metadata" ? " WHERE key!='source_hash'" : ""} ORDER BY rowid`)]));
+    } finally { db.close(); }
+  };
+  let upgradeBytes = v1.slice(), upgradeWrites = 0, releaseUpgrade, upgradeExposed = false, upgradeFail = false;
+  await assert.rejects(createDomainStore({ SQL, seed, initial: v1, persist: async () => { throw Error("quota"); } }), error =>
+    error instanceof DomainMigrationSaveError && error.retryable === true && !("reset" in error));
+  assert.deepEqual(upgradeBytes, v1);
+  const upgradeGate = new Promise(resolve => { releaseUpgrade = resolve; });
+  const upgrading = createDomainStore({ SQL, seed, initial: upgradeBytes, persist: async bytes => {
+    await upgradeGate;
+    if (upgradeFail) throw Error("record-save-failed");
+    upgradeBytes = bytes.slice(); upgradeWrites++;
+  }, now: () => wallNow }).then(store => { upgradeExposed = true; return store; });
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(upgradeExposed, false); assert.deepEqual(upgradeBytes, v1);
+  releaseUpgrade();
+  const upgraded = await upgrading;
+  assert.equal(upgradeWrites, 1); assert.deepEqual(allOldRows(upgradeBytes), allOldRows(v1), "EVERY old row/relation/receipt/clock/archive preserved, except explicit version/hash metadata");
+  assert.deepEqual(upgraded.state, committed); assert.deepEqual(upgraded.archive, archive);
+  assert.equal((await upgraded.execute(create)).replayed, true); assert.equal(upgradeWrites, 1);
+  const reopenUpgrade = await createDomainStore({ SQL, seed, initial: upgradeBytes, persist: async () => { throw Error("unexpected repeat upgrade"); } });
+  assert.deepEqual(reopenUpgrade.state, committed);
+  const unknownV1 = open(v1); unknownV1.run("UPDATE metadata SET value='not-the-published-v1' WHERE key='source_hash'");
+  await assert.rejects(createDomainStore({ SQL, seed, initial: unknownV1.export(), persist: async () => { throw Error("should not write"); } }), error => !(error instanceof DomainMigrationSaveError)); unknownV1.close();
+
+  // Actual normalized SQL persistence of dialogue/turns/clues/candidate evidence/needs/events.
+  let auxKey = 0;
+  const auxCommand = body => ({ sessionId: upgraded.state.sessionId, generation: upgraded.state.generation, expectedRevision: upgraded.state.revision,
+    actorId: local.id, role: "customer", storeId: condition.storeId, idempotencyKey: `aux-${++auxKey}`, ...body });
+  const product = products.find(p => p.id === condition.productId);
+  const record = { id: "sql-search-run", conversationId: "sql-conversation", dialogue: { initialText: "가상개인메모", currentText: product.category,
+    turns: [{ question: "어떤 종류인가요?", answer: product.category }] }, mode: "fixture", model: null, status: "success", action: "candidates", question: null,
+    clues: [{ field: "category", value: product.category, polarity: "required", certainty: "explicit", rawSourceRange: { source: "answer1", start: 0, end: product.category.length } }],
+    candidates: [{ productId: product.id, kind: "alternative", reason: "고객 전용 이유", catalogEvidence: [{ code: `${product.id}:name`, value: product.name }] }],
+    usage: null, latencyMs: 0, errorCode: null };
+  const recordCommand = auxCommand({ type: "search.record", run: record });
+  const preRecordBytes = upgradeBytes.slice(), preRecordState = upgraded.state;
+  upgradeFail = true;
+  await assert.rejects(upgraded.execute(recordCommand), /record-save-failed/);
+  assert.deepEqual(upgradeBytes, preRecordBytes); assert.deepEqual(upgraded.state, preRecordState);
+  upgradeFail = false;
+  assert.equal((await upgraded.execute(recordCommand)).ok, true);
+  for (const body of [
+    { type: "needs.record", needId: "sql-need", runId: record.id, reason: "candidates_rejected", confirmed: true },
+    { type: "recommendation.record", eventId: "sql-shown", runId: record.id, productId: product.id, action: "shown", requestId: null },
+    { type: "recommendation.record", eventId: "sql-selected", runId: record.id, productId: product.id, action: "selected", requestId: null },
+    { type: "recommendation.record", eventId: "sql-linked", runId: record.id, productId: product.id, action: "requested", requestId: "sql-local-request" },
+  ]) { const outcome = await upgraded.execute(auxCommand(body)); assert.equal(outcome.ok, true, JSON.stringify(outcome)); }
+  inspect(upgradeBytes, db => {
+    for (const table of ["search_runs", "search_turns", "search_clues", "search_candidates", "search_candidate_evidence", "needs", "recommendation_events"]) assert.ok(scalar(db, `SELECT count(*) FROM ${table}`) > 0);
+    assert.throws(() => db.run("UPDATE recommendation_events SET productId='missing'"), /FOREIGN KEY/);
+    assert.deepEqual(db.exec("PRAGMA foreign_key_check"), []); assert.deepEqual(readDomainState(db), upgraded.state);
+  });
+  const recordRestored = await createDomainStore({ SQL, seed, initial: upgradeBytes, persist: async () => { throw Error("unexpected restore write"); } });
+  assert.deepEqual(recordRestored.state, upgraded.state);
+  for (const key of ["requests", "orders", "lines", "links", "allocations", "payments", "reservations", "notifications", "policies", "conditions", "lastNow", "clockOffsetMs", "nextSequence", "generation", "sessionId"]) assert.deepEqual(upgraded.state[key], committed[key], key);
+  console.log("PASS UI07 SQL: v1 all-row/receipt/clock/archive preservation; delayed/failed migration retains old bytes, retry/reopen, exact-known-v1 whitelist; seven normalized record tables roundtrip/FK, failed record save + same-command retry, unchanged trade state.");
+
+  // Published-v2-shaped fixture contains ALL UI07 rows plus completed pickup/archive.
+  const legacy2 = open(upgradeBytes);
+  legacy2.run("DROP TABLE merchant_runs; PRAGMA user_version=2");
+  legacy2.run("UPDATE metadata SET value=? WHERE key='source_hash'", [DOMAIN_V2_SOURCE_HASH]);
+  const v2 = legacy2.export(); legacy2.close();
+  const allV2Rows = bytes => {
+    const db = open(bytes);
+    try {
+      const tables = db.exec("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' AND name!='merchant_runs' ORDER BY name")[0].values.flat();
+      return Object.fromEntries(tables.map(name => [name, db.exec(`SELECT * FROM ${name}${name === "metadata" ? " WHERE key!='source_hash'" : ""} ORDER BY rowid`)]));
+    } finally { db.close(); }
+  };
+  let v3Bytes = v2.slice(), traceFail = true, traceWrites = 0;
+  const persistTrace = async bytes => { if (traceFail) throw Error("trace-quota"); v3Bytes = bytes.slice(); traceWrites++; };
+  await assert.rejects(createDomainStore({ SQL, seed, initial: v3Bytes, persist: persistTrace }), e => e instanceof DomainMigrationSaveError && e.retryable && !("reset" in e));
+  assert.deepEqual(v3Bytes, v2); assert.equal(traceWrites, 0);
+  traceFail = false;
+  const traceStore = await createDomainStore({ SQL, seed, initial: v3Bytes, persist: persistTrace, now: () => wallNow });
+  assert.equal(traceWrites, 1); assert.deepEqual(allV2Rows(v3Bytes), allV2Rows(v2), "ALL v2 rows including raw receipts/search/needs/recommendations/clock/archive unchanged");
+  assert.deepEqual(traceStore.state, upgraded.state); assert.deepEqual(traceStore.archive, archive);
+  assert.equal((await traceStore.execute(recordCommand)).replayed, true); assert.equal(traceWrites, 1);
+  const unknownV2 = open(v2); unknownV2.run("UPDATE metadata SET value='unknown-v2' WHERE key='source_hash'");
+  await assert.rejects(createDomainStore({ SQL, seed, initial: unknownV2.export(), persist: persistTrace })); unknownV2.close();
+  const brokenV2 = open(v2); brokenV2.run("PRAGMA foreign_keys=OFF; UPDATE needs SET actorId='missing'");
+  await assert.rejects(createDomainStore({ SQL, seed, initial: brokenV2.export(), persist: persistTrace })); brokenV2.close();
+  assert.equal(traceWrites, 1);
+  const { enabled, productIds, budgetWon, version, spentWon } = traceStore.state.policies.find(p => p.storeId === condition.storeId);
+  const traceInput = { id: "sql-batch-run", text: "요청만 표시", generation: 81, storeId: condition.storeId, budgetWon: 1000, selectedProductIds: [],
+    context: { uiSeq: 1, changes: [], pendingProductIds: [], currentPolicy: { enabled, productIds, budgetWon, version, spentWon } } };
+  const traceResponse = { ok: true, id: traceInput.id, generation: traceInput.generation, storeId: traceInput.storeId, uiSeq: 1,
+    mode: "live", model: "sql-fixture-model", usage: { inputTokens: 3, outputTokens: 4 }, action: "filter", scope: "current_batch", view: "requested",
+    selection: "keep", productIds: [], budgetWon: null, message: "요청만 표시", restoreSelectionChangeId: null, restoreBudgetChangeId: null, policyDraft: null };
+  // Synthetic wire response tests parser/persistence only, not an actual model call.
+  const traceCommand = body => ({ ...command(body), expectedRevision: traceStore.state.revision, sessionId: traceStore.state.sessionId, generation: traceStore.state.generation });
+  const traceStart = traceCommand({ type: "merchant.run.start", run: { id: traceInput.id, kind: "batch", inputJson: JSON.stringify(traceInput), startedAt: wallNow } });
+  const preTraceBytes = v3Bytes.slice(), preTraceState = traceStore.state;
+  traceFail = true; await assert.rejects(traceStore.execute(traceStart), /trace-quota/);
+  assert.deepEqual(v3Bytes, preTraceBytes); assert.deepEqual(traceStore.state, preTraceState);
+  traceFail = false; assert.equal((await traceStore.execute(traceStart)).ok, true);
+  for (const body of [
+    { type: "merchant.run.finish", runId: traceInput.id, terminal: "success", finishedAt: wallNow + 10, latencyMs: 10, terminalErrorCode: null, observation: { status: "success", responseJson: JSON.stringify(traceResponse) } },
+    { type: "merchant.run.apply", runId: traceInput.id, application: "screen_applied", commandKey: null, appliedAt: wallNow + 20 },
+  ]) { const out = await traceStore.execute(traceCommand(body)); assert.equal(out.ok, true, JSON.stringify(out)); }
+  for (const terminal of ["cancelled", "stale", "interrupted", "error"]) {
+    const runId = `sql-${terminal}`, req = { ...traceInput, id: runId }, res = { ...traceResponse, id: runId };
+    for (const body of [
+      { type: "merchant.run.start", run: { id: runId, kind: "batch", inputJson: JSON.stringify(req), startedAt: wallNow } },
+      { type: "merchant.run.finish", runId, terminal, finishedAt: wallNow + 10, latencyMs: 10, terminalErrorCode: terminal === "error" ? "MODEL_TIMEOUT" : null, observation: null },
+    ]) { const out = await traceStore.execute(traceCommand(body)); assert.equal(out.ok, true, JSON.stringify(out)); }
+    assert.equal(traceStore.state.merchantRuns.at(-1).usage, null);
+    const observed = await traceStore.execute(traceCommand({ type: "merchant.run.observe", runId, observation: { status: "success", responseJson: JSON.stringify(res) } }));
+    assert.equal(observed.ok, true, JSON.stringify(observed)); assert.equal(traceStore.state.merchantRuns.at(-1).terminal, terminal);
+  }
+  inspect(v3Bytes, db => {
+    assert.equal(scalar(db, "PRAGMA user_version"), 3); assert.equal(scalar(db, "SELECT count(*) FROM merchant_runs"), 5);
+    assert.throws(() => db.run("UPDATE merchant_runs SET storeId='missing'"), /FOREIGN KEY/);
+    assert.throws(() => db.run("UPDATE merchant_runs SET observationStatus=NULL"), /CHECK/);
+    assert.throws(() => db.run("UPDATE merchant_runs SET finishedAt=NULL"), /CHECK/);
+    assert.throws(() => db.run("UPDATE merchant_runs SET application='policy_saved', applicationCommandKey='missing' WHERE terminal='success'"), /FOREIGN KEY/);
+    assert.deepEqual(readDomainState(db), traceStore.state); assert.deepEqual(db.exec("PRAGMA foreign_key_check"), []);
+  });
+  const traceRestore = await createDomainStore({ SQL, seed, initial: v3Bytes, persist: async () => { throw Error("unexpected trace restore write"); } });
+  assert.deepEqual(traceRestore.state, traceStore.state); assert.deepEqual(traceRestore.archive, archive);
+  for (const key of ["requests", "orders", "lines", "links", "allocations", "payments", "reservations", "notifications", "policies", "conditions", "lastNow", "clockOffsetMs", "nextSequence", "generation", "sessionId", "searchRuns", "needs", "recommendationEvents"]) assert.deepEqual(traceStore.state[key], preTraceState[key], key);
+  console.log("PASS UI09B SQL: known v1/v2→3 additive; every v2 table row/receipt/search/clock/archive preserved; migration failure retry (no reset); unknown/corrupt v2 rejected; normalized merchant run CHECK/FK, failed save/same-command retry, finish/apply roundtrip/reopen, trade/clock frozen. No browser/live.");
+  wallNow += 1000;
+  const queuedBeforeReset = store.execute(command({ type: "clock.tick" }));
+  const staleCheck = assert.rejects(queuedBeforeReset, /DOMAIN_STALE_COMMAND/);
+  const reset = await store.reset(); await staleCheck;
+  assert.equal(reset.generation, committed.generation + 1); assert.equal(reset.orders.length, 0);
+  assert.equal(reset.requests.length, 20); assert.ok(reset.requests.every(r => r.consentAt === wallNow));
+  assert.deepEqual(store.archive, archive); assert.equal(hash(oldBytes), oldHash);
+  assert.equal((await store.execute(create)).ok, false, "old generation/session command rejected after reset");
+  console.log(`PASS domain-store SQL: ${products.length}/8/${availability.length}/29 masters, 20 current-clock pending; normalized request→order→supply→payment→pickup; CHECK/FK + rollback, delayed/failed save/reset, queue/stale/replay, restore, unknown schema/hash rejection, legacy approved archive unchanged. Node persistence seam only; browser IndexedDB/UI not exercised.`);
+}
